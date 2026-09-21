@@ -84,6 +84,9 @@ struct WalkingRoutePreviewCard: View {
 
             if canChoosePace {
                 pacePicker
+                if simulation.pace == .custom {
+                    customPaceSlider
+                }
             }
 
             controls
@@ -421,6 +424,34 @@ struct WalkingRoutePreviewCard: View {
             get: { simulation.pace },
             set: { simulation.pace = $0 }
         )
+    }
+
+    private var customPaceBinding: Binding<Double> {
+        Binding(
+            get: { simulation.customPaceKilometresPerHour },
+            set: { simulation.customPaceKilometresPerHour = $0 }
+        )
+    }
+
+    private var customPaceSlider: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Custom speed")
+                    .font(.subheadline.weight(.medium))
+                Spacer()
+                Text("\(Int(simulation.customPaceKilometresPerHour.rounded())) km/h")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            Slider(
+                value: customPaceBinding,
+                in: 1...100,
+                step: 1
+            )
+            .accessibilityLabel("Custom speed")
+            .accessibilityValue("\(Int(simulation.customPaceKilometresPerHour.rounded())) kilometers per hour")
+        }
     }
 
     private var distanceText: String {

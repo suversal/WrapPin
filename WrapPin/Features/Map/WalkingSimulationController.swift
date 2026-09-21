@@ -3,10 +3,11 @@ import Foundation
 import MapKit
 import Observation
 
-enum WalkingPace: Double, CaseIterable, Identifiable {
-    case relaxed = 1.0
-    case normal = 1.4
-    case brisk = 1.8
+enum WalkingPace: CaseIterable, Identifiable {
+    case relaxed
+    case normal
+    case brisk
+    case custom
 
     var id: Self { self }
 
@@ -15,10 +16,18 @@ enum WalkingPace: Double, CaseIterable, Identifiable {
         case .relaxed: String(localized: "Relaxed")
         case .normal: String(localized: "Normal")
         case .brisk: String(localized: "Brisk")
+        case .custom: String(localized: "Custom")
         }
     }
 
-    var metresPerSecond: Double { rawValue }
+    var defaultMetresPerSecond: Double {
+        switch self {
+        case .relaxed: 1.0
+        case .normal: 1.4
+        case .brisk: 1.8
+        case .custom: 1.4
+        }
+    }
 }
 
 enum WalkingSimulationPhase: Equatable {
@@ -39,6 +48,7 @@ final class WalkingSimulationController {
     private(set) var distanceTravelled: CLLocationDistance = 0
     private(set) var totalDistance: CLLocationDistance = 0
     var pace: WalkingPace = .normal
+    var customPaceKilometresPerHour: Double = 5
 
     @ObservationIgnored
     private var routePoints: [MKMapPoint] = []
@@ -61,7 +71,16 @@ final class WalkingSimulationController {
     }
 
     var remainingDuration: TimeInterval {
-        remainingDistance / pace.metresPerSecond
+        remainingDistance / paceMetresPerSecond
+    }
+
+    var paceMetresPerSecond: Double {
+        switch pace {
+        case .custom:
+            max(1, min(customPaceKilometresPerHour, 100)) / 3.6
+        case .relaxed, .normal, .brisk:
+            pace.defaultMetresPerSecond
+        }
     }
 
     var locksDestination: Bool {
@@ -143,7 +162,7 @@ final class WalkingSimulationController {
         await appModel.startWalkingLocationSession(
             at: movementTarget(at: routePoints[0].coordinate, destination: destination),
             destination: destination,
-            paceMetresPerSecond: pace.metresPerSecond
+            paceMetresPerSecond: paceMetresPerSecond
         )
 
         if case .idle = appModel.deviceSession.phase, phase == .preparing {
@@ -253,7 +272,7 @@ final class WalkingSimulationController {
 
                 self.distanceTravelled = min(
                     self.totalDistance,
-                    self.distanceTravelled + (self.pace.metresPerSecond * elapsed)
+                    self.distanceTravelled + (self.paceMetresPerSecond * elapsed)
                 )
 
                 guard let coordinate = self.coordinate(at: self.distanceTravelled) else {
@@ -328,5 +347,19 @@ final class WalkingSimulationController {
             latitude: coordinate.latitude,
             longitude: coordinate.longitude
         )
+    }
+
+    func applyRecoveredPaceMetresPerSecond(_ recoveredPace: Double) {
+        guard recoveredPace > 0 else { return }
+
+        if let matchedPreset = WalkingPace.allCases.first(where: {
+            $0 != .custom && abs($0.defaultMetresPerSecond - recoveredPace) < 0.0001
+        }) {
+            pace = matchedPreset
+            return
+        }
+
+        pace = .custom
+        customPaceKilometresPerHour = max(1, min(recoveredPace * 3.6, 100))
     }
 }

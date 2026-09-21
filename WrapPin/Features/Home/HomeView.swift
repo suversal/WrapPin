@@ -597,11 +597,8 @@ struct HomeView: View {
 
             appModel.dismissInterruptedSessionRecovery()
             walkingSimulation.prepare(route: route, destination: destination)
-            if
-                let rawPace = recovery.walkingPaceMetresPerSecond,
-                let recoveredPace = WalkingPace(rawValue: rawPace)
-            {
-                walkingSimulation.pace = recoveredPace
+            if let rawPace = recovery.walkingPaceMetresPerSecond {
+                walkingSimulation.applyRecoveredPaceMetresPerSecond(rawPace)
             }
             mapModel.show(route)
             isPreparingRecoveredWalk = false
