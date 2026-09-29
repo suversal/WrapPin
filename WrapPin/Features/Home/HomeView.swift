@@ -330,6 +330,7 @@ struct HomeView: View {
                         isPaired: isPaired,
                         sessionPhase: appModel.deviceSession.phase,
                         tunnelHandoffApp: appModel.tunnelHandoffApp,
+                        usesBuiltInTunnel: appModel.usesBuiltInTunnel,
                         tunnelAppInstallURL: appModel.selectedTunnelAppInstallURL,
                         previewingRouteMode: walkingRoutePlanner.isLoading ? walkingRoutePlanner.mode : nil,
                         routeError: walkingRoutePlanner.errorMessage,
@@ -427,6 +428,7 @@ struct HomeView: View {
                     MobileDataGuidanceView(
                         guidance: guidance,
                         tunnelHandoffApp: appModel.tunnelHandoffApp,
+                        usesBuiltInTunnel: appModel.usesBuiltInTunnel,
                         isUsingMobileData: appModel.deviceSession.isUsingMobileDataForStartup,
                         onOpenTunnelApp: appModel.deviceSession.openSelectedTunnelApp,
                         onRetry: appModel.deviceSession.retryConnection,

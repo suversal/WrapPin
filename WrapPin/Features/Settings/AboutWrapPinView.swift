@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AboutWrapPinView: View {
+    @Environment(AppModel.self) private var appModel
     var body: some View {
         List {
             appSummary
@@ -56,7 +57,9 @@ struct AboutWrapPinView: View {
                 guideRow(
                     "Start Location",
                     symbol: "location.fill",
-                    text: "Start reporting the selected place as this iPhone’s location. LocalDevVPN must be connected."
+                    text: appModel.usesBuiltInTunnel
+                        ? "Start reporting the selected place. WrapPin starts its built-in tunnel automatically."
+                        : "Start reporting the selected place as this iPhone’s location. LocalDevVPN must be connected."
                 )
                 guideRow(
                     "Update Location",
@@ -140,7 +143,9 @@ struct AboutWrapPinView: View {
                 guideRow(
                     "Pairing & Connection",
                     symbol: "iphone.and.arrow.forward",
-                    text: "Pair this iPhone once so WrapPin can identify it through LocalDevVPN."
+                    text: appModel.usesBuiltInTunnel
+                        ? "Pair this iPhone once so WrapPin can identify it through its built-in tunnel."
+                        : "Pair this iPhone once so WrapPin can identify it through LocalDevVPN."
                 )
                 guideRow(
                     "Connection Health",
@@ -155,7 +160,7 @@ struct AboutWrapPinView: View {
                 guideRow(
                     "Reset WrapPin",
                     symbol: "arrow.counterclockwise",
-                    text: "Erase the pairing record and all saved app choices, then return to onboarding. LocalDevVPN itself is not changed."
+                    text: "Erase the pairing record and all saved app choices, then return to onboarding. Existing VPN configurations remain in iOS Settings."
                 )
             }
         }
@@ -202,7 +207,11 @@ struct AboutWrapPinView: View {
     private var quickStart: some View {
         Section {
             stepRow(1, "Pair this iPhone once.")
-            stepRow(2, "Connect LocalDevVPN.")
+            if appModel.usesBuiltInTunnel {
+                stepRow(2, "Allow WrapPin's built-in VPN when prompted.")
+            } else {
+                stepRow(2, "Connect LocalDevVPN.")
+            }
             stepRow(3, "Search, choose or drop a location.")
             stepRow(4, "Start a fixed location or preview a walking or driving route.")
         } header: {

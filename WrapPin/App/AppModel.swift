@@ -11,6 +11,7 @@ final class AppModel {
     private static let appearanceKey = "appAppearance"
     private static let mapDisplayStyleKey = "mapDisplayStyle"
     private static let tunnelHandoffAppKey = "tunnelHandoffApp"
+    private static let usesBuiltInTunnelKey = "usesBuiltInTunnel"
     private static let activeSessionRecoveryKey = "activeSessionRecovery"
     private static let anonymousUsageStatisticsKey = "sharesAnonymousUsageStatistics"
 
@@ -27,6 +28,7 @@ final class AppModel {
     private(set) var appearance: AppAppearance
     private(set) var mapDisplayStyle: MapDisplayStyle
     private(set) var tunnelHandoffApp: TunnelHandoffApp
+    private(set) var usesBuiltInTunnel: Bool
     private(set) var sharesAnonymousUsageStatistics: Bool
     private(set) var interruptedSession: SessionRecoveryRecord?
     private(set) var isRestoringInterruptedSession = false
@@ -84,11 +86,13 @@ final class AppModel {
         self.tunnelHandoffApp = TunnelHandoffApp(
             rawValue: preferences.string(forKey: Self.tunnelHandoffAppKey) ?? ""
         ) ?? .localDevVPN
+        self.usesBuiltInTunnel = preferences.object(forKey: Self.usesBuiltInTunnelKey) as? Bool ?? true
         self.sharesAnonymousUsageStatistics = Self.initialUsageStatisticsPreference(
             in: preferences
         )
         self.interruptedSession = Self.recoveryRecord(in: preferences)
         self.deviceSession.tunnelHandoffApp = tunnelHandoffApp
+        self.deviceSession.usesBuiltInTunnel = usesBuiltInTunnel
 
         onDevicePairing.onFailure = { [weak self] stage in
             guard let self else { return }
@@ -234,6 +238,12 @@ final class AppModel {
         preferences.set(app.rawValue, forKey: Self.tunnelHandoffAppKey)
     }
 
+    func setUsesBuiltInTunnel(_ enabled: Bool) {
+        usesBuiltInTunnel = enabled
+        deviceSession.usesBuiltInTunnel = enabled
+        preferences.set(enabled, forKey: Self.usesBuiltInTunnelKey)
+    }
+
     func setSharesAnonymousUsageStatistics(_ enabled: Bool) {
         sharesAnonymousUsageStatistics = enabled
         preferences.set(enabled, forKey: Self.anonymousUsageStatisticsKey)
@@ -282,6 +292,8 @@ final class AppModel {
         mapDisplayStyle = .standard
         tunnelHandoffApp = .localDevVPN
         deviceSession.tunnelHandoffApp = .localDevVPN
+        usesBuiltInTunnel = true
+        deviceSession.usesBuiltInTunnel = true
         sharesAnonymousUsageStatistics = false
         interruptedSession = nil
         activeSessionRecovery = nil

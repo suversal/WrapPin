@@ -201,14 +201,21 @@ struct PairingSetupView: View {
                 .font(.headline)
 
             requirementRow(number: "1", text: "Pair this iPhone here, or import its existing RPPairing file.")
-            requirementRow(number: "2", text: "Install LocalDevVPN and switch it on.")
+            requirementRow(
+                number: "2",
+                text: appModel.usesBuiltInTunnel
+                    ? "Allow WrapPin to add its built-in VPN when prompted."
+                    : "Install LocalDevVPN and switch it on."
+            )
             requirementRow(number: "3", text: "Keep Developer Mode enabled on the iPhone.")
 
-            Link(destination: localDevVPNURL) {
-                Label("View LocalDevVPN", systemImage: "arrow.up.right.square")
-                    .frame(maxWidth: .infinity)
+            if !appModel.usesBuiltInTunnel {
+                Link(destination: localDevVPNURL) {
+                    Label("View LocalDevVPN", systemImage: "arrow.up.right.square")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
 
             Text("New on-device pairing is available on iOS 27. The simulator can test the screen, but Apple only exposes the real handshake on a physical iPhone.")
                 .font(.caption)
@@ -391,7 +398,9 @@ struct PairingSetupView: View {
                 ? String(localized: "Create the pairing securely on this iPhone, or import an existing file.")
                 : String(localized: "Connect your physical iPhone to create the pairing, or import an existing file.")
         case .paired:
-            return String(localized: "WrapPin can use this record when the LocalDevVPN session layer is connected.")
+            return appModel.usesBuiltInTunnel
+                ? String(localized: "WrapPin can use this record with its built-in device tunnel.")
+                : String(localized: "WrapPin can use this record when the LocalDevVPN session layer is connected.")
         case .failed(let message):
             return message
         }

@@ -2,10 +2,10 @@
 
 This guide covers WrapPin's development builds and the planned IPA workflow.
 
-## Current release identity
+## Current tunnel test build identity
 
-- Marketing version: `1.0.11`
-- Current build: `31`
+- Marketing version: `1.0.12`
+- Current build: `33`
 - Bundle identifier: `com.suversal.wrappin`
 - Minimum deployment target: iOS 27
 - Supported device family: iPhone
@@ -68,7 +68,7 @@ Then select **Any iOS Device (arm64)** and choose **Product → Archive**. Xcode
 
 ## IPA and SideStore
 
-WrapPin's SideStore IPA is built from an optimized, unsigned Release archive. SideStore applies the user's personal development certificate during installation. The native pairing engine is statically linked into the app binary, so it does not need a separate framework or extension.
+The standard WrapPin SideStore IPA is built from an optimized, unsigned Release archive. SideStore applies the user's personal development certificate during installation. The native pairing engine is statically linked into the app binary. This tunnel test branch additionally embeds a Packet Tunnel extension; a free-account SideStore signature is not sufficient for it. See [BuiltInTunnelResearch.zh-CN.md](BuiltInTunnelResearch.zh-CN.md) for the required profiles and test sequence.
 
 For personal SideStore installation:
 

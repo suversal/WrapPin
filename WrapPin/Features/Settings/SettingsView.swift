@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var isReplayingOnboarding = false
     @State private var isConfirmingReset = false
     @State private var resetError: String?
+    @StateObject private var builtInTunnel = BuiltInTunnelManager.shared
 
     var body: some View {
         NavigationStack {
@@ -66,16 +67,38 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Picker(selection: tunnelHandoffAppBinding) {
-                        ForEach(TunnelHandoffApp.allCases) { app in
-                            Text(app.title).tag(app)
+                    Toggle("Use Built-in Tunnel", isOn: Binding(
+                        get: { appModel.usesBuiltInTunnel },
+                        set: { appModel.setUsesBuiltInTunnel($0) }
+                    ))
+                    .disabled(isLocationSessionInProgress)
+                    LabeledContent("Built-in Tunnel", value: builtInTunnelStatus)
+                        .task { await builtInTunnel.refresh() }
+                    Button(builtInTunnel.status == .connected ? "Stop Built-in Tunnel" : "Start Built-in Tunnel") {
+                        if builtInTunnel.status == .connected {
+                            builtInTunnel.stop()
+                        } else {
+                            Task { await builtInTunnel.start() }
                         }
-                    } label: {
-                        settingsRowLabel("Tunnel App", symbol: "network")
                     }
-                    .accessibilityHint("Selects the app to open when WrapPin cannot reach the paired iPhone.")
+                    .disabled(isLocationSessionInProgress || builtInTunnel.status == .connecting || builtInTunnel.status == .disconnecting || builtInTunnel.status == .reasserting)
+                    if let error = builtInTunnel.lastError {
+                        Text(error).font(.footnote).foregroundStyle(.red)
+                    }
+                    if !appModel.usesBuiltInTunnel {
+                        Picker(selection: tunnelHandoffAppBinding) {
+                            ForEach(TunnelHandoffApp.allCases) { app in
+                                Text(app.title).tag(app)
+                            }
+                        } label: {
+                            settingsRowLabel("Tunnel App", symbol: "network")
+                        }
+                        .accessibilityHint("Selects the app to open when WrapPin cannot reach the paired iPhone.")
+                    }
                 } footer: {
-                    if appModel.tunnelHandoffApp == .shadowrocket {
+                    if appModel.usesBuiltInTunnel {
+                        Text("After allowing its VPN configuration once, WrapPin starts this local device tunnel for location sessions and stops it after a successful restore. A tunnel you start here stays on until you stop it. A compatible signing profile is required.")
+                    } else if appModel.tunnelHandoffApp == .shadowrocket {
                         Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
                     } else {
                         Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
@@ -184,7 +207,7 @@ struct SettingsView: View {
                         settingsRowLabel("Reset WrapPin", symbol: "arrow.counterclockwise")
                     }
                 } footer: {
-                    Text("This clears the pairing record and local app settings, then shows onboarding again. It does not remove or change LocalDevVPN.")
+                    Text("This clears the pairing record and local app settings, then shows onboarding again. VPN configurations remain in iOS Settings.")
                 }
             }
             .navigationTitle("Settings")
@@ -341,6 +364,22 @@ struct SettingsView: View {
             get: { appModel.tunnelHandoffApp },
             set: appModel.setTunnelHandoffApp
         )
+    }
+
+    private var isLocationSessionInProgress: Bool {
+        if appModel.deviceSession.isBusy { return true }
+        if case .active = appModel.deviceSession.phase { return true }
+        return false
+    }
+
+    private var builtInTunnelStatus: String {
+        switch builtInTunnel.status {
+        case .connected: String(localized: "Connected")
+        case .connecting, .reasserting: String(localized: "Connecting")
+        case .disconnecting: String(localized: "Disconnecting")
+        case .disconnected, .invalid: String(localized: "Disconnected")
+        @unknown default: String(localized: "Unknown")
+        }
     }
 
     private var anonymousUsageStatisticsBinding: Binding<Bool> {

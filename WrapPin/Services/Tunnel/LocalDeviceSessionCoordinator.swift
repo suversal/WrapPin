@@ -90,6 +90,9 @@ final class LocalDeviceSessionCoordinator: NSObject {
     private(set) var phase: DeviceSessionPhase = .idle {
         didSet {
             guard phase != oldValue else { return }
+            if phase == .idle {
+                BuiltInTunnelManager.shared.stopAfterSession()
+            }
             if case .failed(let message) = phase {
                 guard !terminalFailureReported else { return }
                 terminalFailureReported = true
@@ -116,6 +119,9 @@ final class LocalDeviceSessionCoordinator: NSObject {
             }
         }
     }
+    var usesBuiltInTunnel = false
+    private var builtInTunnelStartupTask: Task<Void, Never>?
+    private var builtInTunnelStartupID: UUID?
     var isUsingMobileDataForStartup: Bool { isMobileDataStartupMode }
     private(set) var connectionStage: DeviceSessionConnectionStage = .idle
     private(set) var endpointSource: DeviceEndpointSource?
@@ -243,7 +249,11 @@ final class LocalDeviceSessionCoordinator: NSObject {
         )
         resolvedService = nil
         phase = .discovering
-        routeStartupForCurrentNetwork()
+        if usesBuiltInTunnel {
+            startBuiltInTunnelForPendingSession()
+        } else {
+            routeStartupForCurrentNetwork()
+        }
 #endif
     }
 
@@ -288,6 +298,10 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
     func openSelectedTunnelApp() {
 #if !targetEnvironment(simulator)
+        if usesBuiltInTunnel {
+            startBuiltInTunnelForPendingSession()
+            return
+        }
         if pendingSession != nil, !workerIsRunning {
             openSelectedTunnelAppForPendingSession()
             return
@@ -923,6 +937,9 @@ final class LocalDeviceSessionCoordinator: NSObject {
     }
 
     private func clearPendingSession() {
+        builtInTunnelStartupTask?.cancel()
+        builtInTunnelStartupTask = nil
+        builtInTunnelStartupID = nil
         retryTelemetry.reset()
         automaticDiscoveryTask?.cancel()
         automaticDiscoveryTask = nil
@@ -961,6 +978,39 @@ final class LocalDeviceSessionCoordinator: NSObject {
         message.localizedCaseInsensitiveContains("through LocalDevVPN")
             || message.localizedCaseInsensitiveContains("make the iPhone connection available")
             || message.localizedCaseInsensitiveContains("open the secure device tunnel")
+    }
+
+    private func startBuiltInTunnelForPendingSession() {
+        guard pendingSession != nil, !workerIsRunning else { return }
+        guard builtInTunnelStartupTask == nil else { return }
+        cleanupDiscovery()
+        mobileDataGuidance = nil
+        hasOpenedTunnelAppThisAttempt = true
+        phase = .openingLocalDevVPN
+        connectionStage = .openingLocalDevVPN
+        let startID = UUID()
+        builtInTunnelStartupID = startID
+        builtInTunnelStartupTask = Task { @MainActor [weak self] in
+            let connected = await BuiltInTunnelManager.shared.startForSession()
+            guard let self, self.builtInTunnelStartupID == startID else { return }
+            self.builtInTunnelStartupTask = nil
+            self.builtInTunnelStartupID = nil
+            guard !Task.isCancelled, self.pendingSession != nil,
+                  self.phase == .openingLocalDevVPN else {
+                BuiltInTunnelManager.shared.stopAfterSession()
+                return
+            }
+            guard connected else {
+                self.fail(BuiltInTunnelManager.shared.lastError ?? "WrapPin could not start its built-in tunnel.")
+                return
+            }
+            if self.wifiPathStatusIsKnown && !self.isWiFiPathSatisfied {
+                self.isMobileDataStartupMode = true
+                self.enterMobileDataGuidance()
+            } else {
+                self.beginDiscovery(showConnectionHelpIfUnavailable: true)
+            }
+        }
     }
 
     private func routeStartupForCurrentNetwork() {
@@ -1056,6 +1106,10 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
     private func openSelectedTunnelAppForPendingSession() {
 #if !targetEnvironment(simulator)
+        if usesBuiltInTunnel {
+            startBuiltInTunnelForPendingSession()
+            return
+        }
         guard pendingSession != nil, !workerIsRunning else { return }
         mobileDataDiscoveryLoopTask?.cancel()
         mobileDataDiscoveryLoopTask = nil

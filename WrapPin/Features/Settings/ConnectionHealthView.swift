@@ -1,4 +1,5 @@
 import CoreLocation
+import NetworkExtension
 import SwiftUI
 import UIKit
 
@@ -11,10 +12,19 @@ struct ConnectionHealthView: View {
     @State private var probedTarget: LocationTarget?
     @State private var probedSimulationCoordinates: SimulationCoordinates?
     @State private var locationProbe = LocationAccuracyProbe()
+    @StateObject private var builtInTunnel = BuiltInTunnelManager.shared
 
     var body: some View {
         List {
             Section("Connection Health") {
+                if appModel.usesBuiltInTunnel {
+                    healthRow(
+                        title: String(localized: "Built-in VPN"),
+                        value: builtInTunnelStatus,
+                        symbol: builtInTunnel.status == .connected ? "checkmark.circle.fill" : "questionmark.circle",
+                        color: builtInTunnel.status == .connected ? .green : .secondary
+                    )
+                }
                 healthRow(
                     title: String(localized: "Pairing"),
                     value: pairingValue,
@@ -214,7 +224,10 @@ struct ConnectionHealthView: View {
 
             Section("Other VPNs") {
                 Text("Another VPN may affect local device connections. Keep a compatible device tunnel enabled when starting a location session; a regular proxy alone may not work.")
-                if appModel.tunnelHandoffApp == .shadowrocket {
+                if appModel.usesBuiltInTunnel {
+                    Text("WrapPin uses its built-in device tunnel. If another VPN is active, stop it before testing this tunnel.")
+                        .foregroundStyle(.secondary)
+                } else if appModel.tunnelHandoffApp == .shadowrocket {
                     Text("Shadowrocket on mobile data may not expose the device connection WrapPin needs. Use Wi-Fi if the connection check fails.")
                         .foregroundStyle(.secondary)
                 }
@@ -228,16 +241,19 @@ struct ConnectionHealthView: View {
                 }
                 .foregroundStyle(.primary)
 
-                Link(destination: appModel.selectedTunnelAppInstallURL) {
-                    Label(
-                        String(format: NSLocalizedString("Get %@", comment: ""), appModel.tunnelHandoffApp.title),
-                        systemImage: "arrow.up.right.square"
-                    )
+                if !appModel.usesBuiltInTunnel {
+                    Link(destination: appModel.selectedTunnelAppInstallURL) {
+                        Label(
+                            String(format: NSLocalizedString("Get %@", comment: ""), appModel.tunnelHandoffApp.title),
+                            systemImage: "arrow.up.right.square"
+                        )
+                    }
                 }
             }
         }
         .navigationTitle("Connection Health")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await builtInTunnel.refresh() }
         .onDisappear {
             diagnostics.cancel()
             locationProbe.stop()
@@ -316,6 +332,16 @@ struct ConnectionHealthView: View {
         case .running: return String(localized: "Checking")
         case .passed: return String(localized: "Reachable")
         case .failed: return String(localized: "Not reachable")
+        }
+    }
+
+    private var builtInTunnelStatus: String {
+        switch builtInTunnel.status {
+        case .connected: String(localized: "Connected")
+        case .connecting, .reasserting: String(localized: "Connecting")
+        case .disconnecting: String(localized: "Disconnecting")
+        case .disconnected, .invalid: String(localized: "Disconnected")
+        @unknown default: String(localized: "Unknown")
         }
     }
 
@@ -489,6 +515,8 @@ struct ConnectionHealthView: View {
         Pairing: \(pairingValue)
         Last pairing failure stage (this launch): \(appModel.onDevicePairing.lastFailureStage?.rawValue ?? "None")
         Device tunnel: \(localDevVPNValue)
+        Tunnel source: \(appModel.usesBuiltInTunnel ? "Built-in" : appModel.tunnelHandoffApp.title)
+        Built-in VPN: \(builtInTunnelStatus)
         Session: \(sessionValue)
         Background session: \(appModel.deviceSession.backgroundKeepAlive.status.rawValue)
         Background session started: \(appModel.deviceSession.backgroundKeepAlive.started)
