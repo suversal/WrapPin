@@ -2,10 +2,10 @@
 
 This guide covers WrapPin's development builds and the planned IPA workflow.
 
-## Current tunnel test build identity
+## Current dual-edition test build identity
 
 - Marketing version: `1.0.12`
-- Current build: `33`
+- Current build: `37`
 - Bundle identifier: `com.suversal.wrappin`
 - Minimum deployment target: iOS 27
 - Supported device family: iPhone
@@ -31,7 +31,7 @@ Keep the Debug and Release configurations identical.
 ## Build in Xcode
 
 1. Open `WrapPin.xcodeproj`.
-2. Select the **WrapPin** scheme.
+2. Select **WrapPin Standard** for the SideStore edition or **WrapPin Tunnel** for the self-sign edition.
 3. Select the connected iPhone.
 4. Open **Signing & Capabilities** and confirm the development team.
 5. Press **Run**.
@@ -68,7 +68,9 @@ Then select **Any iOS Device (arm64)** and choose **Product → Archive**. Xcode
 
 ## IPA and SideStore
 
-The standard WrapPin SideStore IPA is built from an optimized, unsigned Release archive. SideStore applies the user's personal development certificate during installation. The native pairing engine is statically linked into the app binary. This tunnel test branch additionally embeds a Packet Tunnel extension; a free-account SideStore signature is not sufficient for it. See [BuiltInTunnelResearch.zh-CN.md](BuiltInTunnelResearch.zh-CN.md) for the required profiles and test sequence.
+Both editions share application sources and are built from the same commit. **WrapPin Standard** excludes the Packet Tunnel extension and Network Extension entitlement; SideStore can sign the unsigned IPA during installation. **WrapPin Tunnel** embeds `WrapPinTunnel.appex` and needs signing profiles for both the app and extension with Packet Tunnel permission. The native pairing engine is statically linked into both app executables. See [BuiltInTunnelResearch.zh-CN.md](BuiltInTunnelResearch.zh-CN.md) for the signing and device test sequence.
+
+Build and package the editions separately. For each scheme, use a Release archive with `CODE_SIGNING_ALLOWED=NO`, then package its `Products/Applications/*.app` under `Payload/` with `ditto`. Do not put both apps into one IPA. The current test outputs are `Releases/WrapPin-Standard-1.0.12-build37-unsigned.ipa` and `Releases/WrapPin-Tunnel-1.0.12-build37-unsigned.ipa`. They share bundle ID `com.suversal.wrappin` and therefore replace each other on one phone; a change of signing team may require a reinstall and pairing again.
 
 For personal SideStore installation:
 

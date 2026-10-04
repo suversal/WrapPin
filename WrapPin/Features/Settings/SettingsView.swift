@@ -64,28 +64,25 @@ struct SettingsView: View {
                         }
                     }
                     .foregroundStyle(.primary)
+
+                    if BuildEdition.supportsBuiltInTunnel {
+                        NavigationLink {
+                            BuiltInTunnelSettingsView()
+                                .environment(appModel)
+                        } label: {
+                            HStack {
+                                settingsRowLabel("Built-in Tunnel", symbol: "network")
+                                Spacer()
+                                Text(builtInTunnelStatus)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .task { await builtInTunnel.refresh() }
+                    }
                 }
 
-                Section {
-                    Toggle("Use Built-in Tunnel", isOn: Binding(
-                        get: { appModel.usesBuiltInTunnel },
-                        set: { appModel.setUsesBuiltInTunnel($0) }
-                    ))
-                    .disabled(isLocationSessionInProgress)
-                    LabeledContent("Built-in Tunnel", value: builtInTunnelStatus)
-                        .task { await builtInTunnel.refresh() }
-                    Button(builtInTunnel.status == .connected ? "Stop Built-in Tunnel" : "Start Built-in Tunnel") {
-                        if builtInTunnel.status == .connected {
-                            builtInTunnel.stop()
-                        } else {
-                            Task { await builtInTunnel.start() }
-                        }
-                    }
-                    .disabled(isLocationSessionInProgress || builtInTunnel.status == .connecting || builtInTunnel.status == .disconnecting || builtInTunnel.status == .reasserting)
-                    if let error = builtInTunnel.lastError {
-                        Text(error).font(.footnote).foregroundStyle(.red)
-                    }
-                    if !appModel.usesBuiltInTunnel {
+                if !appModel.usesBuiltInTunnel {
+                    Section {
                         Picker(selection: tunnelHandoffAppBinding) {
                             ForEach(TunnelHandoffApp.allCases) { app in
                                 Text(app.title).tag(app)
@@ -94,14 +91,12 @@ struct SettingsView: View {
                             settingsRowLabel("Tunnel App", symbol: "network")
                         }
                         .accessibilityHint("Selects the app to open when WrapPin cannot reach the paired iPhone.")
-                    }
-                } footer: {
-                    if appModel.usesBuiltInTunnel {
-                        Text("After allowing its VPN configuration once, WrapPin starts this local device tunnel for location sessions and stops it after a successful restore. A tunnel you start here stays on until you stop it. A compatible signing profile is required.")
-                    } else if appModel.tunnelHandoffApp == .shadowrocket {
-                        Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
-                    } else {
-                        Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
+                    } footer: {
+                        if appModel.tunnelHandoffApp == .shadowrocket {
+                            Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
+                        } else {
+                            Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
+                        }
                     }
                 }
 
@@ -366,19 +361,17 @@ struct SettingsView: View {
         )
     }
 
-    private var isLocationSessionInProgress: Bool {
-        if appModel.deviceSession.isBusy { return true }
-        if case .active = appModel.deviceSession.phase { return true }
-        return false
-    }
-
     private var builtInTunnelStatus: String {
+        if builtInTunnel.isStarting { return String(localized: "Connecting") }
+        if builtInTunnel.hasConfiguration && !builtInTunnel.isConfigurationEnabled {
+            return String(localized: "VPN Configuration Disabled")
+        }
         switch builtInTunnel.status {
-        case .connected: String(localized: "Connected")
-        case .connecting, .reasserting: String(localized: "Connecting")
-        case .disconnecting: String(localized: "Disconnecting")
-        case .disconnected, .invalid: String(localized: "Disconnected")
-        @unknown default: String(localized: "Unknown")
+        case .connected: return String(localized: "Connected")
+        case .connecting, .reasserting: return String(localized: "Connecting")
+        case .disconnecting: return String(localized: "Disconnecting")
+        case .disconnected, .invalid: return String(localized: "Disconnected")
+        @unknown default: return String(localized: "Unknown")
         }
     }
 

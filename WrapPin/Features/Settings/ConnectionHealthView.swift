@@ -253,7 +253,11 @@ struct ConnectionHealthView: View {
         }
         .navigationTitle("Connection Health")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await builtInTunnel.refresh() }
+        .task {
+            if BuildEdition.supportsBuiltInTunnel {
+                await builtInTunnel.refresh()
+            }
+        }
         .onDisappear {
             diagnostics.cancel()
             locationProbe.stop()
@@ -516,7 +520,8 @@ struct ConnectionHealthView: View {
         Last pairing failure stage (this launch): \(appModel.onDevicePairing.lastFailureStage?.rawValue ?? "None")
         Device tunnel: \(localDevVPNValue)
         Tunnel source: \(appModel.usesBuiltInTunnel ? "Built-in" : appModel.tunnelHandoffApp.title)
-        Built-in VPN: \(builtInTunnelStatus)
+        Built-in VPN: \(BuildEdition.supportsBuiltInTunnel ? builtInTunnelStatus : "Not included")
+        Built-in VPN error: \(BuildEdition.supportsBuiltInTunnel ? (builtInTunnel.lastErrorDetail ?? "None") : "Not included")
         Session: \(sessionValue)
         Background session: \(appModel.deviceSession.backgroundKeepAlive.status.rawValue)
         Background session started: \(appModel.deviceSession.backgroundKeepAlive.started)

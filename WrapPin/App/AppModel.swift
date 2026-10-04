@@ -86,7 +86,8 @@ final class AppModel {
         self.tunnelHandoffApp = TunnelHandoffApp(
             rawValue: preferences.string(forKey: Self.tunnelHandoffAppKey) ?? ""
         ) ?? .localDevVPN
-        self.usesBuiltInTunnel = preferences.object(forKey: Self.usesBuiltInTunnelKey) as? Bool ?? true
+        self.usesBuiltInTunnel = BuildEdition.supportsBuiltInTunnel
+            && (preferences.object(forKey: Self.usesBuiltInTunnelKey) as? Bool ?? true)
         self.sharesAnonymousUsageStatistics = Self.initialUsageStatisticsPreference(
             in: preferences
         )
@@ -239,9 +240,10 @@ final class AppModel {
     }
 
     func setUsesBuiltInTunnel(_ enabled: Bool) {
-        usesBuiltInTunnel = enabled
-        deviceSession.usesBuiltInTunnel = enabled
-        preferences.set(enabled, forKey: Self.usesBuiltInTunnelKey)
+        let available = BuildEdition.supportsBuiltInTunnel && enabled
+        usesBuiltInTunnel = available
+        deviceSession.usesBuiltInTunnel = available
+        preferences.set(available, forKey: Self.usesBuiltInTunnelKey)
     }
 
     func setSharesAnonymousUsageStatistics(_ enabled: Bool) {
@@ -292,8 +294,8 @@ final class AppModel {
         mapDisplayStyle = .standard
         tunnelHandoffApp = .localDevVPN
         deviceSession.tunnelHandoffApp = .localDevVPN
-        usesBuiltInTunnel = true
-        deviceSession.usesBuiltInTunnel = true
+        usesBuiltInTunnel = BuildEdition.supportsBuiltInTunnel
+        deviceSession.usesBuiltInTunnel = BuildEdition.supportsBuiltInTunnel
         sharesAnonymousUsageStatistics = false
         interruptedSession = nil
         activeSessionRecovery = nil

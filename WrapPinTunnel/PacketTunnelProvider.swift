@@ -6,9 +6,15 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     private var isRunning = false
 
     override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
-        let ipv4 = NEIPv4Settings(addresses: ["10.7.0.2"], subnetMasks: ["255.255.255.252"])
+        let configuredAddress = (protocolConfiguration as? NETunnelProviderProtocol)?
+            .providerConfiguration?["localAddress"] as? String ?? "10.7.0.2/30"
+        guard let (address, mask) = Self.parseLocalAddress(configuredAddress) else {
+            completionHandler(NSError(domain: "WrapPinTunnelConfiguration", code: 1,
+                                      userInfo: [NSLocalizedDescriptionKey: "Invalid local tunnel address"]))
+            return
+        }
+        let ipv4 = NEIPv4Settings(addresses: [address], subnetMasks: [mask])
         ipv4.includedRoutes = [NEIPv4Route(destinationAddress: "10.7.0.1", subnetMask: "255.255.255.255")]
-        ipv4.excludedRoutes = [.default()]
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "10.7.0.1")
         settings.ipv4Settings = ipv4
         setTunnelNetworkSettings(settings) { [weak self] error in
@@ -17,6 +23,22 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             self?.reflectPackets()
             completionHandler(nil)
         }
+    }
+
+    private static func parseLocalAddress(_ value: String) -> (String, String)? {
+        let parts = value.split(separator: "/", omittingEmptySubsequences: false)
+        guard parts.count == 2, let prefix = Int(parts[1]), (1...32).contains(prefix) else { return nil }
+        let octets = parts[0].split(separator: ".", omittingEmptySubsequences: false)
+        guard octets.count == 4 else { return nil }
+        let numbers = octets.compactMap { Int($0) }
+        guard numbers.count == 4, numbers.allSatisfy({ (0...255).contains($0) }),
+              (1...223).contains(numbers[0]), numbers[0] != 127,
+              numbers != [10, 7, 0, 1] else { return nil }
+        let address = numbers.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+        let mask = UInt32.max << (32 - prefix)
+        if prefix < 31 && (address & ~mask == 0 || address & ~mask == ~mask) { return nil }
+        let maskText = [24, 16, 8, 0].map { String((mask >> $0) & 0xff) }.joined(separator: ".")
+        return (numbers.map(String.init).joined(separator: "."), maskText)
     }
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
