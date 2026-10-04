@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>WrapPin</string>
+	<string>$(WRAPPIN_DISPLAY_NAME)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,10 +24,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.suversal.wrappin.callback</string>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).callback</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>wrappin</string>
+				<string>$(WRAPPIN_CALLBACK_SCHEME)</string>
 			</array>
 		</dict>
 	</array>

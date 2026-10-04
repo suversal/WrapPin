@@ -1,4 +1,4 @@
-# WrapPin 内置隧道测试版（1.0.12 Build 37）
+# WrapPin 内置隧道测试版（1.0.12 Build 38）
 
 ## 对照方案
 
@@ -20,7 +20,7 @@ Build 37 将内置隧道移到独立设置页，可查看状态、用途、签�
 
 请先确认签名服务确实支持 **Packet Tunnel Network Extension**，而不是只提供普通 IPA 签名。主 App 与扩展必须使用同一 Team，并分别获得匹配各自 Bundle ID 的 provisioning profile；两份配置需要实际授予 `com.apple.developer.networking.networkextension` 的 `packet-tunnel-provider`。普通证书、p12 文件或仅在项目里写 entitlement，不能代替 profile 授权。不要提交证书私钥、p12、mobileprovision 或 UDID。
 
-默认 ID 是 `com.suversal.wrappin` 和 `com.suversal.wrappin.tunnel`。如果签名服务要求自己的 ID，需同时改主 App 和扩展，扩展仍须为主 App ID 加 `.tunnel`。用 Xcode 构建时，可在 `Configuration/Local.private.xcconfig` 设置 `DEVELOPMENT_TEAM` 和 `WRAPPIN_BUNDLE_IDENTIFIER` 后重新归档。对现成 IPA 重签时，签名工具也必须正确重签并保留内嵌 `.appex`、它的 Bundle ID 和权限。
+Build 38 起，标准版保留 `com.suversal.wrappin`，隧道版默认使用 `com.suversal.wrappin.selfsigned`，其扩展使用 `com.suversal.wrappin.selfsigned.tunnel`。两版可并存，桌面分别显示 WrapPin 和 WrapPin Tunnel，但偏好设置和配对记录分别保存。标准版的 LocalDevVPN 返回地址仍为 `wrappin://`，隧道版改为 `wrappintunnel://`。如果签名服务要求自己的 ID，用 Xcode 构建时可在 `Configuration/Local.private.xcconfig` 设置 `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER`；扩展会自动跟随该 ID 加 `.tunnel`。隧道版主 App 和扩展均需各自匹配的 profile 及 Packet Tunnel 授权。对现成 IPA 重签时，签名工具也必须正确重签并保留内嵌 `.appex`、它的 Bundle ID 和权限。
 
 Apple 权限文档：https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.networking.networkextension
 
@@ -37,7 +37,9 @@ Apple 权限文档：https://developer.apple.com/documentation/bundleresources/e
 
 ## 本地交付包
 
-- 标准版：`Releases/WrapPin-Standard-1.0.12-build37-unsigned.ipa`，SHA-256 `98ba8c8370f0603d54c834c23928b4e3af5b55831493ea1629f785c21f8299df`。IPA 结构为 `Payload/WrapPin.app`，不含 `.appex`。
-- 隧道版：`Releases/WrapPin-Tunnel-1.0.12-build37-unsigned.ipa`，SHA-256 `7f3920066cb168ea6cd52c2741fe3d64541055dad54a6fc2c2488396cffee2d5`。IPA 结构为 `Payload/WrapPinTunnelEdition.app`，内含 `PlugIns/WrapPinTunnel.appex`。
-- 两包都来自同一份代码的无签名 Release Archive；App 与扩展为 arm64，版本均为 1.0.12 Build 37。
+Build 37 的两个包共用 App ID，只作历史测试记录，不再用于双版本并存测试。
+
+- 标准版：`Releases/WrapPin-Standard-1.0.12-build38-unsigned.ipa`，SHA-256 `e432b8ebf0f38012351b36f41ed77d33710b9c16baa6b4d612a724423ce16516`。App ID 为 `com.suversal.wrappin`，没有 `.appex`。
+- 隧道版：`Releases/WrapPin-Tunnel-1.0.12-build38-unsigned.ipa`，SHA-256 `2c2322219ebb6526d6d6e70ae22fdb52fb42e59faed221bf71d126b172f8de2c`。App ID 为 `com.suversal.wrappin.selfsigned`，内含 `com.suversal.wrappin.selfsigned.tunnel` 扩展。
+- 两包均来自无签名 Release Archive；App 与扩展为 arm64，版本均为 1.0.12 Build 38。已验证 ZIP、包内 ID、桌面名称、URL Scheme、扩展有无和必要资源；尚未完成签名后的真机安装验收。
 - 本包仅供使用具备 Network Extension 权限的签名配置重签测试；它本身不可直接安装，也不是已通过真机验收的公开版本。

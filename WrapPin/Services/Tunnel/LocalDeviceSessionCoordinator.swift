@@ -258,7 +258,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
     }
 
     func handleOpenURL(_ url: URL) {
-        guard url.scheme?.lowercased() == "wrappin" else { return }
+        guard url.scheme?.lowercased() == BuildEdition.callbackScheme else { return }
         guard pendingSession != nil else { return }
         guard phase == .openingLocalDevVPN || phase == .discovering else { return }
 

@@ -1,3 +1,2 @@
-"CFBundleDisplayName" = "WrapPin";
 "NSLocalNetworkUsageDescription" = "WrapPin 需要使用本地网络，通过兼容的设备隧道配对并连接这台 iPhone。";
 "NSLocationWhenInUseUsageDescription" = "WrapPin 使用定位服务来保持测试定位在后台运行，并在结束后让地图回到真实位置。";

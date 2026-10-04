@@ -1,5 +1,15 @@
 # WrapPin releases
 
+## 1.0.12 (Build 38, separate app identities)
+
+- Created: 4 October 2026 with Xcode 27.0 (`27A266a`)
+- Standard IPA: `WrapPin-Standard-1.0.12-build38-unsigned.ipa`; SHA-256 `e432b8ebf0f38012351b36f41ed77d33710b9c16baa6b4d612a724423ce16516`; bundle ID `com.suversal.wrappin`; no Packet Tunnel extension.
+- Tunnel IPA: `WrapPin-Tunnel-1.0.12-build38-unsigned.ipa`; SHA-256 `2c2322219ebb6526d6d6e70ae22fdb52fb42e59faed221bf71d126b172f8de2c`; bundle ID `com.suversal.wrappin.selfsigned`; extension ID `com.suversal.wrappin.selfsigned.tunnel`.
+- Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+. The Home Screen names and LocalDevVPN return URL schemes are distinct, enabling side-by-side installation when both signing profiles are valid. Their settings and pairing records are separate.
+- Verification: both archives succeeded; IPA ZIP integrity, identifiers, names, URL schemes, required resources, code architecture and extension presence or absence passed. Final SideStore and paid-signature device installation remains untested. The signing team must provide Packet Tunnel profiles for both new tunnel IDs.
+
+See [the tunnel test guide](../Documentation/BuiltInTunnelResearch.zh-CN.md) for signing and device checks.
+
 ## 1.0.12 (Build 37, dual-edition device test)
 
 - Created: 4 October 2026 with Xcode 27.0 (`27A266a`)
