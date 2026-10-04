@@ -14,6 +14,8 @@ WrapPin 沿用 RPPairing → 本机设备发现 → 加密开发者会话 → Lo
 
 Build 37 将内置隧道移到独立设置页，可查看状态、用途、签名要求和地址。默认本机地址沿用之前版本的 `10.7.0.2/30`，对端仍固定为 `10.7.0.1/32`；本机地址可以改为其他 IPv4/CIDR，下次启动隧道时生效。对端地址暂不开放修改，因为配对连接仍依赖 `10.7.0.1`。曾出现的 `NEVPNErrorDomain` 错误 2 在 iOS SDK 中表示 VPN 配置被关闭；Build 37 在用户主动启动时会尝试重新启用、保存并加载已有配置，并在失败时显示操作建议及技术详情。地址修改不能解决签名权限或系统禁用配置的问题。
 
+标准版 Build 37 经 SideStore 安装后，用户报告 iOS 显示“无法验证 App”，尚未进入应用。此结果不算标准版真机验收通过；需先区分同一 SideStore 开发者名下其他 App 是否也无法验证，并检查设备的开发者验证状态及最终签名配置。不要因这个提示直接删除配对数据或改动定位代码。
+
 ## 签名前检查
 
 请先确认签名服务确实支持 **Packet Tunnel Network Extension**，而不是只提供普通 IPA 签名。主 App 与扩展必须使用同一 Team，并分别获得匹配各自 Bundle ID 的 provisioning profile；两份配置需要实际授予 `com.apple.developer.networking.networkextension` 的 `packet-tunnel-provider`。普通证书、p12 文件或仅在项目里写 entitlement，不能代替 profile 授权。不要提交证书私钥、p12、mobileprovision 或 UDID。

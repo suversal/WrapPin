@@ -82,6 +82,8 @@ For personal SideStore installation:
 
 SideStore re-signing and Apple's free-account limits can affect expiry, app identifiers and available entitlements. The final IPA must therefore be tested as a SideStore install rather than assuming an Xcode-installed build is equivalent. With a free Apple Account, SideStore normally refreshes the signed installation within Apple's seven-day development period.
 
+Build 37 Standard passed package checks but was reported to reach an iOS “Unable to Verify App” developer-trust prompt after SideStore installation. That is a failed device-acceptance gate. The unsigned IPA cannot establish whether the final SideStore certificate/profile was trusted or whether the phone reached Apple's verification service; compare other apps signed by the same SideStore account and inspect the device's developer-verification state before rebuilding or deleting app data.
+
 Do not treat an Xcode Debug `.app` folder renamed to `.ipa` as a release package. Use the verified Release archive/package workflow.
 
 ## Privacy statistics configuration

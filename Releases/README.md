@@ -7,7 +7,7 @@
 - Tunnel IPA: `WrapPin-Tunnel-1.0.12-build37-unsigned.ipa`; SHA-256 `7f3920066cb168ea6cd52c2741fe3d64541055dad54a6fc2c2488396cffee2d5`; contains `WrapPinTunnel.appex`.
 - Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+, bundle ID `com.suversal.wrappin`.
 - Changes: separate build schemes from one source tree; dedicated tunnel settings page, editable local IPv4/CIDR, and recovery guidance for a disabled VPN configuration.
-- Verification: both archives succeeded; ZIP integrity, package identity, required resources and extension presence/absence passed. Signed installation and Build 37 device behavior remain to be tested.
+- Verification: both archives succeeded; ZIP integrity, package identity, required resources and extension presence/absence passed. A user installed the Standard IPA through SideStore, but iOS then showed “Unable to Verify App” for the SideStore developer identity and would not launch it. The signed installation has not passed device acceptance; the trust-verification cause is still under investigation. Tunnel Build 37 has not been retested on device.
 - Signing: standard edition can be signed by SideStore; tunnel edition needs profiles with Packet Tunnel permission for both app and extension. The unsigned IPAs cannot be installed as-is.
 
 See [the tunnel test guide](../Documentation/BuiltInTunnelResearch.zh-CN.md) for the device test sequence.
