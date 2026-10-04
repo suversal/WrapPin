@@ -2,9 +2,22 @@
 
 ## Active distribution tracks
 
-- SideStore users: the published asset is still `v1.0.12` Build 32 from `main`. Standard Build 40 passed the maintainer's device test but has not been published as its replacement.
-- Tunnel edition: `WrapPin-Tunnel-1.0.12-build40-unsigned.ipa` is the current candidate. It is an unsigned package, not a public Latest Release. Its main ID is `com.suversal.wrappin.selfsigned`; its Packet Tunnel extension ID is `com.suversal.wrappin.selfsigned.tunnel`.
-- The tunnel app does not show the standard-edition GitHub Latest update prompt until a separate tunnel update channel exists.
+- Public release: `v1.0.13` Build 41, with both editions attached to the same GitHub Release.
+- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.13-build41-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
+- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.13-build41-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+- The tunnel app does not show update notices yet.
+
+## 1.0.13 (Build 41)
+
+- Created: 4 October 2026 with Xcode 27.0 (`27A266a`) using `scripts/package-ipa.sh all`
+- Standard IPA: `WrapPin-Standard-1.0.13-build41-unsigned.ipa`; SHA-256 `794ce2cc86f27eb1b9d21183db04cddf3ce3608e7393869bb79e9955e316fcbc`; no Packet Tunnel extension.
+- Tunnel IPA: `WrapPin-Tunnel-1.0.13-build41-unsigned.ipa`; SHA-256 `8d4c8f27c3e640d24f5db02b18a4dfc4ee54cb024a48ca982a8f04a912c4ee58`; contains `WrapPinTunnel.appex`.
+- Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+.
+- Changes: first public release with both editions; version metadata 1.0.13; the tunnel app's Xcode target is now named `WrapPinTunnelEdition`. Feature code is the same as Build 40.
+- Verification: localization, background-session and failure-stage checks, both Release archives, IPA ZIP integrity, identifiers, versions and extension presence or absence passed. Build 41 itself has not been installed on a device; the maintainer reported that the Build 40 packages passed device testing.
+- Publication: GitHub Release `v1.0.13`.
+
+See [the 1.0.13 build notes](../Documentation/Release-1.0.13.md) for details.
 
 ## 1.0.12 (Build 40, dual-edition candidate)
 

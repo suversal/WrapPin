@@ -70,9 +70,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A00000000000000000000006 /* WrapPin */ = {
+		A00000000000000000000006 /* WrapPinTunnelEdition */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPin" */;
+			buildConfigurationList = A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPinTunnelEdition" */;
 			buildPhases = (
 				A00000000000000000000008 /* Sources */,
 				A00000000000000000000003 /* Frameworks */,
@@ -85,8 +85,8 @@
 			fileSystemSynchronizedGroups = (
 				A00000000000000000000002 /* WrapPin */,
 			);
-			name = WrapPin;
-			productName = WrapPin;
+			name = WrapPinTunnelEdition;
+			productName = WrapPinTunnelEdition;
 			productReference = C10000000000000000000001 /* WrapPinTunnelEdition.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -139,7 +139,7 @@
 			projectRoot = "";
 			targets = (
 				C10000000000000000000006 /* WrapPinStandard */,
-				A00000000000000000000006 /* WrapPin */,
+				A00000000000000000000006 /* WrapPinTunnelEdition */,
 				B10000000000000000000006 /* WrapPinTunnel */,
 			);
 		};
@@ -330,7 +330,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPin" */ = {
+		A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPinTunnelEdition" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0000000000000000000000E /* Debug */,
