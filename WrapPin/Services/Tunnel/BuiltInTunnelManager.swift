@@ -1,3 +1,4 @@
+#if WRAPPIN_TUNNEL_EDITION
 import Foundation
 import NetworkExtension
 import Combine
@@ -33,6 +34,8 @@ final class BuiltInTunnelManager: ObservableObject {
             Task { @MainActor in
                 if connection === self.manager?.connection {
                     self.status = connection.status
+                    // Stopped from iOS Settings: the manual keep-alive no longer applies.
+                    if connection.status == .disconnected { self.keepRunningAfterSession = false }
                     if self.isStarting && connection.status == .disconnected {
                         connection.fetchLastDisconnectError { error in
                             guard let error else { return }
@@ -199,3 +202,4 @@ final class BuiltInTunnelManager: ObservableObject {
         }
     }
 }
+#endif

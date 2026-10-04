@@ -2,9 +2,17 @@
 
 ## Active distribution tracks
 
-- SideStore users: keep using the published `v1.0.12` Build 32 asset from `main`. No Build 38 Standard IPA on this branch is approved as its replacement.
-- Tunnel test candidate: `WrapPin-Tunnel-1.0.12-build39-unsigned.ipa`; SHA-256 `34f47c0c0abade7ab5e8e3d2aedf688b66a1ba0a23be926d79bfd53666d6bc35`. This is an unsigned local test package, not a public Latest Release. Its main ID is `com.suversal.wrappin.selfsigned`; its Packet Tunnel extension ID is `com.suversal.wrappin.selfsigned.tunnel`.
-- Build 39 suppresses the standard-edition GitHub Latest update prompt in the tunnel app until a separate tunnel update channel exists. Signing and physical-device acceptance are still required.
+- SideStore users: the published asset is still `v1.0.12` Build 32 from `main`. Standard Build 40 passed the maintainer's device test but has not been published as its replacement.
+- Tunnel edition: `WrapPin-Tunnel-1.0.12-build40-unsigned.ipa` is the current candidate. It is an unsigned package, not a public Latest Release. Its main ID is `com.suversal.wrappin.selfsigned`; its Packet Tunnel extension ID is `com.suversal.wrappin.selfsigned.tunnel`.
+- The tunnel app does not show the standard-edition GitHub Latest update prompt until a separate tunnel update channel exists.
+
+## 1.0.12 (Build 40, dual-edition candidate)
+
+- Created: 4 October 2026 with Xcode 27.0 (`27A266a`) using `scripts/package-ipa.sh all`
+- Standard IPA: `WrapPin-Standard-1.0.12-build40-unsigned.ipa`; SHA-256 `d4cabc599d1a2f72116c851103d85654b277450e8299c5c6abae14bc3523b0f3`; bundle ID `com.suversal.wrappin`; no Packet Tunnel extension and no NetworkExtension linkage.
+- Tunnel IPA: `WrapPin-Tunnel-1.0.12-build40-unsigned.ipa`; SHA-256 `fb075813280cfa772bf51d80953d4b9de9452eb9ae3846d13c3e2fcdd4f6e6ea`; bundle ID `com.suversal.wrappin.selfsigned`; extension ID `com.suversal.wrappin.selfsigned.tunnel`.
+- Changes: built-in tunnel code is compiled only into the tunnel edition; version, build and timestamp come from `Configuration/Version.xcconfig` for all targets; a tunnel stopped outside the app no longer stays marked as manually kept running; added the missing Simplified Chinese address hint.
+- Verification: both Release archives, localization check, IPA ZIP integrity, identifiers, versions and extension presence or absence passed. The maintainer reported on 4 October 2026 that both packages passed device testing; the individual test cases were not recorded here.
 
 ## 1.0.12 (Build 38, internal dual-edition comparison)
 

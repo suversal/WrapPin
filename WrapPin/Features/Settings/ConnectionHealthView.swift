@@ -1,5 +1,7 @@
 import CoreLocation
+#if WRAPPIN_TUNNEL_EDITION
 import NetworkExtension
+#endif
 import SwiftUI
 import UIKit
 
@@ -12,11 +14,14 @@ struct ConnectionHealthView: View {
     @State private var probedTarget: LocationTarget?
     @State private var probedSimulationCoordinates: SimulationCoordinates?
     @State private var locationProbe = LocationAccuracyProbe()
+#if WRAPPIN_TUNNEL_EDITION
     @StateObject private var builtInTunnel = BuiltInTunnelManager.shared
+#endif
 
     var body: some View {
         List {
             Section("Connection Health") {
+#if WRAPPIN_TUNNEL_EDITION
                 if appModel.usesBuiltInTunnel {
                     healthRow(
                         title: String(localized: "Built-in VPN"),
@@ -25,6 +30,7 @@ struct ConnectionHealthView: View {
                         color: builtInTunnel.status == .connected ? .green : .secondary
                     )
                 }
+#endif
                 healthRow(
                     title: String(localized: "Pairing"),
                     value: pairingValue,
@@ -253,11 +259,9 @@ struct ConnectionHealthView: View {
         }
         .navigationTitle("Connection Health")
         .navigationBarTitleDisplayMode(.inline)
-        .task {
-            if BuildEdition.supportsBuiltInTunnel {
-                await builtInTunnel.refresh()
-            }
-        }
+#if WRAPPIN_TUNNEL_EDITION
+        .task { await builtInTunnel.refresh() }
+#endif
         .onDisappear {
             diagnostics.cancel()
             locationProbe.stop()
@@ -339,6 +343,7 @@ struct ConnectionHealthView: View {
         }
     }
 
+#if WRAPPIN_TUNNEL_EDITION
     private var builtInTunnelStatus: String {
         switch builtInTunnel.status {
         case .connected: String(localized: "Connected")
@@ -348,6 +353,12 @@ struct ConnectionHealthView: View {
         @unknown default: String(localized: "Unknown")
         }
     }
+
+    private var builtInTunnelErrorDetail: String { builtInTunnel.lastErrorDetail ?? "None" }
+#else
+    private var builtInTunnelStatus: String { "Not included" }
+    private var builtInTunnelErrorDetail: String { "Not included" }
+#endif
 
     private var localDevVPNSymbol: String {
         switch diagnostics.state {
@@ -520,8 +531,8 @@ struct ConnectionHealthView: View {
         Last pairing failure stage (this launch): \(appModel.onDevicePairing.lastFailureStage?.rawValue ?? "None")
         Device tunnel: \(localDevVPNValue)
         Tunnel source: \(appModel.usesBuiltInTunnel ? "Built-in" : appModel.tunnelHandoffApp.title)
-        Built-in VPN: \(BuildEdition.supportsBuiltInTunnel ? builtInTunnelStatus : "Not included")
-        Built-in VPN error: \(BuildEdition.supportsBuiltInTunnel ? (builtInTunnel.lastErrorDetail ?? "None") : "Not included")
+        Built-in VPN: \(builtInTunnelStatus)
+        Built-in VPN error: \(builtInTunnelErrorDetail)
         Session: \(sessionValue)
         Background session: \(appModel.deviceSession.backgroundKeepAlive.status.rawValue)
         Background session started: \(appModel.deviceSession.backgroundKeepAlive.started)

@@ -90,9 +90,11 @@ final class LocalDeviceSessionCoordinator: NSObject {
     private(set) var phase: DeviceSessionPhase = .idle {
         didSet {
             guard phase != oldValue else { return }
+#if WRAPPIN_TUNNEL_EDITION
             if phase == .idle {
                 BuiltInTunnelManager.shared.stopAfterSession()
             }
+#endif
             if case .failed(let message) = phase {
                 guard !terminalFailureReported else { return }
                 terminalFailureReported = true
@@ -981,6 +983,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
     }
 
     private func startBuiltInTunnelForPendingSession() {
+#if WRAPPIN_TUNNEL_EDITION
         guard pendingSession != nil, !workerIsRunning else { return }
         guard builtInTunnelStartupTask == nil else { return }
         cleanupDiscovery()
@@ -1011,6 +1014,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
                 self.beginDiscovery(showConnectionHelpIfUnavailable: true)
             }
         }
+#endif
     }
 
     private func routeStartupForCurrentNetwork() {

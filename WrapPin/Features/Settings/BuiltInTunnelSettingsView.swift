@@ -1,3 +1,4 @@
+#if WRAPPIN_TUNNEL_EDITION
 import NetworkExtension
 import SwiftUI
 
@@ -137,3 +138,4 @@ struct BuiltInTunnelSettingsView: View {
         }
     }
 }
+#endif

@@ -701,6 +701,7 @@
 "The app and its tunnel extension both need signing profiles that allow Packet Tunnel. If iOS rejects the VPN configuration, check the signed installation and the VPN entry in iPhone Settings." = "App 和内置扩展的签名配置都必须允许 Packet Tunnel。若 iOS 拒绝 VPN 配置，请检查签名后的安装包，以及 iPhone 设置中的 VPN 条目。";
 "Local IPv4/CIDR" = "本机 IPv4/CIDR";
 "Restore Default Address" = "恢复默认地址";
+"For example, 10.7.0.2/30" = "例如 10.7.0.2/30";
 "Use an IPv4 address with a prefix, such as 10.7.0.2/30. Do not use the peer address 10.7.0.1." = "请输入带前缀的 IPv4 地址，例如 10.7.0.2/30。不要使用对端地址 10.7.0.1。";
 "Enter a valid local IPv4 address and prefix. It must differ from 10.7.0.1." = "请输入有效的本机 IPv4 地址和前缀，且不能与 10.7.0.1 相同。";
 "VPN Configuration Disabled" = "VPN 配置已关闭";

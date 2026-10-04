@@ -23,7 +23,9 @@ struct SettingsView: View {
     @State private var isReplayingOnboarding = false
     @State private var isConfirmingReset = false
     @State private var resetError: String?
+#if WRAPPIN_TUNNEL_EDITION
     @StateObject private var builtInTunnel = BuiltInTunnelManager.shared
+#endif
 
     var body: some View {
         NavigationStack {
@@ -65,20 +67,20 @@ struct SettingsView: View {
                     }
                     .foregroundStyle(.primary)
 
-                    if BuildEdition.supportsBuiltInTunnel {
-                        NavigationLink {
-                            BuiltInTunnelSettingsView()
-                                .environment(appModel)
-                        } label: {
-                            HStack {
-                                settingsRowLabel("Built-in Tunnel", symbol: "network")
-                                Spacer()
-                                Text(builtInTunnelStatus)
-                                    .foregroundStyle(.secondary)
-                            }
+#if WRAPPIN_TUNNEL_EDITION
+                    NavigationLink {
+                        BuiltInTunnelSettingsView()
+                            .environment(appModel)
+                    } label: {
+                        HStack {
+                            settingsRowLabel("Built-in Tunnel", symbol: "network")
+                            Spacer()
+                            Text(builtInTunnelStatus)
+                                .foregroundStyle(.secondary)
                         }
-                        .task { await builtInTunnel.refresh() }
                     }
+                    .task { await builtInTunnel.refresh() }
+#endif
                 }
 
                 if !appModel.usesBuiltInTunnel {
@@ -363,6 +365,7 @@ struct SettingsView: View {
         )
     }
 
+#if WRAPPIN_TUNNEL_EDITION
     private var builtInTunnelStatus: String {
         if builtInTunnel.isStarting { return String(localized: "Connecting") }
         if builtInTunnel.hasConfiguration && !builtInTunnel.isConfigurationEnabled {
@@ -376,6 +379,7 @@ struct SettingsView: View {
         @unknown default: return String(localized: "Unknown")
         }
     }
+#endif
 
     private var anonymousUsageStatisticsBinding: Binding<Bool> {
         Binding(

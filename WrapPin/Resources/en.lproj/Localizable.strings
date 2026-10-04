@@ -184,6 +184,7 @@
 "The app and its tunnel extension both need signing profiles that allow Packet Tunnel. If iOS rejects the VPN configuration, check the signed installation and the VPN entry in iPhone Settings." = "The app and its tunnel extension both need signing profiles that allow Packet Tunnel. If iOS rejects the VPN configuration, check the signed installation and the VPN entry in iPhone Settings.";
 "Local IPv4/CIDR" = "Local IPv4/CIDR";
 "Restore Default Address" = "Restore Default Address";
+"For example, 10.7.0.2/30" = "For example, 10.7.0.2/30";
 "Use an IPv4 address with a prefix, such as 10.7.0.2/30. Do not use the peer address 10.7.0.1." = "Use an IPv4 address with a prefix, such as 10.7.0.2/30. Do not use the peer address 10.7.0.1.";
 "Enter a valid local IPv4 address and prefix. It must differ from 10.7.0.1." = "Enter a valid local IPv4 address and prefix. It must differ from 10.7.0.1.";
 "VPN Configuration Disabled" = "VPN Configuration Disabled";
