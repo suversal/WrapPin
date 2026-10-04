@@ -4,6 +4,10 @@ All notable public changes to WrapPin are recorded here.
 
 ## [Unreleased]
 
+### Improved
+
+- The tunnel edition now checks the latest public GitHub release and shows update notices, like the standard edition. Both editions are attached to the same release.
+
 ## [1.0.13] - 2026-10-04
 
 ### Added
