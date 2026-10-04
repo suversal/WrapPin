@@ -2,12 +2,11 @@
 
 This guide covers WrapPin's development builds and the planned IPA workflow.
 
-## Current dual-edition test build identity
+## Current release tracks
 
 - Marketing version: `1.0.12`
-- Current build: `38`
-- Standard bundle identifier: `com.suversal.wrappin`
-- Tunnel bundle identifier: `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
+- Public SideStore edition: `v1.0.12` Build `32` from `main`, bundle identifier `com.suversal.wrappin`
+- Tunnel test candidate on `codex/tunnel-edition`: Build `39`, bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
 - Minimum deployment target: iOS 27
 - Supported device family: iPhone
 
@@ -69,9 +68,9 @@ Then select **Any iOS Device (arm64)** and choose **Product → Archive**. Xcode
 
 ## IPA and SideStore
 
-Both editions share application sources and are built from the same commit. **WrapPin Standard** excludes the Packet Tunnel extension and Network Extension entitlement; SideStore can sign the unsigned IPA during installation. **WrapPin Tunnel** embeds `WrapPinTunnel.appex` and needs signing profiles for both the app and extension with Packet Tunnel permission. The native pairing engine is statically linked into both app executables. See [BuiltInTunnelResearch.zh-CN.md](BuiltInTunnelResearch.zh-CN.md) for the signing and device test sequence.
+The public SideStore package remains `WrapPin-1.0.12-build32.ipa` from `main`. The Standard target on this tunnel development branch is an internal comparison build and must not replace the public SideStore asset without a separate SideStore installation and regression pass. **WrapPin Tunnel** embeds `WrapPinTunnel.appex` and needs signing profiles for both the app and extension with Packet Tunnel permission. See [BuiltInTunnelResearch.zh-CN.md](BuiltInTunnelResearch.zh-CN.md) for the signing and device test sequence.
 
-Build and package the editions separately. For each scheme, use a Release archive with `CODE_SIGNING_ALLOWED=NO`, then package its `Products/Applications/*.app` under `Payload/` with `ditto`. Do not put both apps into one IPA. Build 38 outputs are `Releases/WrapPin-Standard-1.0.12-build38-unsigned.ipa` and `Releases/WrapPin-Tunnel-1.0.12-build38-unsigned.ipa`. The tunnel edition has a distinct bundle ID so it can coexist with the SideStore standard edition. It also appears as **WrapPin Tunnel** on the Home Screen and uses a separate `wrappintunnel://` return scheme when handing off to LocalDevVPN; the standard edition retains **WrapPin** and `wrappin://`. Each edition has separate app storage and pairing state. To sign the tunnel edition, the paid team needs matching profiles for both `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER` and that ID plus `.tunnel`.
+On this branch, package only the **WrapPin Tunnel** scheme. Use a Release archive with `CODE_SIGNING_ALLOWED=NO`, then package its `Products/Applications/*.app` under `Payload/` with `ditto`. The current candidate is `Releases/WrapPin-Tunnel-1.0.12-build39-unsigned.ipa`. Its distinct bundle ID and `wrappintunnel://` return scheme prevent it from replacing or receiving callbacks meant for the SideStore edition. It has separate app storage and pairing state. To sign it, the paid team needs matching profiles for both `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER` and that ID plus `.tunnel`.
 
 For personal SideStore installation:
 

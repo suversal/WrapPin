@@ -147,23 +147,25 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
-                Section {
-                    Button {
-                        Task { await releaseUpdates.checkForUpdates() }
-                    } label: {
-                        Label {
-                            Text(updateCheckTitle)
-                        } icon: {
-                            settingsRowIcon(updateCheckSymbol)
+                if !BuildEdition.supportsBuiltInTunnel {
+                    Section {
+                        Button {
+                            Task { await releaseUpdates.checkForUpdates() }
+                        } label: {
+                            Label {
+                                Text(updateCheckTitle)
+                            } icon: {
+                                settingsRowIcon(updateCheckSymbol)
+                            }
                         }
-                    }
-                    .disabled(releaseUpdates.status == .checking)
+                        .disabled(releaseUpdates.status == .checking)
 
-                    updateStatusDetail
-                } header: {
-                    Text("Updates")
-                } footer: {
-                    Text("WrapPin checks the latest public GitHub release when it opens. You can check again here. Location, pairing and diagnostic data are not sent with this request.")
+                        updateStatusDetail
+                    } header: {
+                        Text("Updates")
+                    } footer: {
+                        Text("WrapPin checks the latest public GitHub release when it opens. You can check again here. Location, pairing and diagnostic data are not sent with this request.")
+                    }
                 }
 
                 Section {

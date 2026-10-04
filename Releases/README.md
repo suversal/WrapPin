@@ -1,12 +1,18 @@
 # WrapPin releases
 
-## 1.0.12 (Build 38, separate app identities)
+## Active distribution tracks
+
+- SideStore users: keep using the published `v1.0.12` Build 32 asset from `main`. No Build 38 Standard IPA on this branch is approved as its replacement.
+- Tunnel test candidate: `WrapPin-Tunnel-1.0.12-build39-unsigned.ipa`; SHA-256 `34f47c0c0abade7ab5e8e3d2aedf688b66a1ba0a23be926d79bfd53666d6bc35`. This is an unsigned local test package, not a public Latest Release. Its main ID is `com.suversal.wrappin.selfsigned`; its Packet Tunnel extension ID is `com.suversal.wrappin.selfsigned.tunnel`.
+- Build 39 suppresses the standard-edition GitHub Latest update prompt in the tunnel app until a separate tunnel update channel exists. Signing and physical-device acceptance are still required.
+
+## 1.0.12 (Build 38, internal dual-edition comparison)
 
 - Created: 4 October 2026 with Xcode 27.0 (`27A266a`)
 - Standard IPA: `WrapPin-Standard-1.0.12-build38-unsigned.ipa`; SHA-256 `e432b8ebf0f38012351b36f41ed77d33710b9c16baa6b4d612a724423ce16516`; bundle ID `com.suversal.wrappin`; no Packet Tunnel extension.
 - Tunnel IPA: `WrapPin-Tunnel-1.0.12-build38-unsigned.ipa`; SHA-256 `2c2322219ebb6526d6d6e70ae22fdb52fb42e59faed221bf71d126b172f8de2c`; bundle ID `com.suversal.wrappin.selfsigned`; extension ID `com.suversal.wrappin.selfsigned.tunnel`.
 - Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+. The Home Screen names and LocalDevVPN return URL schemes are distinct, enabling side-by-side installation when both signing profiles are valid. Their settings and pairing records are separate.
-- Verification: both archives succeeded; IPA ZIP integrity, identifiers, names, URL schemes, required resources, code architecture and extension presence or absence passed. Final SideStore and paid-signature device installation remains untested. The signing team must provide Packet Tunnel profiles for both new tunnel IDs.
+- Verification: both archives succeeded; IPA ZIP integrity, identifiers, names, URL schemes, required resources, code architecture and extension presence or absence passed. Final SideStore and paid-signature device installation remains untested. Build 38 Standard must not be distributed to existing SideStore users. The signing team must provide Packet Tunnel profiles for both new tunnel IDs.
 
 See [the tunnel test guide](../Documentation/BuiltInTunnelResearch.zh-CN.md) for signing and device checks.
 

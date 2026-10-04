@@ -13,14 +13,14 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.11（Build 31） · <strong>系统要求：</strong>iOS 27+
+  <strong>公开标准版：</strong>1.0.12（Build 32） · <strong>系统要求：</strong>iOS 27+
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/iOS-27%2B-blue" alt="iOS 27+">
   <img src="https://img.shields.io/badge/UI-SwiftUI-orange" alt="SwiftUI">
   <img src="https://img.shields.io/badge/%E7%BB%B4%E6%8A%A4%E8%80%85-suversal-purple" alt="由 suversal 维护">
-  <img src="https://img.shields.io/badge/Version-1.0.11-lightgrey" alt="Version 1.0.11">
+  <img src="https://img.shields.io/badge/Version-1.0.12-lightgrey" alt="Version 1.0.12">
   <img src="https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0">
 </p>
 
@@ -40,8 +40,8 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 ## 当前进展
 
-- 当前公开版本为 **1.0.11（Build 31）**；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.11) 为准。
-- 本版把自定义步行速度的调节步长细化为 0.1 公里/小时，把驾车速度的调节步长细化为 1 公里/小时；速度范围和默认值不变。Build 31 的独立安装与真机交互验收尚无记录。
+- 当前公开标准版为 **1.0.12（Build 32）**；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.12) 为准。
+- 当前隧道版仅在 `codex/tunnel-edition` 分支本地测试，尚未发布。它使用独立 App ID 和签名配置，不替换 SideStore 标准版。
 - 已完成完整简体中文界面、地图标签本地化、配对与连接引导、中文安装文档和使用手册。
 - 已完善地址与坐标复制、连接检测、诊断信息复制、异常会话恢复和真实位置恢复流程。
 - 配对和定位启动不再依赖可能受 SideStore 重签 Bundle ID 影响的 `BGTaskScheduler`，并优先使用 LocalDevVPN 端点。

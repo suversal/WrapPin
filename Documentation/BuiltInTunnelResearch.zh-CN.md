@@ -1,4 +1,4 @@
-# WrapPin 内置隧道测试版（1.0.12 Build 38）
+# WrapPin 内置隧道测试版（1.0.12 Build 39）
 
 ## 对照方案
 
@@ -36,6 +36,9 @@ Apple 权限文档：https://developer.apple.com/documentation/bundleresources/e
 只有签名安装、VPN 启动、定位、停止恢复全通过，才能称为可用的隧道版；无签名 IPA 不能直接安装。
 
 ## 本地交付包
+
+- 公开标准版仍是 `v1.0.12` Build 32。Build 38 标准包只是本地对照包，没有通过 SideStore 真机验收，不得替换公开下载。
+- 当前隧道候选包：`Releases/WrapPin-Tunnel-1.0.12-build39-unsigned.ipa`，SHA-256 `34f47c0c0abade7ab5e8e3d2aedf688b66a1ba0a23be926d79bfd53666d6bc35`。主 App 与扩展 ID 分别为 `com.suversal.wrappin.selfsigned`、`com.suversal.wrappin.selfsigned.tunnel`。它已通过本地归档、ZIP、身份、arm64 和扩展检查，但还没有签名及真机验收。隧道版暂不检查标准版的 GitHub Latest 更新，避免误导用户安装错误的版本。
 
 Build 37 的两个包共用 App ID，只作历史测试记录，不再用于双版本并存测试。
 
