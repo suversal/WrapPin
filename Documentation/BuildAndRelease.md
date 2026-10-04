@@ -2,11 +2,11 @@
 
 This guide covers WrapPin's development builds and the planned IPA workflow.
 
-## Current release identity
+## Current release tracks
 
-- Marketing version: `1.0.11`
-- Current build: `31`
-- Bundle identifier: `com.suversal.wrappin`
+- Marketing version: `1.0.13`, Build `41`, for both editions
+- Standard edition (SideStore): bundle identifier `com.suversal.wrappin`
+- Tunnel edition: bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
 - Minimum deployment target: iOS 27
 - Supported device family: iPhone
 
@@ -21,17 +21,18 @@ WrapPin uses two separate numbers:
 
 Ordinary compile checks do not consume a build number. Build numbers must never move backwards for a later install or upload.
 
-Both values are stored in the target build settings:
+Both values, and the build timestamp, are stored once in `Configuration/Version.xcconfig`:
 
 - `MARKETING_VERSION`
 - `CURRENT_PROJECT_VERSION`
+- `WRAPPIN_BUILD_TIMESTAMP`
 
-Keep the Debug and Release configurations identical.
+The Standard app, the Tunnel app and the Packet Tunnel extension all read that file. Do not set these values again in a target's build settings; the extension must always match the app that embeds it.
 
 ## Build in Xcode
 
 1. Open `WrapPin.xcodeproj`.
-2. Select the **WrapPin** scheme.
+2. Select **WrapPin Standard** for the SideStore edition or **WrapPin Tunnel** for the self-sign edition.
 3. Select the connected iPhone.
 4. Open **Signing & Capabilities** and confirm the development team.
 5. Press **Run**.
@@ -68,7 +69,9 @@ Then select **Any iOS Device (arm64)** and choose **Product → Archive**. Xcode
 
 ## IPA and SideStore
 
-WrapPin's SideStore IPA is built from an optimized, unsigned Release archive. SideStore applies the user's personal development certificate during installation. The native pairing engine is statically linked into the app binary, so it does not need a separate framework or extension.
+Both editions are released from the same commit and attached to the same GitHub Release. **WrapPin Standard** is the SideStore package and contains no tunnel code. **WrapPin Tunnel** embeds `WrapPinTunnel.appex` and needs signing profiles for both the app and extension with Packet Tunnel permission. See [BuiltInTunnelResearch.zh-CN.md](BuiltInTunnelResearch.zh-CN.md) for the signing and device test sequence.
+
+Run `scripts/package-ipa.sh all` to package both editions. For each one it creates a Release archive with `CODE_SIGNING_ALLOWED=NO`, checks the app and extension identities, packages `Products/Applications/*.app` under `Payload/` with `ditto`, prints the SHA-256 and refuses to overwrite an existing build number; `standard` and `tunnel` package one edition. The tunnel edition's distinct bundle ID and `wrappintunnel://` return scheme prevent it from replacing or receiving callbacks meant for the standard edition. It has separate app storage and pairing state. To sign it, the paid team needs matching profiles for both `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER` and that ID plus `.tunnel`.
 
 For personal SideStore installation:
 
@@ -80,6 +83,8 @@ For personal SideStore installation:
 
 SideStore re-signing and Apple's free-account limits can affect expiry, app identifiers and available entitlements. The final IPA must therefore be tested as a SideStore install rather than assuming an Xcode-installed build is equivalent. With a free Apple Account, SideStore normally refreshes the signed installation within Apple's seven-day development period.
 
+Build 37 Standard passed package checks but was reported to reach an iOS “Unable to Verify App” developer-trust prompt after SideStore installation. That is a failed device-acceptance gate. The unsigned IPA cannot establish whether the final SideStore certificate/profile was trusted or whether the phone reached Apple's verification service; compare other apps signed by the same SideStore account and inspect the device's developer-verification state before rebuilding or deleting app data.
+
 Do not treat an Xcode Debug `.app` folder renamed to `.ipa` as a release package. Use the verified Release archive/package workflow.
 
 ## Privacy statistics configuration
@@ -89,6 +94,7 @@ Optional statistics are sent directly to TelemetryDeck's Ingest API. WrapPin doe
 Three build settings configure a public or locally signed build:
 
 - `WRAPPIN_BUNDLE_IDENTIFIER`
+- `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER`
 - `WRAPPIN_TELEMETRY_APP_ID`
 - `WRAPPIN_TELEMETRY_NAMESPACE`
 

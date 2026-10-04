@@ -16,7 +16,7 @@ enum TunnelHandoffApp: String, CaseIterable, Identifiable {
     // Keep LocalDevVPN's working enable-and-return callback; Shadowrocket only opens its app.
     var launchURL: URL {
         switch self {
-        case .localDevVPN: URL(string: "localdevvpn://enable?scheme=wrappin")!
+        case .localDevVPN: URL(string: "localdevvpn://enable?scheme=\(BuildEdition.callbackScheme)")!
         case .shadowrocket: URL(string: "shadowrocket://")!
         }
     }

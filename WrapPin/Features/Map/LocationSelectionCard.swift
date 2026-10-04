@@ -11,6 +11,7 @@ struct LocationSelectionCard: View {
     let isPaired: Bool
     let sessionPhase: DeviceSessionPhase
     let tunnelHandoffApp: TunnelHandoffApp
+    let usesBuiltInTunnel: Bool
     let tunnelAppInstallURL: URL
     let previewingRouteMode: RouteMode?
     let routeError: String?
@@ -349,7 +350,9 @@ struct LocationSelectionCard: View {
     private var primaryTitle: String {
         switch sessionPhase {
         case .openingLocalDevVPN:
-            String(format: NSLocalizedString("Opening %@…", comment: ""), tunnelHandoffApp.title)
+            usesBuiltInTunnel
+                ? String(localized: "Starting built-in tunnel…")
+                : String(format: NSLocalizedString("Opening %@…", comment: ""), tunnelHandoffApp.title)
         case .discovering:
             String(localized: "Finding This iPhone…")
         case .connecting:
@@ -406,6 +409,9 @@ struct LocationSelectionCard: View {
                 ? String(localized: "Start when ready. Stop restores this iPhone's real location.")
                 : String(localized: "Pair this iPhone before starting location control.")
         case .openingLocalDevVPN:
+            if usesBuiltInTunnel {
+                return String(localized: "WrapPin is connecting its built-in device tunnel.")
+            }
             return tunnelHandoffApp == .localDevVPN
                 ? String(localized: "Wait for LocalDevVPN to connect and return. If it does not, return to WrapPin yourself.")
                 : String(localized: "Turn on the tunnel in the selected app, then return to WrapPin.")

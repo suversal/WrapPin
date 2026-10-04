@@ -4,6 +4,21 @@ All notable public changes to WrapPin are recorded here.
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-10-04
+
+### Added
+
+- Added a separate tunnel edition with a built-in Packet Tunnel for the paired-device connection. It starts with a location session and stops after the real location is restored; a manually started tunnel stays on until stopped. It needs signing profiles with Packet Tunnel permission for the app and its extension, uses its own App ID and can be installed beside the standard edition.
+
+### Improved
+
+- The standard edition is unchanged in behaviour and contains no tunnel code or extension.
+- Both editions are now built from one source tree and one version file with `scripts/package-ipa.sh`.
+
+### Known limitations
+
+- The tunnel edition does not show update notices yet.
+
 ## [1.0.11] - 2026-09-23
 
 ### Improved

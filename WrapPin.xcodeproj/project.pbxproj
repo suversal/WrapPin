@@ -8,16 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* Frameworks/WrapPinPairingFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* Frameworks/WrapPinPairingFFI.xcframework */; };
+		C10000000000000000000002 /* Frameworks/WrapPinPairingFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* Frameworks/WrapPinPairingFFI.xcframework */; };
+		B10000000000000000000001 /* WrapPinTunnel.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* WrapPinTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B10000000000000000000003 = {isa = PBXContainerItemProxy; containerPortal = A0000000000000000000000A; proxyType = 1; remoteGlobalIDString = B10000000000000000000006; remoteInfo = WrapPinTunnel; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B10000000000000000000004 /* Embed App Extensions */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (B10000000000000000000001 /* WrapPinTunnel.appex in Embed App Extensions */, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A00000000000000000000001 /* WrapPin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WrapPin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C10000000000000000000001 /* WrapPinTunnelEdition.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WrapPinTunnelEdition.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000002 /* Frameworks/WrapPinPairingFFI.xcframework */ = {isa = PBXFileReference; explicitFileType = wrapper.xcframework; path = Frameworks/WrapPinPairingFFI.xcframework; sourceTree = "<group>"; };
 		A20000000000000000000001 /* Configuration/Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Configuration/Local.xcconfig; sourceTree = "<group>"; };
+		B10000000000000000000002 /* WrapPinTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WrapPinTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A00000000000000000000002 /* WrapPin */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WrapPin; sourceTree = "<group>"; };
+		B10000000000000000000005 /* WrapPinTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WrapPinTunnel; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,6 +42,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C10000000000000000000003 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (C10000000000000000000002 /* Frameworks/WrapPinPairingFFI.xcframework in Frameworks */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -36,6 +50,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000002 /* WrapPin */,
+				B10000000000000000000005 /* WrapPinTunnel */,
 				A20000000000000000000001 /* Configuration/Local.xcconfig */,
 				A10000000000000000000002 /* Frameworks/WrapPinPairingFFI.xcframework */,
 				A00000000000000000000005 /* Products */,
@@ -46,6 +61,8 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000001 /* WrapPin.app */,
+				C10000000000000000000001 /* WrapPinTunnelEdition.app */,
+				B10000000000000000000002 /* WrapPinTunnel.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,26 +70,43 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A00000000000000000000006 /* WrapPin */ = {
+		A00000000000000000000006 /* WrapPinTunnelEdition */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPin" */;
+			buildConfigurationList = A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPinTunnelEdition" */;
 			buildPhases = (
 				A00000000000000000000008 /* Sources */,
 				A00000000000000000000003 /* Frameworks */,
 				A00000000000000000000009 /* Resources */,
+				B10000000000000000000004 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
+			dependencies = (B10000000000000000000007 /* PBXTargetDependency */, );
 			fileSystemSynchronizedGroups = (
 				A00000000000000000000002 /* WrapPin */,
 			);
-			name = WrapPin;
+			name = WrapPinTunnelEdition;
+			productName = WrapPinTunnelEdition;
+			productReference = C10000000000000000000001 /* WrapPinTunnelEdition.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C10000000000000000000006 /* WrapPinStandard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C10000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPinStandard" */;
+			buildPhases = (
+				C10000000000000000000008 /* Sources */,
+				C10000000000000000000003 /* Frameworks */,
+				C10000000000000000000009 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = (A00000000000000000000002 /* WrapPin */, );
+			name = WrapPinStandard;
 			productName = WrapPin;
 			productReference = A00000000000000000000001 /* WrapPin.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B10000000000000000000006 /* WrapPinTunnel */ = {isa = PBXNativeTarget; buildConfigurationList = B10000000000000000000008; buildPhases = (B10000000000000000000009 /* Sources */, B1000000000000000000000A /* Frameworks */, B1000000000000000000000B /* Resources */, ); buildRules = (); dependencies = (); fileSystemSynchronizedGroups = (B10000000000000000000005 /* WrapPinTunnel */, ); name = WrapPinTunnel; productName = WrapPinTunnel; productReference = B10000000000000000000002 /* WrapPinTunnel.appex */; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -83,9 +117,11 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
+					C10000000000000000000006 = {CreatedOnToolsVersion = 27.0; };
 					A00000000000000000000006 = {
 						CreatedOnToolsVersion = 16.0;
 					};
+					B10000000000000000000006 = {CreatedOnToolsVersion = 16.0; };
 				};
 			};
 			buildConfigurationList = A0000000000000000000000B /* Build configuration list for PBXProject "WrapPin" */;
@@ -102,12 +138,15 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A00000000000000000000006 /* WrapPin */,
+				C10000000000000000000006 /* WrapPinStandard */,
+				A00000000000000000000006 /* WrapPinTunnelEdition */,
+				B10000000000000000000006 /* WrapPinTunnel */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B1000000000000000000000B /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		A00000000000000000000009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,9 +154,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C10000000000000000000009 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B10000000000000000000009 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		A00000000000000000000008 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,7 +166,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C10000000000000000000008 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B10000000000000000000007 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = B10000000000000000000006 /* WrapPinTunnel */; targetProxy = B10000000000000000000003; };
+/* End PBXTargetDependency section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B1000000000000000000000A /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		A0000000000000000000000C /* Debug */ = {
@@ -229,18 +279,17 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = A20000000000000000000001 /* Configuration/Local.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "Configuration/WrapPin-Tunnel.entitlements";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 32;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Configuration/WrapPin-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0.12;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_BUNDLE_IDENTIFIER)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				WRAPPIN_BUILD_TIMESTAMP = "2026-09-28T06:11:08Z";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER)"; WRAPPIN_CALLBACK_SCHEME = wrappintunnel; WRAPPIN_DISPLAY_NAME = "WrapPin Tunnel";
+				PRODUCT_NAME = WrapPinTunnelEdition;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WRAPPIN_TUNNEL_EDITION $(inherited)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -254,18 +303,17 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = A20000000000000000000001 /* Configuration/Local.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "Configuration/WrapPin-Tunnel.entitlements";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 32;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Configuration/WrapPin-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0.12;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_BUNDLE_IDENTIFIER)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				WRAPPIN_BUILD_TIMESTAMP = "2026-09-28T06:11:08Z";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER)"; WRAPPIN_CALLBACK_SCHEME = wrappintunnel; WRAPPIN_DISPLAY_NAME = "WrapPin Tunnel";
+				PRODUCT_NAME = WrapPinTunnelEdition;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WRAPPIN_TUNNEL_EDITION $(inherited)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -275,10 +323,14 @@
 			};
 			name = Release;
 		};
+		B1000000000000000000000C /* Debug */ = {isa = XCBuildConfiguration; baseConfigurationReference = A20000000000000000000001; buildSettings = {CODE_SIGN_ENTITLEMENTS = "Configuration/WrapPin-Tunnel.entitlements"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "Configuration/WrapPinTunnel-Info.plist"; IPHONEOS_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER).tunnel"; PRODUCT_NAME = WrapPinTunnel; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
+		B1000000000000000000000D /* Release */ = {isa = XCBuildConfiguration; baseConfigurationReference = A20000000000000000000001; buildSettings = {CODE_SIGN_ENTITLEMENTS = "Configuration/WrapPin-Tunnel.entitlements"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "Configuration/WrapPinTunnel-Info.plist"; IPHONEOS_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER).tunnel"; PRODUCT_NAME = WrapPinTunnel; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
+		C1000000000000000000000E /* Debug */ = {isa = XCBuildConfiguration; baseConfigurationReference = A20000000000000000000001; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_STYLE = Automatic; "EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "Configuration/WrapPin-Info.plist"; IPHONEOS_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_BUNDLE_IDENTIFIER)"; WRAPPIN_CALLBACK_SCHEME = wrappin; WRAPPIN_DISPLAY_NAME = WrapPin; PRODUCT_NAME = WrapPin; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; VERSIONING_SYSTEM = "apple-generic"; }; name = Debug; };
+		C1000000000000000000000F /* Release */ = {isa = XCBuildConfiguration; baseConfigurationReference = A20000000000000000000001; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_STYLE = Automatic; "EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "Configuration/WrapPin-Info.plist"; IPHONEOS_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = "$(WRAPPIN_BUNDLE_IDENTIFIER)"; WRAPPIN_CALLBACK_SCHEME = wrappin; WRAPPIN_DISPLAY_NAME = WrapPin; PRODUCT_NAME = WrapPin; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; VERSIONING_SYSTEM = "apple-generic"; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPin" */ = {
+		A00000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPinTunnelEdition" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0000000000000000000000E /* Debug */,
@@ -296,6 +348,8 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B10000000000000000000008 /* Build configuration list for PBXNativeTarget "WrapPinTunnel" */ = {isa = XCConfigurationList; buildConfigurations = (B1000000000000000000000C /* Debug */, B1000000000000000000000D /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		C10000000000000000000007 /* Build configuration list for PBXNativeTarget "WrapPinStandard" */ = {isa = XCConfigurationList; buildConfigurations = (C1000000000000000000000E /* Debug */, C1000000000000000000000F /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A0000000000000000000000A /* Project object */;

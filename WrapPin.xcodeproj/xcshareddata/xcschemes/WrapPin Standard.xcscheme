@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A00000000000000000000006"
+               BlueprintIdentifier = "C10000000000000000000006"
                BuildableName = "WrapPin.app"
                ReferencedContainer = "container:WrapPin.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A00000000000000000000006"
+            BlueprintIdentifier = "C10000000000000000000006"
             BuildableName = "WrapPin.app"
             ReferencedContainer = "container:WrapPin.xcodeproj">
          </BuildableReference>
@@ -61,7 +61,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A00000000000000000000006"
+            BlueprintIdentifier = "C10000000000000000000006"
             BuildableName = "WrapPin.app"
             ReferencedContainer = "container:WrapPin.xcodeproj">
          </BuildableReference>

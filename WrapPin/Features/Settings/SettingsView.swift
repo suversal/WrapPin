@@ -23,6 +23,9 @@ struct SettingsView: View {
     @State private var isReplayingOnboarding = false
     @State private var isConfirmingReset = false
     @State private var resetError: String?
+#if WRAPPIN_TUNNEL_EDITION
+    @StateObject private var builtInTunnel = BuiltInTunnelManager.shared
+#endif
 
     var body: some View {
         NavigationStack {
@@ -63,22 +66,39 @@ struct SettingsView: View {
                         }
                     }
                     .foregroundStyle(.primary)
+
+#if WRAPPIN_TUNNEL_EDITION
+                    NavigationLink {
+                        BuiltInTunnelSettingsView()
+                            .environment(appModel)
+                    } label: {
+                        HStack {
+                            settingsRowLabel("Built-in Tunnel", symbol: "network")
+                            Spacer()
+                            Text(builtInTunnelStatus)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .task { await builtInTunnel.refresh() }
+#endif
                 }
 
-                Section {
-                    Picker(selection: tunnelHandoffAppBinding) {
-                        ForEach(TunnelHandoffApp.allCases) { app in
-                            Text(app.title).tag(app)
+                if !appModel.usesBuiltInTunnel {
+                    Section {
+                        Picker(selection: tunnelHandoffAppBinding) {
+                            ForEach(TunnelHandoffApp.allCases) { app in
+                                Text(app.title).tag(app)
+                            }
+                        } label: {
+                            settingsRowLabel("Tunnel App", symbol: "network")
                         }
-                    } label: {
-                        settingsRowLabel("Tunnel App", symbol: "network")
-                    }
-                    .accessibilityHint("Selects the app to open when WrapPin cannot reach the paired iPhone.")
-                } footer: {
-                    if appModel.tunnelHandoffApp == .shadowrocket {
-                        Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
-                    } else {
-                        Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
+                        .accessibilityHint("Selects the app to open when WrapPin cannot reach the paired iPhone.")
+                    } footer: {
+                        if appModel.tunnelHandoffApp == .shadowrocket {
+                            Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
+                        } else {
+                            Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
+                        }
                     }
                 }
 
@@ -129,23 +149,25 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
-                Section {
-                    Button {
-                        Task { await releaseUpdates.checkForUpdates() }
-                    } label: {
-                        Label {
-                            Text(updateCheckTitle)
-                        } icon: {
-                            settingsRowIcon(updateCheckSymbol)
+                if !BuildEdition.supportsBuiltInTunnel {
+                    Section {
+                        Button {
+                            Task { await releaseUpdates.checkForUpdates() }
+                        } label: {
+                            Label {
+                                Text(updateCheckTitle)
+                            } icon: {
+                                settingsRowIcon(updateCheckSymbol)
+                            }
                         }
-                    }
-                    .disabled(releaseUpdates.status == .checking)
+                        .disabled(releaseUpdates.status == .checking)
 
-                    updateStatusDetail
-                } header: {
-                    Text("Updates")
-                } footer: {
-                    Text("WrapPin checks the latest public GitHub release when it opens. You can check again here. Location, pairing and diagnostic data are not sent with this request.")
+                        updateStatusDetail
+                    } header: {
+                        Text("Updates")
+                    } footer: {
+                        Text("WrapPin checks the latest public GitHub release when it opens. You can check again here. Location, pairing and diagnostic data are not sent with this request.")
+                    }
                 }
 
                 Section {
@@ -184,7 +206,7 @@ struct SettingsView: View {
                         settingsRowLabel("Reset WrapPin", symbol: "arrow.counterclockwise")
                     }
                 } footer: {
-                    Text("This clears the pairing record and local app settings, then shows onboarding again. It does not remove or change LocalDevVPN.")
+                    Text("This clears the pairing record and local app settings, then shows onboarding again. VPN configurations remain in iOS Settings.")
                 }
             }
             .navigationTitle("Settings")
@@ -342,6 +364,22 @@ struct SettingsView: View {
             set: appModel.setTunnelHandoffApp
         )
     }
+
+#if WRAPPIN_TUNNEL_EDITION
+    private var builtInTunnelStatus: String {
+        if builtInTunnel.isStarting { return String(localized: "Connecting") }
+        if builtInTunnel.hasConfiguration && !builtInTunnel.isConfigurationEnabled {
+            return String(localized: "VPN Configuration Disabled")
+        }
+        switch builtInTunnel.status {
+        case .connected: return String(localized: "Connected")
+        case .connecting, .reasserting: return String(localized: "Connecting")
+        case .disconnecting: return String(localized: "Disconnecting")
+        case .disconnected, .invalid: return String(localized: "Disconnected")
+        @unknown default: return String(localized: "Unknown")
+        }
+    }
+#endif
 
     private var anonymousUsageStatisticsBinding: Binding<Bool> {
         Binding(

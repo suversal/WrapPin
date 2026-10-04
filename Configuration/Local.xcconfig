@@ -2,7 +2,9 @@
 // the repository owner's Apple development team.
 DEVELOPMENT_TEAM =
 WRAPPIN_BUNDLE_IDENTIFIER = com.suversal.wrappin
+WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER = $(WRAPPIN_BUNDLE_IDENTIFIER).selfsigned
 WRAPPIN_TELEMETRY_APP_ID =
 WRAPPIN_TELEMETRY_NAMESPACE =
 
+#include "Version.xcconfig"
 #include? "Local.private.xcconfig"

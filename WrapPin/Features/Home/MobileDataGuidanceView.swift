@@ -5,6 +5,7 @@ struct MobileDataGuidanceView: View {
 
     let guidance: MobileDataGuidance
     let tunnelHandoffApp: TunnelHandoffApp
+    let usesBuiltInTunnel: Bool
     let isUsingMobileData: Bool
     let onOpenTunnelApp: () -> Void
     let onRetry: () -> Void
@@ -84,8 +85,10 @@ struct MobileDataGuidanceView: View {
                     .controlSize(.large)
                     .frame(maxWidth: .infinity)
 
-                Button(openTunnelAppTitle, action: onOpenTunnelApp)
-                    .buttonStyle(.bordered)
+                if !usesBuiltInTunnel {
+                    Button(openTunnelAppTitle, action: onOpenTunnelApp)
+                        .buttonStyle(.bordered)
+                }
 
                 if TunnelHandoffPolicy.offersMobileDataWorkaround(for: tunnelHandoffApp) {
                     Button("I'm Using Mobile Data", action: onUseMobileData)
@@ -118,8 +121,10 @@ struct MobileDataGuidanceView: View {
                     .controlSize(.large)
                     .frame(maxWidth: .infinity)
 
-                Button(openTunnelAppTitle, action: onOpenTunnelApp)
-                    .buttonStyle(.bordered)
+                if !usesBuiltInTunnel {
+                    Button(openTunnelAppTitle, action: onOpenTunnelApp)
+                        .buttonStyle(.bordered)
+                }
 
                 Button("Cancel", role: .cancel, action: onCancel)
                     .foregroundStyle(.secondary)
@@ -139,7 +144,7 @@ struct MobileDataGuidanceView: View {
     private var title: String {
         switch guidance {
         case .connectionHelp:
-            if tunnelHandoffApp == .shadowrocket && isUsingMobileData {
+            if !usesBuiltInTunnel && tunnelHandoffApp == .shadowrocket && isUsingMobileData {
                 String(localized: "Use Wi-Fi with Shadowrocket")
             } else {
                 String(localized: "Still Connecting")
@@ -154,15 +159,21 @@ struct MobileDataGuidanceView: View {
     private var message: String {
         switch guidance {
         case .connectionHelp:
+            if usesBuiltInTunnel {
+                return String(localized: "Check that WrapPin's built-in tunnel is connected, then try again. If you are using mobile data, follow the mobile data steps below.")
+            }
             if tunnelHandoffApp == .shadowrocket && isUsingMobileData {
-                String(localized: "Shadowrocket may not provide the device connection WrapPin needs over mobile data. Connect to Wi-Fi, keep a compatible tunnel on, then return and try again.")
+                return String(localized: "Shadowrocket may not provide the device connection WrapPin needs over mobile data. Connect to Wi-Fi, keep a compatible tunnel on, then return and try again.")
             } else {
-                String(localized: "Make sure the selected app's tunnel is connected, then try again. Choose mobile data only when you're actually using 4G or 5G.")
+                return String(localized: "Make sure the selected app's tunnel is connected, then try again. Choose mobile data only when you're actually using 4G or 5G.")
             }
         case .turnOff:
-            String(localized: "Make sure LocalDevVPN is connected, switch mobile data off briefly, then return to WrapPin.")
+            if usesBuiltInTunnel {
+                return String(localized: "Keep the built-in tunnel connected, switch mobile data off briefly, then return to WrapPin.")
+            }
+            return String(localized: "Make sure LocalDevVPN is connected, switch mobile data off briefly, then return to WrapPin.")
         case .turnBackOn:
-            String(localized: "The secure location session is ready. You can restore mobile data now; spoofing will continue over 5G.")
+            return String(localized: "The secure location session is ready. You can restore mobile data now; spoofing will continue over 5G.")
         }
     }
 

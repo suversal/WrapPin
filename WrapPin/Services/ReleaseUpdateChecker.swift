@@ -128,6 +128,9 @@ final class ReleaseUpdateModel {
     }
 
     func checkForUpdates() async {
+        // The public Latest release currently points to the SideStore edition.
+        // The tunnel edition needs its own release channel before showing updates.
+        guard !BuildEdition.supportsBuiltInTunnel else { return }
         guard status != .checking else { return }
         status = .checking
 
