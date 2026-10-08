@@ -248,12 +248,7 @@ struct ConnectionHealthView: View {
                 .foregroundStyle(.primary)
 
                 if !appModel.usesBuiltInTunnel {
-                    Link(destination: appModel.selectedTunnelAppInstallURL) {
-                        Label(
-                            String(format: NSLocalizedString("Get %@", comment: ""), appModel.tunnelHandoffApp.title),
-                            systemImage: "arrow.up.right.square"
-                        )
-                    }
+                    TunnelAppButton()
                 }
             }
         }

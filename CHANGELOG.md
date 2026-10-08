@@ -7,6 +7,15 @@ All notable public changes to WrapPin are recorded here.
 ### Improved
 
 - The tunnel edition now checks the latest public GitHub release and shows update notices, like the standard edition. Both editions are attached to the same release.
+- Stopping while a location session is still connecting now takes effect at once instead of waiting for the remaining connection steps, and no longer applies the selected location briefly before clearing it.
+
+### Fixed
+
+- Failure stages in Connection Health and in optional anonymous statistics were reported as unknown when the app ran in Simplified Chinese, and for two device-discovery failures in any language. The location engine now reports a stage code, so classification no longer depends on the wording or language of a message.
+- A stop that the iPhone did not confirm now shows its message in the app's language.
+- After Stop & Restore, the current-location button could centre the map on the last simulated place instead of the iPhone's real position. The map now ignores location fixes that iOS marks as simulated and waits for a real one.
+- Device Setup, the introduction and the in-app guide named LocalDevVPN even when Shadowrocket was the selected tunnel app. They now name the selected app, and the tunnel-app button in Device Setup and Connection Health opens that app when it is installed or its App Store page when it is not.
+- Device Setup showed its pairing steps, the “Before connecting” list and the fingerprint labels in English when the app ran in Simplified Chinese.
 
 ## [1.0.13] - 2026-10-04
 

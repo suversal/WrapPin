@@ -8,7 +8,10 @@ struct OnboardingView: View {
 
     let isReplay: Bool
     private var pages: [OnboardingPage] {
-        OnboardingPage.pages(usesBuiltInTunnel: appModel.usesBuiltInTunnel)
+        OnboardingPage.pages(
+            usesBuiltInTunnel: appModel.usesBuiltInTunnel,
+            tunnelAppName: appModel.tunnelHandoffApp.title
+        )
     }
 
     init(isReplay: Bool = false) {
@@ -283,7 +286,7 @@ private struct OnboardingPage {
         self.showsUsageStatisticsControl = showsUsageStatisticsControl
     }
 
-    static func pages(usesBuiltInTunnel: Bool) -> [OnboardingPage] { [
+    static func pages(usesBuiltInTunnel: Bool, tunnelAppName: String) -> [OnboardingPage] { [
         OnboardingPage(
             symbol: "location.viewfinder",
             title: "Welcome to WrapPin",
@@ -305,7 +308,7 @@ private struct OnboardingPage {
                     symbol: "lock.shield.fill",
                     title: usesBuiltInTunnel
                         ? String(localized: "Allow WrapPin's built-in VPN")
-                        : String(localized: "Install and connect LocalDevVPN"),
+                        : String(format: NSLocalizedString("Install and connect %@", comment: ""), tunnelAppName),
                     message: usesBuiltInTunnel
                         ? String(localized: "The first location session asks to add a VPN configuration; WrapPin then starts its local device tunnel automatically.")
                         : String(localized: "Keep its local tunnel connected while starting a location.")

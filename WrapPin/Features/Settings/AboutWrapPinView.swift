@@ -59,7 +59,7 @@ struct AboutWrapPinView: View {
                     symbol: "location.fill",
                     text: appModel.usesBuiltInTunnel
                         ? "Start reporting the selected place. WrapPin starts its built-in tunnel automatically."
-                        : "Start reporting the selected place as this iPhone’s location. LocalDevVPN must be connected."
+                        : "Start reporting the selected place as this iPhone’s location. \(appModel.tunnelHandoffApp.title) must be connected."
                 )
                 guideRow(
                     "Update Location",
@@ -145,7 +145,7 @@ struct AboutWrapPinView: View {
                     symbol: "iphone.and.arrow.forward",
                     text: appModel.usesBuiltInTunnel
                         ? "Pair this iPhone once so WrapPin can identify it through its built-in tunnel."
-                        : "Pair this iPhone once so WrapPin can identify it through LocalDevVPN."
+                        : "Pair this iPhone once so WrapPin can identify it through \(appModel.tunnelHandoffApp.title)."
                 )
                 guideRow(
                     "Connection Health",
@@ -210,7 +210,7 @@ struct AboutWrapPinView: View {
             if appModel.usesBuiltInTunnel {
                 stepRow(2, "Allow WrapPin's built-in VPN when prompted.")
             } else {
-                stepRow(2, "Connect LocalDevVPN.")
+                stepRow(2, "Connect \(appModel.tunnelHandoffApp.title).")
             }
             stepRow(3, "Search, choose or drop a location.")
             stepRow(4, "Start a fixed location or preview a walking or driving route.")

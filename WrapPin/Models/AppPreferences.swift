@@ -13,6 +13,14 @@ enum TunnelHandoffApp: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Opens the app itself, without asking it to change its tunnel.
+    var appURL: URL {
+        switch self {
+        case .localDevVPN: URL(string: "localdevvpn://")!
+        case .shadowrocket: URL(string: "shadowrocket://")!
+        }
+    }
+
     // Keep LocalDevVPN's working enable-and-return callback; Shadowrocket only opens its app.
     var launchURL: URL {
         switch self {
