@@ -2,7 +2,7 @@
 
 All notable public changes to WrapPin are recorded here.
 
-## [Unreleased]
+## [1.0.14] - 2026-10-08
 
 ### Added
 
@@ -20,6 +20,12 @@ All notable public changes to WrapPin are recorded here.
 - After Stop & Restore, the current-location button could centre the map on the last simulated place instead of the iPhone's real position. The map now ignores location fixes that iOS marks as simulated and waits for a real one.
 - Device Setup, the introduction and the in-app guide named LocalDevVPN even when Shadowrocket was the selected tunnel app. They now name the selected app, and the tunnel-app button in Device Setup and Connection Health opens that app when it is installed or its App Store page when it is not.
 - Device Setup showed its pairing steps, the “Before connecting” list and the fingerprint labels in English when the app ran in Simplified Chinese.
+
+### Known limitations
+
+- Times on route options use the simulated speed, not live traffic. Resuming an interrupted route replans with the suggested route rather than a previously chosen alternative.
+- A few connection failure messages still name LocalDevVPN when Shadowrocket or the built-in tunnel is in use.
+- Build 47 was rebuilt after the version change and has package-level checks only; the same feature code passed device testing as Build 46 in both editions.
 
 ## [1.0.13] - 2026-10-04
 

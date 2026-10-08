@@ -13,14 +13,14 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.13（Build 41） · <strong>系统要求：</strong>iOS 27+
+  <strong>当前版本：</strong>1.0.14（Build 47） · <strong>系统要求：</strong>iOS 27+
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/iOS-27%2B-blue" alt="iOS 27+">
   <img src="https://img.shields.io/badge/UI-SwiftUI-orange" alt="SwiftUI">
   <img src="https://img.shields.io/badge/%E7%BB%B4%E6%8A%A4%E8%80%85-suversal-purple" alt="由 suversal 维护">
-  <img src="https://img.shields.io/badge/Version-1.0.13-lightgrey" alt="Version 1.0.13">
+  <img src="https://img.shields.io/badge/Version-1.0.14-lightgrey" alt="Version 1.0.14">
   <img src="https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0">
 </p>
 
@@ -40,7 +40,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 ## 当前进展
 
-- 当前公开版本为 **1.0.13（Build 41）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.13) 为准。
+- 当前公开版本为 **1.0.14（Build 47）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.14) 为准。
 - 标准版（`WrapPin-Standard-…`）供 SideStore 等自签方式安装，使用 LocalDevVPN 等外部隧道。隧道版（`WrapPin-Tunnel-…`）内置设备隧道，主 App 和扩展都需要带 Packet Tunnel 权限的签名配置，免费账号无法签名；它使用独立 App ID，不替换标准版。
 - 已完成完整简体中文界面、地图标签本地化、配对与连接引导、中文安装文档和使用手册。
 - 已完善地址与坐标复制、连接检测、诊断信息复制、异常会话恢复和真实位置恢复流程。
@@ -66,7 +66,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 - 固定位置可切换 GCJ-02 修正与 WGS84 原值。地区建议仅作起点；如果显示位置有偏差，可切换另一种方式再核对。
 - 一键复制所选地点的可读地址或经纬度坐标。
 - 启动固定位置后直接更换坐标，无需重新建立整条连接。
-- 预览 Apple 地图步行或驾车路线；步行支持三档预设或 1–12 公里/小时自定义速度，驾车支持 5–240 公里/小时。
+- 预览 Apple 地图步行或驾车路线，有多条路线时最多提供三条供选择；步行支持三档预设或 1–12 公里/小时自定义速度，驾车支持 5–240 公里/小时。
 - 在步行期间暂停、继续、原路返回或更换目的地。
 - 保存常用地点，快速访问最近使用的位置。
 - 会话结束时主动清除模拟坐标并恢复真实位置。
