@@ -87,7 +87,7 @@ struct AboutWrapPinView: View {
                 guideRow(
                     "Preview Walk",
                     symbol: "figure.walk",
-                    text: "Ask Apple Maps for a walking route from your current point to the selected destination before anything starts."
+                    text: "Ask Apple Maps for walking routes from your current point to the selected destination before anything starts. When there are several, choose one on the card or tap it on the map."
                 )
                 guideRow(
                     "Walking pace",
@@ -125,7 +125,7 @@ struct AboutWrapPinView: View {
                 guideRow(
                     "Preview Drive",
                     symbol: "car.fill",
-                    text: "Ask Apple Maps for a road route before starting a simulated drive."
+                    text: "Ask Apple Maps for road routes before starting a simulated drive. When there are several, choose one on the card or tap it on the map."
                 )
                 guideRow(
                     "Simulated speed",

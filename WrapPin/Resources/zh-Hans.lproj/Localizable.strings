@@ -341,7 +341,8 @@
 "Preview Drive" = "预览驾车";
 "Search for a place or tap the map, then start a fixed location or preview a walking or driving route." = "搜索地点或轻点地图，即可模拟固定位置，也可以先预览步行或驾车路线。";
 "Fixed, walking or driving session started" = "开始固定位置、步行或驾车模拟";
-"Ask Apple Maps for a road route before starting a simulated drive." = "开始前先通过 Apple 地图规划驾车路线。";
+"Ask Apple Maps for road routes before starting a simulated drive. When there are several, choose one on the card or tap it on the map." = "开始前先通过 Apple 地图规划驾车路线。有多条路线时，可在卡片上选择，或直接轻点地图上的路线。";
+"Route %lld, %@, %@" = "路线 %1$lld，%2$@，%3$@";
 "Set a constant speed from 5 to 240 km/h. Travel time uses this speed, not live traffic." = "可设置 5–240 公里/小时的匀速模拟速度。预计用时按所选速度计算，不代表实时路况。";
 "End the route and confirm that this iPhone's real location has returned." = "结束路线模拟后，确认本机真实位置已恢复。";
 "Start a fixed location or preview a walking or driving route." = "开始固定位置模拟，或先预览步行、驾车路线。";
@@ -592,7 +593,7 @@
 "Interrupted-session recovery" = "中断恢复";
 "If WrapPin did not receive a normal end signal, the next launch offers to resume, reconnect briefly to restore the real location, or confirm that it is already back." = "如果上次没有正常结束，再次打开时可以继续任务、短暂重连以恢复真实位置，或确认真实位置已经恢复。";
 "Walking routes" = "步行路线";
-"Ask Apple Maps for a walking route from your current point to the selected destination before anything starts." = "开始前，先通过 Apple 地图规划从当前位置到目的地的步行路线。";
+"Ask Apple Maps for walking routes from your current point to the selected destination before anything starts. When there are several, choose one on the card or tap it on the map." = "开始前，先通过 Apple 地图规划从当前位置到目的地的步行路线。有多条路线时，可在卡片上选择，或直接轻点地图上的路线。";
 "Choose how quickly the simulated location moves along the route." = "选择模拟位置沿路线移动的速度。";
 "Begin moving the reported location along the previewed route. The walk can continue while you use another app." = "让模拟位置沿预览路线移动；切换到其他 App 后仍可继续。";
 "Pause or Resume" = "暂停或继续";

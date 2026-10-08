@@ -4,6 +4,10 @@ All notable public changes to WrapPin are recorded here.
 
 ## [Unreleased]
 
+### Added
+
+- Walking and driving previews now offer up to three routes when Apple Maps suggests alternatives. Choose one on the preview card or tap it on the map before starting; time and distance update for the chosen route.
+
 ### Improved
 
 - The tunnel edition now checks the latest public GitHub release and shows update notices, like the standard edition. Both editions are attached to the same release.

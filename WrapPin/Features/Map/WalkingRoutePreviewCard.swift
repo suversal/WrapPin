@@ -5,9 +5,12 @@ struct WalkingRoutePreviewCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     let route: MKRoute
+    let routes: [MKRoute]
+    let selectedRouteIndex: Int
     let destination: LocationTarget
     let simulation: WalkingSimulationController
     let isPaired: Bool
+    let onSelectRoute: (Int) -> Void
     let onStart: () -> Void
     let onTogglePause: () -> Void
     let onWalkBack: () -> Void
@@ -89,6 +92,10 @@ struct WalkingRoutePreviewCard: View {
             if showsProgress {
                 ProgressView(value: simulation.progress)
                     .tint(simulation.phase == .arrived ? .green : .blue)
+            }
+
+            if canChoosePace, routes.count > 1 {
+                routeOptions
             }
 
             routeMetrics
@@ -174,6 +181,67 @@ struct WalkingRoutePreviewCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    @ViewBuilder
+    private var routeOptions: some View {
+        let options = ForEach(Array(routes.enumerated()), id: \.offset) { index, option in
+            routeOption(option, index: index)
+        }
+
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(spacing: 8) { options }
+        } else {
+            HStack(spacing: 8) { options }
+        }
+    }
+
+    private func routeOption(_ option: MKRoute, index: Int) -> some View {
+        let isSelected = index == selectedRouteIndex
+        let duration = formatDuration(option.distance / simulation.speedMetresPerSecond)
+        let distance = formatDistance(option.distance)
+
+        return Button {
+            onSelectRoute(index)
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(duration)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isSelected ? .blue : .primary)
+                Text(distance)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if !option.name.isEmpty {
+                    Text(option.name)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                isSelected ? AnyShapeStyle(.blue.opacity(0.14)) : AnyShapeStyle(.thinMaterial),
+                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .stroke(.blue, lineWidth: isSelected ? 1.5 : 0)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            String(
+                format: NSLocalizedString("Route %lld, %@, %@", comment: ""),
+                index + 1,
+                duration,
+                distance
+            )
+        )
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     @ViewBuilder
@@ -532,7 +600,10 @@ struct WalkingRoutePreviewCard: View {
     }
 
     private var distanceText: String {
-        let distance = showsProgress ? simulation.remainingDistance : route.distance
+        formatDistance(showsProgress ? simulation.remainingDistance : route.distance)
+    }
+
+    private func formatDistance(_ distance: CLLocationDistance) -> String {
         if Locale.current.region?.identifier == "GB" {
             return formatUKDistance(distance)
         }

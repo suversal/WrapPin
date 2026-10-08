@@ -97,9 +97,7 @@ final class WalkingSimulationController {
         self.mode = mode
         self.coordinateMode = coordinateMode
 
-        let polyline = route.polyline
-        let points = polyline.points()
-        routePoints = (0..<polyline.pointCount).map { points[$0] }
+        routePoints = route.mapPoints
         cumulativeDistances = cumulativeDistanceValues(for: routePoints)
         totalDistance = cumulativeDistances.last ?? route.distance
         distanceTravelled = 0

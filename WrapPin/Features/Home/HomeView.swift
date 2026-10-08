@@ -34,6 +34,17 @@ struct HomeView: View {
         ZStack {
             MapReader { proxy in
                 Map(position: $mapModel.cameraPosition) {
+                    // Draw the alternatives first so the selected route stays on top.
+                    ForEach(
+                        Array(walkingRoutePlanner.routes.enumerated()),
+                        id: \.offset
+                    ) { index, alternative in
+                        if index != walkingRoutePlanner.selectedRouteIndex {
+                            MapPolyline(alternative)
+                                .stroke(.blue.opacity(0.35), lineWidth: 5)
+                        }
+                    }
+
                     if let route = walkingRoutePlanner.route {
                         MapPolyline(route)
                             .stroke(.blue, lineWidth: 6)
@@ -74,6 +85,7 @@ struct HomeView: View {
 
                     guard !walkingSimulation.locksDestination else { return }
                     guard let coordinate = proxy.convert(point, from: .local) else { return }
+                    if selectPreviewedRoute(at: point, coordinate: coordinate, proxy: proxy) { return }
                     Task { await mapModel.selectDroppedPin(at: coordinate) }
                 }
             }
@@ -294,10 +306,14 @@ struct HomeView: View {
                    let destination = walkingRoutePlanner.destination {
                     WalkingRoutePreviewCard(
                         route: route,
+                        routes: walkingRoutePlanner.routes,
+                        selectedRouteIndex: walkingRoutePlanner.selectedRouteIndex,
                         destination: walkingSimulation.destination ?? destination,
                         simulation: walkingSimulation,
                         isPaired: isPaired,
+                        onSelectRoute: selectPreviewedRoute,
                         onStart: {
+                            walkingRoutePlanner.discardAlternativeRoutes()
                             followsSimulatedLocation = walkingSimulation.mode == .driving
                             Task { await walkingSimulation.start(using: appModel) }
                         },
@@ -374,7 +390,7 @@ struct HomeView: View {
                                         mode: mode,
                                         coordinateMode: fixedCoordinateMode
                                     )
-                                    mapModel.show(route)
+                                    mapModel.show(walkingRoutePlanner.routes)
                                 }
                             }
                         },
@@ -693,6 +709,49 @@ struct HomeView: View {
         }
     }
 
+    private func selectPreviewedRoute(_ index: Int) {
+        guard
+            !walkingSimulation.locksDestination,
+            index != walkingRoutePlanner.selectedRouteIndex,
+            let destination = walkingRoutePlanner.destination,
+            let route = walkingRoutePlanner.selectRoute(at: index)
+        else { return }
+
+        walkingSimulation.prepare(
+            route: route,
+            destination: destination,
+            mode: walkingRoutePlanner.mode,
+            coordinateMode: walkingSimulation.coordinateMode
+        )
+    }
+
+    /// Returns true when the tap landed on one of several previewed routes, so
+    /// it chooses a route instead of dropping a pin and discarding the preview.
+    private func selectPreviewedRoute(
+        at point: CGPoint,
+        coordinate: CLLocationCoordinate2D,
+        proxy: MapProxy
+    ) -> Bool {
+        let routes = walkingRoutePlanner.routes
+        guard routes.count > 1 else { return false }
+        // Measure a finger-sized tolerance at the current zoom.
+        guard let edge = proxy.convert(CGPoint(x: point.x + 22, y: point.y), from: .local) else {
+            return false
+        }
+
+        let tap = MKMapPoint(coordinate)
+        let edgePoint = MKMapPoint(edge)
+        let tolerance = hypot(edgePoint.x - tap.x, edgePoint.y - tap.y)
+        guard let index = RouteHitTesting.nearestRouteIndex(
+            to: tap,
+            in: routes.map(\.mapPoints),
+            tolerance: tolerance
+        ) else { return false }
+
+        selectPreviewedRoute(index)
+        return true
+    }
+
     private func resumeInterruptedSession(_ recovery: SessionRecoveryRecord) {
         recoveredWalkError = nil
 
@@ -716,10 +775,12 @@ struct HomeView: View {
         fixedCoordinateMode = routeCoordinateMode
         isPreparingRecoveredWalk = true
         Task { @MainActor in
+            // A resumed route starts straight away, so there is nothing to choose between.
             let route = await walkingRoutePlanner.preview(
                 to: destination,
                 from: recovery.lastReportedLocation,
-                mode: recovery.routeMode
+                mode: recovery.routeMode,
+                includingAlternatives: false
             )
             guard let route else {
                 recoveredWalkError = walkingRoutePlanner.errorMessage

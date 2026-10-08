@@ -19,7 +19,9 @@ enum RouteMode: String, Codable, CaseIterable, Identifiable {
 @MainActor
 @Observable
 final class WalkingRoutePlanner {
-    private(set) var route: MKRoute?
+    /// The suggested route first, then up to two alternatives.
+    private(set) var routes: [MKRoute] = []
+    private(set) var selectedRouteIndex = 0
     private(set) var destination: LocationTarget?
     private(set) var mode: RouteMode = .walking
     private(set) var isLoading = false
@@ -28,13 +30,21 @@ final class WalkingRoutePlanner {
     @ObservationIgnored
     private var directions: MKDirections?
 
+    private static let maximumRouteCount = 3
+
+    var route: MKRoute? {
+        routes.indices.contains(selectedRouteIndex) ? routes[selectedRouteIndex] : nil
+    }
+
     func preview(
         to target: LocationTarget,
         from source: LocationTarget? = nil,
-        mode: RouteMode = .walking
+        mode: RouteMode = .walking,
+        includingAlternatives: Bool = true
     ) async -> MKRoute? {
         directions?.cancel()
-        route = nil
+        routes = []
+        selectedRouteIndex = 0
         destination = target
         self.mode = mode
         errorMessage = nil
@@ -54,7 +64,7 @@ final class WalkingRoutePlanner {
             address: nil
         )
         request.transportType = mode.transportType
-        request.requestsAlternateRoutes = false
+        request.requestsAlternateRoutes = includingAlternatives
 
         let calculation = MKDirections(request: request)
         directions = calculation
@@ -76,7 +86,7 @@ final class WalkingRoutePlanner {
                 return nil
             }
 
-            route = preferredRoute
+            routes = Array(response.routes.prefix(Self.maximumRouteCount))
             return preferredRoute
         } catch is CancellationError {
             return nil
@@ -92,15 +102,31 @@ final class WalkingRoutePlanner {
     func clear() {
         directions?.cancel()
         directions = nil
-        route = nil
+        routes = []
+        selectedRouteIndex = 0
         destination = nil
         mode = .walking
         isLoading = false
         errorMessage = nil
     }
 
+    @discardableResult
+    func selectRoute(at index: Int) -> MKRoute? {
+        guard routes.indices.contains(index) else { return nil }
+        selectedRouteIndex = index
+        return routes[index]
+    }
+
+    /// Once a route is in use the other suggestions no longer apply.
+    func discardAlternativeRoutes() {
+        guard let route, routes.count > 1 else { return }
+        routes = [route]
+        selectedRouteIndex = 0
+    }
+
     func retargetExistingRoute(to target: LocationTarget) {
         guard route != nil else { return }
+        discardAlternativeRoutes()
         destination = target
         errorMessage = nil
     }
