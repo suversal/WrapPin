@@ -2,6 +2,16 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.15] - 2026-10-08
+
+### Fixed
+
+- Four connection failure messages named LocalDevVPN even when Shadowrocket or the built-in tunnel was in use. They now refer to the device tunnel.
+
+### Known limitations
+
+- Build 48 has not been installed on a device, and this wording change was not device-tested on its own. The rest of the feature code is the same as 1.0.14.
+
 ## [1.0.14] - 2026-10-08
 
 ### Added

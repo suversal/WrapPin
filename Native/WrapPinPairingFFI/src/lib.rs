@@ -581,7 +581,7 @@ async fn run_location_session(
     let peer_ip: IpAddr = peer_address.parse().map_err(|_| {
         LocationError::new(
             Stage::VpnConnection,
-            "LocalDevVPN returned an invalid device address.",
+            "The device tunnel returned an invalid device address.",
         )
     })?;
     let pairing_address = SocketAddr::new(peer_ip, remote_pairing_port);
@@ -590,11 +590,11 @@ async fn run_location_session(
         TcpStream::connect(pairing_address),
         LocationError::recoverable(
             Stage::VpnConnection,
-            "LocalDevVPN did not make the iPhone connection available in time.",
+            "The device tunnel did not make the iPhone connection available in time.",
         ),
         LocationError::recoverable(
             Stage::VpnConnection,
-            "WrapPin could not reach the iPhone through LocalDevVPN.",
+            "WrapPin could not reach the iPhone through the device tunnel.",
         ),
     )
     .await?;
@@ -646,7 +646,7 @@ async fn run_location_session(
         TcpStream::connect(SocketAddr::new(peer_ip, tunnel_port)),
         LocationError::new(
             Stage::TunnelConnection,
-            "LocalDevVPN did not open the secure tunnel in time.",
+            "The device tunnel did not open the secure connection in time.",
         ),
         LocationError::recoverable(
             Stage::TunnelConnection,
