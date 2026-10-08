@@ -2,9 +2,22 @@
 
 ## Active distribution tracks
 
-- Public release: `v1.0.14` Build 47, with both editions attached to the same GitHub Release.
-- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.14-build47-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
-- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.14-build47-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+- Public release: `v1.0.15` Build 48, with both editions attached to the same GitHub Release.
+- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.15-build48-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
+- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.15-build48-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+
+## 1.0.15 (Build 48)
+
+- Created: 8 October 2026 with Xcode 27.0 (`27A266a`) using `scripts/package-ipa.sh all`
+- Standard IPA: `WrapPin-Standard-1.0.15-build48-unsigned.ipa`; SHA-256 `58d30ab5801807708b9f0a04d59869cab684465212226b186966b32272a1b84d`; no Packet Tunnel extension.
+- Tunnel IPA: `WrapPin-Tunnel-1.0.15-build48-unsigned.ipa`; SHA-256 `eefaed0ff692454d610ff45b91780a5216d5c63a65001daa425eca5afb894522`; contains `WrapPinTunnel.appex`.
+- Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+. No TelemetryDeck identifiers were configured for this build, so it sends no usage statistics.
+- Changes: four connection failure messages from the native engine refer to the device tunnel instead of naming LocalDevVPN; both xcframework slices rebuilt. No other change from Build 47.
+- Verification: localization, failure-stage, background-session, coordinate-mode, route-recovery, tunnel-handoff and route-selection checks, native engine tests, both Release archives, IPA ZIP integrity, identifiers, versions and extension presence or absence passed. Build 48 has not been installed on a device and the wording change was not device-tested on its own.
+- Known issues: resuming an interrupted route replans with the suggested route only.
+- Publication: GitHub Release `v1.0.15`.
+
+See [the 1.0.15 build notes](../Documentation/Release-1.0.15.md) for details.
 
 ## 1.0.14 (Build 47)
 

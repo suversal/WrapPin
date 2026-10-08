@@ -14,7 +14,6 @@
 "WrapPin lost the location session details." = "WrapPin lost the location session details.";
 "WrapPin could not start its location engine." = "WrapPin could not start its location engine.";
 "WrapPin found an outdated device announcement. Toggle LocalDevVPN off and on, then try again." = "WrapPin found an outdated device announcement. Toggle LocalDevVPN off and on, then try again.";
-"WrapPin could not find this iPhone through LocalDevVPN. Check that the tunnel is enabled and try again." = "WrapPin could not find this iPhone through LocalDevVPN. Check that the tunnel is enabled and try again.";
 "WrapPin found an outdated device announcement. Restart the selected tunnel and try again." = "WrapPin found an outdated device announcement. Restart the selected tunnel and try again.";
 "WrapPin could not find this iPhone through the device tunnel. Check the selected tunnel and try again." = "WrapPin could not find this iPhone through the device tunnel. Check the selected tunnel and try again.";
 "WrapPin is already changing the connection. Let it finish, then run the check again." = "WrapPin is already changing the connection. Let it finish, then run the check again.";
@@ -25,7 +24,7 @@
 "WrapPin could not securely store the new pairing." = "WrapPin could not securely store the new pairing.";
 "WrapPin could not start its device session." = "WrapPin could not start its device session.";
 "WrapPin could not identify this iPhone's pairing service." = "WrapPin could not identify this iPhone's pairing service.";
-"WrapPin could not reach the iPhone through LocalDevVPN." = "WrapPin could not reach the iPhone through LocalDevVPN.";
+"WrapPin could not reach the iPhone through the device tunnel." = "WrapPin could not reach the iPhone through the device tunnel.";
 "WrapPin could not open the secure device tunnel." = "WrapPin could not open the secure device tunnel.";
 "WrapPin could not secure the device tunnel." = "WrapPin could not secure the device tunnel.";
 "WrapPin could not open the iPhone's service directory." = "WrapPin could not open the iPhone's service directory.";
