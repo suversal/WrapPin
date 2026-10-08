@@ -6,7 +6,7 @@
 "The pairing record is generated or checked on this iPhone, then stored only in its Keychain. WrapPin does not upload it." = "The pairing record is generated or checked on this iPhone, then stored only in its Keychain. WrapPin does not upload it.";
 "WrapPin will return automatically after the tunnel starts." = "WrapPin will return automatically after the tunnel starts.";
 "WrapPin is visible to the iOS pairing screen." = "WrapPin is visible to the iOS pairing screen.";
-"WrapPin can use this record when the LocalDevVPN session layer is connected." = "WrapPin can use this record when the LocalDevVPN session layer is connected.";
+"WrapPin can use this record when the %@ tunnel is connected." = "WrapPin can use this record when the %@ tunnel is connected.";
 "Make sure LocalDevVPN is connected, switch mobile data off briefly, then return to WrapPin." = "Make sure LocalDevVPN is connected, switch mobile data off briefly, then return to WrapPin.";
 "WrapPin could not update the active location." = "WrapPin could not update the active location.";
 "WrapPin could not prepare the selected location." = "WrapPin could not prepare the selected location.";
@@ -58,7 +58,7 @@
 "Shows whether WrapPin is ready, connecting or active. Tap it for pairing and connection details." = "Shows whether WrapPin is ready, connecting or active. Tap it for pairing and connection details.";
 "When using mobile data, temporarily turn it off when asked. WrapPin continues automatically once the local connection is available, and tells you when data can go back on." = "When using mobile data, temporarily turn it off when asked. WrapPin continues automatically once the local connection is available, and tells you when data can go back on.";
 "If WrapPin did not receive a normal end signal, the next launch offers to resume, reconnect briefly to restore the real location, or confirm that it is already back." = "If WrapPin did not receive a normal end signal, the next launch offers to resume, reconnect briefly to restore the real location, or confirm that it is already back.";
-"Pair this iPhone once so WrapPin can identify it through LocalDevVPN." = "Pair this iPhone once so WrapPin can identify it through LocalDevVPN.";
+"Pair this iPhone once so WrapPin can identify it through %@." = "Pair this iPhone once so WrapPin can identify it through %@.";
 "WrapPin sends only a small, fixed set of anonymous activity counts when sharing is enabled." = "WrapPin sends only a small, fixed set of anonymous activity counts when sharing is enabled.";
 "Turning sharing off immediately stops new reporting and removes the identifier from WrapPin. It cannot withdraw anonymous events already received by TelemetryDeck." = "Turning sharing off immediately stops new reporting and removes the identifier from WrapPin. It cannot withdraw anonymous events already received by TelemetryDeck.";
 "WrapPin uses a narrow first-party sender instead of an analytics SDK, so extra device metadata cannot be added automatically." = "WrapPin uses a narrow first-party sender instead of an analytics SDK, so extra device metadata cannot be added automatically.";

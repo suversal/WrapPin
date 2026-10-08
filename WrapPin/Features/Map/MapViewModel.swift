@@ -163,7 +163,11 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     }
 
     func show(_ route: MKRoute) {
-        let routeRect = route.polyline.boundingMapRect
+        show([route])
+    }
+
+    func show(_ routes: [MKRoute]) {
+        let routeRect = routes.reduce(MKMapRect.null) { $0.union($1.polyline.boundingMapRect) }
         guard !routeRect.isNull, !routeRect.isEmpty else { return }
 
         let horizontalPadding = max(routeRect.size.width * 0.24, 1_200)
@@ -499,6 +503,10 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
 
     private func receiveLocations(_ locations: [CLLocation]) {
         guard let location = locations.last, location.horizontalAccuracy >= 0 else { return }
+        // After a session stops, Core Location can keep delivering the last
+        // simulated fix with a new timestamp until it reacquires the real one.
+        // Keep waiting instead of caching it as this iPhone's real location.
+        guard !Self.isSimulated(location) else { return }
         if requiresFreshRealLocation,
            let locationRequestStartedAt,
            location.timestamp < locationRequestStartedAt.addingTimeInterval(-0.5) {
@@ -535,12 +543,17 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         let candidates = [lastRealLocation, locationManager.location]
             .compactMap { $0 }
             .filter {
-                $0.horizontalAccuracy >= 0
+                !Self.isSimulated($0)
+                    && $0.horizontalAccuracy >= 0
                     && $0.horizontalAccuracy <= 1_000
                     && Date().timeIntervalSince($0.timestamp) <= 300
             }
 
         return candidates.max { $0.timestamp < $1.timestamp }
+    }
+
+    private static func isSimulated(_ location: CLLocation) -> Bool {
+        location.sourceInformation?.isSimulatedBySoftware == true
     }
 }
 

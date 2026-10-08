@@ -30,11 +30,12 @@ final class OnDevicePairingCoordinator {
     private(set) var phase: OnDevicePairingPhase = .idle {
         didSet {
             guard phase != oldValue else { return }
-            if case .failed(let message) = phase {
+            if case .failed = phase {
                 guard !terminalFailureReported else { return }
                 terminalFailureReported = true
                 let stage = schedulerFailureReason == nil
-                    ? FailureStage.classify(message, fallback: .pairingUnknown) : .schedulerSubmission
+                    ? (pendingFailureStage ?? .pairingUnknown) : .schedulerSubmission
+                pendingFailureStage = nil
                 lastFailureStage = stage
                 onFailure?(stage)
             }
@@ -43,6 +44,7 @@ final class OnDevicePairingCoordinator {
     }
 
     private(set) var lastFailureStage: FailureStage?
+    private var pendingFailureStage: FailureStage?
     private(set) var schedulerFailureReason: SchedulerFailureReason?
 
     private var terminalFailureReported = false
@@ -91,6 +93,7 @@ final class OnDevicePairingCoordinator {
 
         terminalFailureReported = false
         lastFailureStage = nil
+        pendingFailureStage = nil
         schedulerFailureReason = nil
         cancellationRequested = false
         pendingFailureMessage = nil
@@ -274,6 +277,7 @@ final class OnDevicePairingCoordinator {
         pendingFailureMessage = String(localized:
             "Pairing took too long. Return to WrapPin and try again."
         )
+        pendingFailureStage = .pairingExpired
         if let activeSession {
             wp_remote_pairing_session_cancel(activeSession)
         }
@@ -285,6 +289,8 @@ final class OnDevicePairingCoordinator {
     }
 
     private func fail(_ message: String) {
+        // Classify the English key; the localized text never matches a stage.
+        pendingFailureStage = FailureStage.classify(message, fallback: .pairingUnknown)
         let localizedMessage = NSLocalizedString(message, comment: "")
         if workerIsRunning, let activeSession {
             pendingFailureMessage = localizedMessage

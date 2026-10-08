@@ -8,8 +8,6 @@ struct PairingSetupView: View {
     @State private var isImporting = false
     @State private var isConfirmingRemoval = false
 
-    private let localDevVPNURL = URL(string: "https://apps.apple.com/app/localdevvpn/id6755608044")!
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -76,10 +74,10 @@ struct PairingSetupView: View {
             if case .paired(let summary) = appModel.pairingStatus {
                 Divider()
 
-                pairingDetail(title: "Fingerprint", value: summary.fingerprint, monospaced: true)
+                pairingDetail(title: String(localized: "Fingerprint"), value: summary.fingerprint, monospaced: true)
 
                 pairingDetail(
-                    title: "Added",
+                    title: String(localized: "Added"),
                     value: summary.importedAt.formatted(date: .abbreviated, time: .shortened)
                 )
 
@@ -152,9 +150,9 @@ struct PairingSetupView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Finish in Settings")
                     .font(.subheadline.weight(.semibold))
-                instructionRow("Open Settings › Privacy & Security › Developer Mode.")
-                instructionRow("Tap Pair with WrapPin.")
-                instructionRow("Use the code shown here when iOS asks for it.")
+                instructionRow(String(localized: "Open Settings › Privacy & Security › Developer Mode."))
+                instructionRow(String(localized: "Tap Pair with WrapPin."))
+                instructionRow(String(localized: "Use the code shown here when iOS asks for it."))
             }
 
         case .showingPIN(let pin):
@@ -200,21 +198,24 @@ struct PairingSetupView: View {
             Text("Before connecting")
                 .font(.headline)
 
-            requirementRow(number: "1", text: "Pair this iPhone here, or import its existing RPPairing file.")
+            requirementRow(
+                number: "1",
+                text: String(localized: "Pair this iPhone here, or import its existing RPPairing file.")
+            )
             requirementRow(
                 number: "2",
                 text: appModel.usesBuiltInTunnel
-                    ? "Allow WrapPin to add its built-in VPN when prompted."
-                    : "Install LocalDevVPN and switch it on."
+                    ? String(localized: "Allow WrapPin to add its built-in VPN when prompted.")
+                    : String(
+                        format: NSLocalizedString("Install %@ and switch it on.", comment: ""),
+                        appModel.tunnelHandoffApp.title
+                    )
             )
-            requirementRow(number: "3", text: "Keep Developer Mode enabled on the iPhone.")
+            requirementRow(number: "3", text: String(localized: "Keep Developer Mode enabled on the iPhone."))
 
             if !appModel.usesBuiltInTunnel {
-                Link(destination: localDevVPNURL) {
-                    Label("View LocalDevVPN", systemImage: "arrow.up.right.square")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+                TunnelAppButton(fillsWidth: true)
+                    .buttonStyle(.bordered)
             }
 
             Text("New on-device pairing is available on iOS 27. The simulator can test the screen, but Apple only exposes the real handshake on a physical iPhone.")
@@ -400,7 +401,10 @@ struct PairingSetupView: View {
         case .paired:
             return appModel.usesBuiltInTunnel
                 ? String(localized: "WrapPin can use this record with its built-in device tunnel.")
-                : String(localized: "WrapPin can use this record when the LocalDevVPN session layer is connected.")
+                : String(
+                    format: NSLocalizedString("WrapPin can use this record when the %@ tunnel is connected.", comment: ""),
+                    appModel.tunnelHandoffApp.title
+                )
         case .failed(let message):
             return message
         }

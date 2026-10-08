@@ -72,7 +72,7 @@ Only LocalDevVPN startup needs this temporary change. After the secure location 
 
 1. Choose a destination.
 2. Tap **Preview Walk**.
-3. Check the route, distance, estimated time and arrival time.
+3. Check the route, distance, estimated time and arrival time. When Apple Maps suggests several routes, the card lists up to three; choose one there or tap it on the map.
 4. Choose a walking pace, or turn on **Custom walking speed** to select 1–12 km/h in 0.1 km/h steps. For cycling or faster travel, use a driving route where suitable.
 5. Tap **Start Walking**.
 

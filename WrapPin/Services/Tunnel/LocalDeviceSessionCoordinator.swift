@@ -95,10 +95,10 @@ final class LocalDeviceSessionCoordinator: NSObject {
                 BuiltInTunnelManager.shared.stopAfterSession()
             }
 #endif
-            if case .failed(let message) = phase {
+            if case .failed = phase {
                 guard !terminalFailureReported else { return }
                 terminalFailureReported = true
-                let stage = FailureStage.classify(message, fallback: .locationUnknown)
+                let stage = terminalFailureStage
                 lastFailureStage = stage
                 lastFailureDisposition = .terminal
                 onFailure?(stage)
@@ -139,6 +139,8 @@ final class LocalDeviceSessionCoordinator: NSObject {
     private(set) var lastFailureDisposition: FailureDisposition?
     var onRecoveryNeeded: ((FailureStage) -> Void)?
     private var terminalFailureReported = false
+    // Set together with a `.failed` phase; see `enterFailedPhase`.
+    private var terminalFailureStage: FailureStage = .locationUnknown
     var onFailure: ((FailureStage) -> Void)?
 
     var onPhaseChange: ((DeviceSessionPhase) -> Void)?
@@ -231,7 +233,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
             comment: ""
         )
         lastFailureMessage = message
-        phase = .failed(message)
+        enterFailedPhase(message, stage: .locationUnknown)
 #else
         cancellationRequested = false
         pendingFailureMessage = nil
@@ -284,7 +286,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
         let coordinates = simulationCoordinates ?? SimulationCoordinates(target)
         guard wp_location_session_update(activeSession, coordinates.latitude, coordinates.longitude) == 0 else {
-            fail("WrapPin could not update the active location.")
+            fail("WrapPin could not update the active location.", stage: .locationActiveWrite)
             return .failed
         }
 
@@ -312,7 +314,10 @@ final class LocalDeviceSessionCoordinator: NSObject {
         UIApplication.shared.open(tunnelHandoffApp.launchURL) { [weak self] opened in
             guard !opened else { return }
             Task { @MainActor in
-                self?.fail("Could not open the selected tunnel app. Check that it is installed and supports app links.")
+                self?.fail(
+                    "Could not open the selected tunnel app. Check that it is installed and supports app links.",
+                    stage: .vpnConnection
+                )
             }
         }
 #endif
@@ -515,11 +520,13 @@ final class LocalDeviceSessionCoordinator: NSObject {
                     self.openSelectedTunnelAppForPendingSession()
                 } else if self.sawNonMatchingService {
                     self.fail(
-                        "WrapPin found an outdated device announcement. Restart the selected tunnel and try again."
+                        "WrapPin found an outdated device announcement. Restart the selected tunnel and try again.",
+                        stage: .discovery
                     )
                 } else {
                     self.fail(
-                        "WrapPin could not find this iPhone through the device tunnel. Check the selected tunnel and try again."
+                        "WrapPin could not find this iPhone through the device tunnel. Check the selected tunnel and try again.",
+                        stage: .discovery
                     )
                 }
             }
@@ -591,7 +598,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
     private func submitLocationTask() {
         guard pendingSession != nil, resolvedService != nil else {
-            fail("WrapPin could not prepare the selected location.")
+            fail("WrapPin could not prepare the selected location.", stage: .locationPreparation)
             return
         }
 
@@ -602,11 +609,11 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
     private func runNativeLocationSession() {
         guard let pendingSession, let resolvedService else {
-            fail("WrapPin lost the location session details.")
+            fail("WrapPin lost the location session details.", stage: .locationPreparation)
             return
         }
         guard let session = wp_location_session_create() else {
-            fail("WrapPin could not start its location engine.")
+            fail("WrapPin could not start its location engine.", stage: .locationEngine)
             return
         }
 
@@ -708,11 +715,13 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
         if cancellationRequested {
             cancellationRequested = false
-            if case .failure(let message) = outcome,
-               message != "The location session was stopped." {
+            if case .failure(let failure) = outcome, !failure.wasCancelled {
                 restorationStatus = String(localized: "Stop not confirmed; real location unverified")
                 clearPendingSession()
-                phase = .failed(message)
+                enterFailedPhase(
+                    NSLocalizedString(failure.message, comment: ""),
+                    stage: failure.stage ?? .locationUnknown
+                )
                 return
             }
             if restorationDisplayStartDate != nil {
@@ -729,9 +738,9 @@ final class LocalDeviceSessionCoordinator: NSObject {
             clearPendingSession()
             phase = .idle
             connectionStage = .idle
-        case .failure(let message):
-            if isRecoverableTunnelConnectionFailure(message) {
-                let stage = FailureStage.classify(message, fallback: .locationUnknown)
+        case .failure(let failure):
+            if failure.isRecoverable {
+                let stage = failure.stage ?? .locationUnknown
                 lastFailureStage = stage
                 lastFailureDisposition = .recoverable
                 onRecoveryNeeded?(stage)
@@ -748,16 +757,23 @@ final class LocalDeviceSessionCoordinator: NSObject {
                 return
             }
 
-            let localizedMessage = NSLocalizedString(message, comment: "")
+            let localizedMessage = NSLocalizedString(failure.message, comment: "")
             mobileDataGuidance = nil
             clearPendingSession()
-            phase = .failed(localizedMessage)
+            enterFailedPhase(localizedMessage, stage: failure.stage ?? .locationUnknown)
             connectionStage = .failed
             lastFailureMessage = localizedMessage
         }
     }
 
-    private func fail(_ message: String) {
+    // The stage travels with the failure so analytics and diagnostics never
+    // depend on the wording or language of the message.
+    private func enterFailedPhase(_ localizedMessage: String, stage: FailureStage) {
+        terminalFailureStage = stage
+        phase = .failed(localizedMessage)
+    }
+
+    private func fail(_ message: String, stage: FailureStage) {
         backgroundKeepAlive.stop()
         let localizedMessage = NSLocalizedString(message, comment: "")
         lastFailureMessage = localizedMessage
@@ -774,7 +790,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
             clearPendingSession()
         }
 
-        phase = .failed(localizedMessage)
+        enterFailedPhase(localizedMessage, stage: stage)
     }
 
     private func cleanupDiscovery() {
@@ -976,12 +992,6 @@ final class LocalDeviceSessionCoordinator: NSObject {
         }
     }
 
-    private func isRecoverableTunnelConnectionFailure(_ message: String) -> Bool {
-        message.localizedCaseInsensitiveContains("through LocalDevVPN")
-            || message.localizedCaseInsensitiveContains("make the iPhone connection available")
-            || message.localizedCaseInsensitiveContains("open the secure device tunnel")
-    }
-
     private func startBuiltInTunnelForPendingSession() {
 #if WRAPPIN_TUNNEL_EDITION
         guard pendingSession != nil, !workerIsRunning else { return }
@@ -1004,7 +1014,10 @@ final class LocalDeviceSessionCoordinator: NSObject {
                 return
             }
             guard connected else {
-                self.fail(BuiltInTunnelManager.shared.lastError ?? "WrapPin could not start its built-in tunnel.")
+                self.fail(
+                    BuiltInTunnelManager.shared.lastError ?? "WrapPin could not start its built-in tunnel.",
+                    stage: .vpnConnection
+                )
                 return
             }
             if self.wifiPathStatusIsKnown && !self.isWiFiPathSatisfied {
@@ -1126,7 +1139,10 @@ final class LocalDeviceSessionCoordinator: NSObject {
         UIApplication.shared.open(tunnelHandoffApp.launchURL) { [weak self] opened in
             guard !opened else { return }
             Task { @MainActor in
-                self?.fail("Could not open the selected tunnel app. Check that it is installed and supports app links.")
+                self?.fail(
+                    "Could not open the selected tunnel app. Check that it is installed and supports app links.",
+                    stage: .vpnConnection
+                )
             }
         }
 #endif
@@ -1150,7 +1166,7 @@ extension LocalDeviceSessionCoordinator: NetServiceBrowserDelegate, NetServiceDe
         didNotSearch errorDict: [String: NSNumber]
     ) {
         MainActor.assumeIsolated {
-            fail("Local Network access is required to find this iPhone.")
+            fail("Local Network access is required to find this iPhone.", stage: .discovery)
         }
     }
 
@@ -1167,9 +1183,17 @@ extension LocalDeviceSessionCoordinator: NetServiceBrowserDelegate, NetServiceDe
     }
 }
 
+private struct NativeLocationFailure: Sendable {
+    /// The engine's English message; also the localization key.
+    let message: String
+    let stage: FailureStage?
+    let isRecoverable: Bool
+    let wasCancelled: Bool
+}
+
 private enum NativeLocationOutcome: Sendable {
     case success
-    case failure(String)
+    case failure(NativeLocationFailure)
 
     init(result: WPLocationResult, returnCode: Int32) {
         guard returnCode != 0 else {
@@ -1183,7 +1207,12 @@ private enum NativeLocationOutcome: Sendable {
         } else {
             message = ""
         }
-        self = .failure(message.isEmpty ? "The iPhone could not start the location session." : message)
+        self = .failure(NativeLocationFailure(
+            message: message.isEmpty ? "The iPhone could not start the location session." : message,
+            stage: FailureStage(nativeLocationStage: result.error_stage),
+            isRecoverable: result.error_is_recoverable != 0,
+            wasCancelled: result.error_stage == FailureStage.nativeLocationCancelledCode
+        ))
     }
 }
 

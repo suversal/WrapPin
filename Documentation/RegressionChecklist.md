@@ -80,6 +80,8 @@ Use this checklist before packaging an IPA or declaring a development build stab
 ## Walking routes
 
 - [ ] Preview Walking Route draws a plausible Apple Maps route.
+- [ ] When a walking or driving preview has several routes, the card lists up to three; choosing one on the card or tapping it on the map highlights it and updates distance and time. Tapping away from every route still drops a pin.
+- [ ] After Start, only the chosen route stays on the map and the simulated location follows it.
 - [ ] Distance uses yards/miles under UK regional settings.
 - [ ] Pace changes update timing before the walk starts.
 - [ ] Custom walking speed supports 1–12 km/h in 0.1 km/h steps, updates timing, and can be switched back to preset paces.
@@ -100,6 +102,9 @@ Use this checklist before packaging an IPA or declaring a development build stab
 - [ ] Restore Real Location requires confirmation, clears the simulated location and leaves no new session active.
 - [ ] Cancelling recovery restoration preserves the interrupted-session recovery options.
 - [ ] Stop & Restore shows restoration progress for at least a moment before returning to Ready.
+- [ ] Tapping the current-location button right after Stop & Restore centres the map on the real position, not on the last simulated place.
+- [ ] Stopping while the session is still connecting returns to Ready promptly, without briefly applying the selected location.
+- [ ] With the iPhone set to Simplified Chinese, a failed start shows a Chinese message and Connection Health reports a specific session issue stage, not `locationUnknown`.
 - [ ] My Real Location Is Already Back dismisses the recovery state.
 - [ ] Force-closing during a walk offers Resume Walking from a recent saved point.
 - [ ] Mobile-data recovery waits until data can be restored before finishing.

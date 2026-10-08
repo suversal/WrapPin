@@ -78,12 +78,13 @@
 "Securing the pairing record in Keychain…" = "正在将配对记录安全存入钥匙串…";
 "Stopping pairing…" = "正在停止配对…";
 "Before connecting" = "连接前的准备";
-"View LocalDevVPN" = "查看 LocalDevVPN";
 "Stored securely" = "已安全存储";
 "On-device pairing needs your physical iPhone." = "本机配对需要使用真实 iPhone。";
 "Pair this iPhone here, or import its existing RPPairing file." = "在此配对这台 iPhone，或导入它现有的 RPPairing 文件。";
-"Install LocalDevVPN and switch it on." = "安装 LocalDevVPN 并开启隧道。";
+"Install %@ and switch it on." = "安装 %@ 并开启隧道。";
 "Keep Developer Mode enabled on the iPhone." = "保持 iPhone 的开发者模式已开启。";
+"Step %@. %@" = "第 %1$@ 步：%2$@";
+"Pairing code %@" = "配对码 %@";
 "New on-device pairing is available on iOS 27. The simulator can test the screen, but Apple only exposes the real handshake on a physical iPhone." = "iOS 27 支持新的本机配对流程。模拟器只能测试界面，真实配对必须在实体 iPhone 上完成。";
 "The pairing record is generated or checked on this iPhone, then stored only in its Keychain. WrapPin does not upload it." = "配对记录会在这台 iPhone 上生成或验证，随后仅存入本机钥匙串。WrapPin 不会上传它。";
 
@@ -135,7 +136,7 @@
 "Validating the record and its keys." = "正在验证配对记录及密钥。";
 "Create the pairing securely on this iPhone, or import an existing file." = "可在这台 iPhone 上安全创建配对，或导入现有配对文件。";
 "Connect your physical iPhone to create the pairing, or import an existing file." = "请连接实体 iPhone 创建配对，或导入现有配对文件。";
-"WrapPin can use this record when the LocalDevVPN session layer is connected." = "LocalDevVPN 会话层连接后，WrapPin 即可使用这份配对记录。";
+"WrapPin can use this record when the %@ tunnel is connected." = "%@ 隧道连接后，WrapPin 即可使用这份配对记录。";
 
 /* Mobile data guidance */
 "Still Connecting" = "仍在连接";
@@ -273,7 +274,7 @@
 "Enable Developer Mode" = "开启开发者模式";
 "Open Settings, then go to Privacy & Security > Developer Mode." = "打开“设置”，进入“隐私与安全性”>“开发者模式”。";
 "Install LocalDevVPN" = "安装 LocalDevVPN";
-"Install and connect LocalDevVPN" = "安装并连接 LocalDevVPN";
+"Install and connect %@" = "安装并连接 %@";
 "Keep its local tunnel connected while starting a location." = "开始模拟定位时，请保持本地隧道已连接。";
 "Connect its local tunnel before starting a location." = "开始模拟定位前，请先连接本地隧道。";
 "Pair this iPhone" = "配对本机";
@@ -340,7 +341,8 @@
 "Preview Drive" = "预览驾车";
 "Search for a place or tap the map, then start a fixed location or preview a walking or driving route." = "搜索地点或轻点地图，即可模拟固定位置，也可以先预览步行或驾车路线。";
 "Fixed, walking or driving session started" = "开始固定位置、步行或驾车模拟";
-"Ask Apple Maps for a road route before starting a simulated drive." = "开始前先通过 Apple 地图规划驾车路线。";
+"Ask Apple Maps for road routes before starting a simulated drive. When there are several, choose one on the card or tap it on the map." = "开始前先通过 Apple 地图规划驾车路线。有多条路线时，可在卡片上选择，或直接轻点地图上的路线。";
+"Route %lld, %@, %@" = "路线 %1$lld，%2$@，%3$@";
 "Set a constant speed from 5 to 240 km/h. Travel time uses this speed, not live traffic." = "可设置 5–240 公里/小时的匀速模拟速度。预计用时按所选速度计算，不代表实时路况。";
 "End the route and confirm that this iPhone's real location has returned." = "结束路线模拟后，确认本机真实位置已恢复。";
 "Start a fixed location or preview a walking or driving route." = "开始固定位置模拟，或先预览步行、驾车路线。";
@@ -563,7 +565,7 @@
 "How it works" = "快速开始";
 "WrapPin is intended for location-based app development and testing on your own device." = "WrapPin 用于在你拥有并控制的设备上进行定位开发和测试。";
 "Pair this iPhone once." = "完成一次本机配对。";
-"Connect LocalDevVPN." = "连接 LocalDevVPN。";
+"Connect %@." = "连接 %@。";
 "Search, choose or drop a location." = "搜索地点，或直接在地图上选点。";
 "Start a fixed location or preview a walking route." = "开始固定位置模拟，或先预览步行路线。";
 "Search" = "搜索";
@@ -583,7 +585,7 @@
 "Shows whether WrapPin is ready, connecting or active. Tap it for pairing and connection details." = "显示本机是否已就绪、正在连接或模拟定位中。轻点可查看设备连接详情。";
 "Change appearance and map style, check the connection, manage pairing and view app information." = "调整外观和地图样式，检查连接、管理配对并查看 App 信息。";
 "Location control" = "模拟定位";
-"Start reporting the selected place as this iPhone’s location. LocalDevVPN must be connected." = "将所选地点设为本机报告的位置。开始前必须连接 LocalDevVPN。";
+"Start reporting the selected place as this iPhone’s location. %@ must be connected." = "将所选地点设为本机报告的位置。开始前必须连接 %@。";
 "Move an active location session to a newly selected place without restarting the whole connection flow." = "模拟定位运行时，可以直接切换到新地点，无需重新连接。";
 "Confirm before ending the active session and restoring this iPhone’s real location." = "结束模拟定位并恢复本机真实位置前会再次确认。";
 "Mobile-data guidance" = "蜂窝网络引导";
@@ -591,7 +593,7 @@
 "Interrupted-session recovery" = "中断恢复";
 "If WrapPin did not receive a normal end signal, the next launch offers to resume, reconnect briefly to restore the real location, or confirm that it is already back." = "如果上次没有正常结束，再次打开时可以继续任务、短暂重连以恢复真实位置，或确认真实位置已经恢复。";
 "Walking routes" = "步行路线";
-"Ask Apple Maps for a walking route from your current point to the selected destination before anything starts." = "开始前，先通过 Apple 地图规划从当前位置到目的地的步行路线。";
+"Ask Apple Maps for walking routes from your current point to the selected destination before anything starts. When there are several, choose one on the card or tap it on the map." = "开始前，先通过 Apple 地图规划从当前位置到目的地的步行路线。有多条路线时，可在卡片上选择，或直接轻点地图上的路线。";
 "Choose how quickly the simulated location moves along the route." = "选择模拟位置沿路线移动的速度。";
 "Begin moving the reported location along the previewed route. The walk can continue while you use another app." = "让模拟位置沿预览路线移动；切换到其他 App 后仍可继续。";
 "Pause or Resume" = "暂停或继续";
@@ -600,7 +602,7 @@
 "Keep the active session and return to the map so you can choose another destination." = "保持当前连接并返回地图，选择新的目的地。";
 "Stop walking, clear the route and restore the real location. A confirmation helps prevent accidental stops." = "停止模拟步行、清除路线并恢复真实位置。操作前会再次确认。";
 "Setup & support" = "设置与帮助";
-"Pair this iPhone once so WrapPin can identify it through LocalDevVPN." = "只需配对一次，之后 WrapPin 即可通过 LocalDevVPN 识别本机。";
+"Pair this iPhone once so WrapPin can identify it through %@." = "只需配对一次，之后 WrapPin 即可通过 %@ 识别本机。";
 "Check pairing and the local connection without changing your location. You can also share a readable diagnostics report." = "检查配对和本机连接，不会修改当前位置。也可以复制便于阅读的诊断报告。";
 "View onboarding again without deleting your pairing, favourites, history or preferences." = "重新查看使用介绍，不会删除配对、收藏、历史记录或偏好设置。";
 "Erase the pairing record and all saved app choices, then return to onboarding. LocalDevVPN itself is not changed." = "删除配对记录和所有本地设置，然后返回首次使用页面；不会更改 LocalDevVPN。";

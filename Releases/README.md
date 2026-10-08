@@ -2,10 +2,32 @@
 
 ## Active distribution tracks
 
-- Public release: `v1.0.13` Build 41, with both editions attached to the same GitHub Release.
-- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.13-build41-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
-- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.13-build41-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
-- The tunnel app does not show update notices yet.
+- Public release: `v1.0.14` Build 47, with both editions attached to the same GitHub Release.
+- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.14-build47-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
+- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.14-build47-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+
+## 1.0.14 (Build 47)
+
+- Created: 8 October 2026 with Xcode 27.0 (`27A266a`) using `scripts/package-ipa.sh all`
+- Standard IPA: `WrapPin-Standard-1.0.14-build47-unsigned.ipa`; SHA-256 `5b538b6d8c900664bb26421354ea966fe8305779009e13448afc272f703c62f9`; no Packet Tunnel extension.
+- Tunnel IPA: `WrapPin-Tunnel-1.0.14-build47-unsigned.ipa`; SHA-256 `77eada290adc810fed300df26f6b54a1916ca88fadce0b0d49bc9a5f1408a531`; contains `WrapPinTunnel.appex`.
+- Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+. No TelemetryDeck identifiers were configured for this build, so it sends no usage statistics.
+- Changes: alternative routes in walking and driving previews; the location engine reports failure stage codes and observes a stop during connection, which required rebuilding both xcframework slices; fixes for Chinese failure stages, the current-location button after restore, tunnel-app naming and Device Setup localization; the tunnel edition's update check.
+- Verification: localization, failure-stage, background-session, coordinate-mode, route-recovery, tunnel-handoff and route-selection checks, native engine tests, both Release archives, IPA ZIP integrity, identifiers, versions and extension presence or absence passed. Build 47 itself has not been installed on a device; the maintainer reported on 8 October 2026 that the Build 46 packages of both editions, with the same feature code, passed device testing.
+- Known issues: a few connection failure messages still name LocalDevVPN when another tunnel is in use; resuming an interrupted route replans with the suggested route only.
+- Publication: GitHub Release `v1.0.14`.
+
+See [the 1.0.14 build notes](../Documentation/Release-1.0.14.md) for details.
+
+## 1.0.13 (Builds 42–46, device-test packages)
+
+- Created: 6–8 October 2026 with Xcode 27.0 (`27A266a`); unsigned test packages for the maintainer only, not published.
+- Build 42 (Standard): failure stage codes and prompt stop while connecting; SHA-256 `c64e3791c2f1181719f00ddbdc61db2cbccf496dc6b8b7d41142207ef5a38e74`.
+- Build 43 (Standard): Device Setup localization; SHA-256 `0ebf747928c4c8c881d68bb0cce47f02d7210fa989b67adb8e3500c330318bbf`.
+- Build 44 (Standard): simulated fixes ignored after restore; selected tunnel app named in the interface; SHA-256 `9b8c043a7491fcccb33385a219ec1ba649525563c5c65c3d096d7f11b3b85099`.
+- Build 45 (both editions): tunnel-app button opens the installed app; Standard SHA-256 `0bb91e849df93c124d63c02c29f2a99489e55e1e314daf212566362fb330d70b`, Tunnel SHA-256 `8c6389581446a6db4454b384c1010b9b711147c9acef39e75e8b35211d237b69`.
+- Build 46 (both editions): alternative routes; Standard SHA-256 `80c1e69360db34c0836f345c53fbbdea1412c645c318eee21897a4652202fa26`, Tunnel SHA-256 `62be1fc440cba99709a30e7fc4f6137a43c3ef2d3213f3dcd639863754a8b12c`.
+- Verification: the maintainer reported that Standard Builds 45 and 46 and Tunnel Builds 45 and 46 passed device testing; the individual test cases were not recorded here.
 
 ## 1.0.13 (Build 41)
 

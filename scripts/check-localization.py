@@ -21,7 +21,13 @@ LOCALIZED_CALLS = re.compile(
     r'|\.confirmationDialog\(|\.accessibilityLabel\(|\.accessibilityHint\()'
     r'\s*"((?:\\.|[^"\\])*)"'
 )
-NATIVE_MESSAGES = re.compile(r'"([^"\n]+)"\.to_string\(\)')
+# Rust user-facing messages: owned strings, coordinate validation and the
+# location engine's structured errors.
+NATIVE_MESSAGES = re.compile(
+    r'"([^"\n]+)"\.to_string\(\)'
+    r'|\bErr\(\s*"([^"\n]+)"\s*\)'
+    r'|LocationError::(?:new|recoverable)\(\s*[\w:]+,\s*"([^"\n]+)"'
+)
 
 
 def load_keys() -> tuple[set[str], list[str]]:
@@ -46,8 +52,10 @@ def find_required_keys() -> dict[str, set[str]]:
 
     for path in sorted(NATIVE_ROOT.rglob("*.rs")):
         text = path.read_text(encoding="utf-8")
+        text = text.split("#[cfg(test)]")[0]
         for match in NATIVE_MESSAGES.finditer(text):
-            required.setdefault(match.group(1), set()).add(str(path.relative_to(ROOT)))
+            key = next(group for group in match.groups() if group)
+            required.setdefault(key, set()).add(str(path.relative_to(ROOT)))
     return required
 
 
