@@ -55,7 +55,7 @@ struct LocationCoordinates {
 }
 
 impl LocationCoordinates {
-    fn validated(latitude: f64, longitude: f64) -> Result<Self, String> {
+    fn validated(latitude: f64, longitude: f64) -> Result<Self, &'static str> {
         if latitude.is_finite()
             && longitude.is_finite()
             && (-90.0..=90.0).contains(&latitude)
@@ -66,7 +66,7 @@ impl LocationCoordinates {
                 longitude,
             })
         } else {
-            Err("That location is outside the valid coordinate range.".to_string())
+            Err("That location is outside the valid coordinate range.")
         }
     }
 }
@@ -86,6 +86,62 @@ pub struct RemotePairingResult {
 #[repr(C)]
 pub struct LocationResult {
     pub error_message: *mut c_char,
+    pub error_stage: i32,
+    pub error_is_recoverable: i32,
+}
+
+/// Where a location session failed. The numeric values are part of the C ABI:
+/// Swift maps them to its own failure stages, so the wording of an error
+/// message can change without affecting classification. Never renumber.
+#[repr(i32)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum LocationStage {
+    Unknown = 0,
+    PairingRecord = 1,
+    Discovery = 2,
+    VpnConnection = 3,
+    PairVerification = 4,
+    TunnelCreation = 5,
+    TunnelConnection = 6,
+    TunnelSecurity = 7,
+    ServiceDirectory = 8,
+    ServiceHandshake = 9,
+    LocationService = 10,
+    LocationInitialWrite = 11,
+    LocationActiveWrite = 12,
+    LocationEngine = 13,
+    LocationRestore = 14,
+    Cancelled = 15,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct LocationError {
+    stage: LocationStage,
+    /// The device tunnel was not reachable yet; the app may retry discovery.
+    recoverable: bool,
+    message: &'static str,
+}
+
+impl LocationError {
+    const fn new(stage: LocationStage, message: &'static str) -> Self {
+        Self {
+            stage,
+            recoverable: false,
+            message,
+        }
+    }
+
+    const fn recoverable(stage: LocationStage, message: &'static str) -> Self {
+        Self {
+            stage,
+            recoverable: true,
+            message,
+        }
+    }
+
+    const fn cancelled() -> Self {
+        Self::new(LocationStage::Cancelled, LOCATION_CANCELLED_ERROR)
+    }
 }
 
 pub type LocationStartedCallback = Option<extern "C" fn(context: *mut c_void)>;
@@ -326,6 +382,8 @@ pub unsafe extern "C" fn wp_location_session_run(
 
     unsafe {
         (*result).error_message = ptr::null_mut();
+        (*result).error_stage = LocationStage::Unknown as i32;
+        (*result).error_is_recoverable = 0;
     }
 
     let session = unsafe { &*session };
@@ -350,7 +408,12 @@ pub unsafe extern "C" fn wp_location_session_run(
             .worker_threads(3)
             .enable_all()
             .build()
-            .map_err(|_| "WrapPin could not start its device session.".to_string())?;
+            .map_err(|_| {
+                LocationError::new(
+                    LocationStage::LocationEngine,
+                    "WrapPin could not start its device session.",
+                )
+            })?;
 
         runtime.block_on(run_location_session(
             pairing_record,
@@ -367,18 +430,29 @@ pub unsafe extern "C" fn wp_location_session_run(
 
     match execution {
         Ok(Ok(())) => 0,
-        Ok(Err(message)) => {
-            unsafe { (*result).error_message = owned_c_string(message) };
+        Ok(Err(error)) => {
+            unsafe { write_location_error(&mut *result, error) };
             1
         }
         Err(_) => {
             unsafe {
-                (*result).error_message =
-                    owned_c_string("The location session stopped unexpectedly.");
+                write_location_error(
+                    &mut *result,
+                    LocationError::new(
+                        LocationStage::LocationEngine,
+                        "The location session stopped unexpectedly.",
+                    ),
+                );
             }
             1
         }
     }
+}
+
+unsafe fn write_location_error(result: &mut LocationResult, error: LocationError) {
+    result.error_message = owned_c_string(error.message);
+    result.error_stage = error.stage as i32;
+    result.error_is_recoverable = error.recoverable as i32;
 }
 
 #[unsafe(no_mangle)]
@@ -390,6 +464,8 @@ pub unsafe extern "C" fn wp_location_result_destroy(result: *mut LocationResult)
         unsafe { drop(CString::from_raw(result.error_message)) };
     }
     result.error_message = ptr::null_mut();
+    result.error_stage = LocationStage::Unknown as i32;
+    result.error_is_recoverable = 0;
 }
 
 #[unsafe(no_mangle)]
@@ -473,111 +549,218 @@ async fn run_location_session(
     started_callback: LocationStartedCallback,
     callback_context: usize,
     cancellation: Arc<AtomicBool>,
-) -> Result<(), String> {
+) -> Result<(), LocationError> {
+    use LocationStage as Stage;
+
     let mut applied_coordinates = current_coordinates(&coordinates)?;
     if remote_pairing_port == 0 || service_identifier.is_empty() || auth_tag.is_empty() {
-        return Err("WrapPin could not identify this iPhone's pairing service.".to_string());
+        return Err(LocationError::new(
+            Stage::Discovery,
+            "WrapPin could not identify this iPhone's pairing service.",
+        ));
     }
 
-    let mut pairing_file = RpPairingFile::from_bytes(&pairing_record_bytes)
-        .map_err(|_| "The saved pairing record could not be read.".to_string())?;
-    let alt_irk = pairing_file
-        .alt_irk()
-        .ok_or_else(|| "The saved pairing record is missing its device identity.".to_string())?;
+    let mut pairing_file = RpPairingFile::from_bytes(&pairing_record_bytes).map_err(|_| {
+        LocationError::new(
+            Stage::PairingRecord,
+            "The saved pairing record could not be read.",
+        )
+    })?;
+    let alt_irk = pairing_file.alt_irk().ok_or(LocationError::new(
+        Stage::PairingRecord,
+        "The saved pairing record is missing its device identity.",
+    ))?;
     if !PeerDevice::validate_auth_tag(alt_irk, &service_identifier, &auth_tag) {
-        return Err("The discovered device did not match the paired iPhone.".to_string());
+        return Err(LocationError::new(
+            Stage::PairingRecord,
+            "The discovered device did not match the paired iPhone.",
+        ));
     }
     check_location_cancellation(&cancellation)?;
 
-    let peer_ip: IpAddr = peer_address
-        .parse()
-        .map_err(|_| "LocalDevVPN returned an invalid device address.".to_string())?;
+    let peer_ip: IpAddr = peer_address.parse().map_err(|_| {
+        LocationError::new(
+            Stage::VpnConnection,
+            "LocalDevVPN returned an invalid device address.",
+        )
+    })?;
     let pairing_address = SocketAddr::new(peer_ip, remote_pairing_port);
-    let stream = timeout(SESSION_TIMEOUT, TcpStream::connect(pairing_address))
-        .await
-        .map_err(|_| {
-            "LocalDevVPN did not make the iPhone connection available in time.".to_string()
-        })?
-        .map_err(|_| "WrapPin could not reach the iPhone through LocalDevVPN.".to_string())?;
+    let stream = connection_step(
+        &cancellation,
+        TcpStream::connect(pairing_address),
+        LocationError::recoverable(
+            Stage::VpnConnection,
+            "LocalDevVPN did not make the iPhone connection available in time.",
+        ),
+        LocationError::recoverable(
+            Stage::VpnConnection,
+            "WrapPin could not reach the iPhone through LocalDevVPN.",
+        ),
+    )
+    .await?;
 
     let socket = RpPairingSocket::new(stream);
     let mut remote_pairing = RemotePairingClient::new(socket, DEFAULT_HOST_NAME);
-    timeout(SESSION_TIMEOUT, remote_pairing.attempt_pair_verify())
-        .await
-        .map_err(|_| "The paired iPhone did not respond in time.".to_string())?
-        .map_err(|_| "The iPhone rejected the saved pairing session.".to_string())?;
-    timeout(
-        SESSION_TIMEOUT,
+    connection_step(
+        &cancellation,
+        remote_pairing.attempt_pair_verify(),
+        LocationError::new(
+            Stage::PairVerification,
+            "The paired iPhone did not respond in time.",
+        ),
+        LocationError::new(
+            Stage::PairVerification,
+            "The iPhone rejected the saved pairing session.",
+        ),
+    )
+    .await?;
+    connection_step(
+        &cancellation,
         remote_pairing.validate_pairing(&mut pairing_file),
+        LocationError::new(
+            Stage::PairVerification,
+            "Pairing verification took too long.",
+        ),
+        LocationError::new(
+            Stage::PairVerification,
+            "The saved pairing is no longer valid. Reset Device Setup and pair again.",
+        ),
     )
-    .await
-    .map_err(|_| "Pairing verification took too long.".to_string())?
-    .map_err(|_| {
-        "The saved pairing is no longer valid. Reset Device Setup and pair again.".to_string()
-    })?;
-    check_location_cancellation(&cancellation)?;
+    .await?;
 
-    let tunnel_port = timeout(SESSION_TIMEOUT, remote_pairing.create_tcp_listener())
-        .await
-        .map_err(|_| "The iPhone did not create its secure tunnel in time.".to_string())?
-        .map_err(|_| "The iPhone could not create its secure tunnel.".to_string())?;
-    let tunnel_stream = timeout(
-        SESSION_TIMEOUT,
+    let tunnel_port = connection_step(
+        &cancellation,
+        remote_pairing.create_tcp_listener(),
+        LocationError::new(
+            Stage::TunnelCreation,
+            "The iPhone did not create its secure tunnel in time.",
+        ),
+        LocationError::new(
+            Stage::TunnelCreation,
+            "The iPhone could not create its secure tunnel.",
+        ),
+    )
+    .await?;
+    let tunnel_stream = connection_step(
+        &cancellation,
         TcpStream::connect(SocketAddr::new(peer_ip, tunnel_port)),
+        LocationError::new(
+            Stage::TunnelConnection,
+            "LocalDevVPN did not open the secure tunnel in time.",
+        ),
+        LocationError::recoverable(
+            Stage::TunnelConnection,
+            "WrapPin could not open the secure device tunnel.",
+        ),
     )
-    .await
-    .map_err(|_| "LocalDevVPN did not open the secure tunnel in time.".to_string())?
-    .map_err(|_| "WrapPin could not open the secure device tunnel.".to_string())?;
-    let tunnel = timeout(
-        SESSION_TIMEOUT,
+    .await?;
+    let tunnel = connection_step(
+        &cancellation,
         connect_tls_psk_tunnel_native(tunnel_stream, remote_pairing.encryption_key()),
+        LocationError::new(
+            Stage::TunnelSecurity,
+            "The encrypted device tunnel took too long to start.",
+        ),
+        LocationError::new(
+            Stage::TunnelSecurity,
+            "WrapPin could not secure the device tunnel.",
+        ),
     )
-    .await
-    .map_err(|_| "The encrypted device tunnel took too long to start.".to_string())?
-    .map_err(|_| "WrapPin could not secure the device tunnel.".to_string())?;
+    .await?;
 
-    let client_ip: IpAddr = tunnel
-        .info
-        .client_address
-        .parse()
-        .map_err(|_| "The iPhone returned an invalid tunnel address.".to_string())?;
-    let server_ip: IpAddr = tunnel
-        .info
-        .server_address
-        .parse()
-        .map_err(|_| "The iPhone returned an invalid service address.".to_string())?;
+    let client_ip: IpAddr = tunnel.info.client_address.parse().map_err(|_| {
+        LocationError::new(
+            Stage::TunnelSecurity,
+            "The iPhone returned an invalid tunnel address.",
+        )
+    })?;
+    let server_ip: IpAddr = tunnel.info.server_address.parse().map_err(|_| {
+        LocationError::new(
+            Stage::TunnelSecurity,
+            "The iPhone returned an invalid service address.",
+        )
+    })?;
     let rsd_port = tunnel.info.server_rsd_port;
     let adapter = tcp::adapter::Adapter::new(Box::new(tunnel.into_inner()), client_ip, server_ip);
     let mut handle = adapter.to_async_handle();
 
-    let rsd_stream = timeout(SESSION_TIMEOUT, handle.connect(rsd_port))
-        .await
-        .map_err(|_| "The iPhone's service directory took too long to respond.".to_string())?
-        .map_err(|_| "WrapPin could not open the iPhone's service directory.".to_string())?;
-    let mut handshake = timeout(SESSION_TIMEOUT, RsdHandshake::new(rsd_stream))
-        .await
-        .map_err(|_| "The iPhone's service handshake took too long.".to_string())?
-        .map_err(|_| "WrapPin could not complete the iPhone service handshake.".to_string())?;
-    let mut dvt = timeout(
-        SESSION_TIMEOUT,
-        RemoteServerClient::connect_rsd(&mut handle, &mut handshake),
+    let rsd_stream = connection_step(
+        &cancellation,
+        handle.connect(rsd_port),
+        LocationError::new(
+            Stage::ServiceDirectory,
+            "The iPhone's service directory took too long to respond.",
+        ),
+        LocationError::new(
+            Stage::ServiceDirectory,
+            "WrapPin could not open the iPhone's service directory.",
+        ),
     )
-    .await
-    .map_err(|_| "The location service took too long to open.".to_string())?
-    .map_err(|_| "The iPhone did not make its location service available.".to_string())?;
-    timeout(SESSION_TIMEOUT, dvt.read_message(0))
-        .await
-        .map_err(|_| "The location service did not become ready in time.".to_string())?
-        .map_err(|_| "The iPhone's location service did not become ready.".to_string())?;
-    let mut location = timeout(SESSION_TIMEOUT, LocationSimulationClient::new(&mut dvt))
-        .await
-        .map_err(|_| "The location controls took too long to open.".to_string())?
-        .map_err(|_| "WrapPin could not open the iPhone's location controls.".to_string())?;
+    .await?;
+    let mut handshake = connection_step(
+        &cancellation,
+        RsdHandshake::new(rsd_stream),
+        LocationError::new(
+            Stage::ServiceHandshake,
+            "The iPhone's service handshake took too long.",
+        ),
+        LocationError::new(
+            Stage::ServiceHandshake,
+            "WrapPin could not complete the iPhone service handshake.",
+        ),
+    )
+    .await?;
+    let mut dvt = connection_step(
+        &cancellation,
+        RemoteServerClient::connect_rsd(&mut handle, &mut handshake),
+        LocationError::new(
+            Stage::LocationService,
+            "The location service took too long to open.",
+        ),
+        LocationError::new(
+            Stage::LocationService,
+            "The iPhone did not make its location service available.",
+        ),
+    )
+    .await?;
+    connection_step(
+        &cancellation,
+        dvt.read_message(0),
+        LocationError::new(
+            Stage::LocationService,
+            "The location service did not become ready in time.",
+        ),
+        LocationError::new(
+            Stage::LocationService,
+            "The iPhone's location service did not become ready.",
+        ),
+    )
+    .await?;
+    let mut location = connection_step(
+        &cancellation,
+        LocationSimulationClient::new(&mut dvt),
+        LocationError::new(
+            Stage::LocationService,
+            "The location controls took too long to open.",
+        ),
+        LocationError::new(
+            Stage::LocationService,
+            "WrapPin could not open the iPhone's location controls.",
+        ),
+    )
+    .await?;
 
+    // From the first write onwards the session must reach `clear`, so a stop
+    // request is only observed between writes, never in the middle of one.
     location
         .set(applied_coordinates.latitude, applied_coordinates.longitude)
         .await
-        .map_err(|_| "The iPhone did not accept the selected location.".to_string())?;
+        .map_err(|_| {
+            LocationError::new(
+                Stage::LocationInitialWrite,
+                "The iPhone did not accept the selected location.",
+            )
+        })?;
     if let Some(callback) = started_callback {
         callback(callback_context as *mut c_void);
     }
@@ -595,7 +778,12 @@ async fn run_location_session(
             location
                 .set(latest_coordinates.latitude, latest_coordinates.longitude)
                 .await
-                .map_err(|_| "The iPhone ended the active location session.".to_string())?;
+                .map_err(|_| {
+                    LocationError::new(
+                        Stage::LocationActiveWrite,
+                        "The iPhone ended the active location session.",
+                    )
+                })?;
             applied_coordinates = latest_coordinates;
             last_refresh = Instant::now();
         }
@@ -604,28 +792,59 @@ async fn run_location_session(
     await_location_clear(location.clear(), SESSION_TIMEOUT).await
 }
 
+/// Runs one step of connection setup, bounded by the session timeout and
+/// abandoned as soon as the session is cancelled. Nothing has been written to
+/// the device's location yet, so dropping the step leaves nothing to restore.
+async fn connection_step<T, E>(
+    cancellation: &Arc<AtomicBool>,
+    operation: impl std::future::Future<Output = Result<T, E>>,
+    timed_out: LocationError,
+    failed: LocationError,
+) -> Result<T, LocationError> {
+    tokio::select! {
+        outcome = timeout(SESSION_TIMEOUT, operation) => {
+            outcome.map_err(|_| timed_out)?.map_err(|_| failed)
+        }
+        _ = wait_for_cancellation(Arc::clone(cancellation)) => Err(LocationError::cancelled()),
+    }
+}
+
 async fn await_location_clear<E>(
     operation: impl std::future::Future<Output = Result<(), E>>,
     deadline: Duration,
-) -> Result<(), String> {
+) -> Result<(), LocationError> {
     timeout(deadline, operation)
         .await
-        .map_err(|_| "The iPhone did not confirm stopping location simulation in time.".to_string())?
-        .map_err(|_| "WrapPin could not confirm stopping location simulation.".to_string())
+        .map_err(|_| {
+            LocationError::new(
+                LocationStage::LocationRestore,
+                "The iPhone did not confirm stopping location simulation in time.",
+            )
+        })?
+        .map_err(|_| {
+            LocationError::new(
+                LocationStage::LocationRestore,
+                "WrapPin could not confirm stopping location simulation.",
+            )
+        })
 }
 
 fn current_coordinates(
     coordinates: &Arc<Mutex<LocationCoordinates>>,
-) -> Result<LocationCoordinates, String> {
-    let current = coordinates
-        .lock()
-        .map_err(|_| "WrapPin could not update the active location.".to_string())?;
+) -> Result<LocationCoordinates, LocationError> {
+    let current = coordinates.lock().map_err(|_| {
+        LocationError::new(
+            LocationStage::LocationActiveWrite,
+            "WrapPin could not update the active location.",
+        )
+    })?;
     LocationCoordinates::validated(current.latitude, current.longitude)
+        .map_err(|message| LocationError::new(LocationStage::Unknown, message))
 }
 
-fn check_location_cancellation(cancelled: &Arc<AtomicBool>) -> Result<(), String> {
+fn check_location_cancellation(cancelled: &Arc<AtomicBool>) -> Result<(), LocationError> {
     if cancelled.load(Ordering::Acquire) {
-        Err(LOCATION_CANCELLED_ERROR.to_string())
+        Err(LocationError::cancelled())
     } else {
         Ok(())
     }
@@ -746,18 +965,108 @@ mod restoration_tests {
 
     #[tokio::test]
     async fn clear_success_is_acknowledged() {
-        assert!(await_location_clear(std::future::ready(Ok::<(), ()>(())), Duration::from_millis(10)).await.is_ok());
+        let cleared =
+            await_location_clear(std::future::ready(Ok::<(), ()>(())), Duration::from_millis(10));
+        assert!(cleared.await.is_ok());
     }
 
     #[tokio::test]
     async fn clear_error_is_not_success() {
-        assert_eq!(await_location_clear(std::future::ready(Err::<(), ()>(())), Duration::from_millis(10)).await.unwrap_err(),
-            "WrapPin could not confirm stopping location simulation.");
+        let error =
+            await_location_clear(std::future::ready(Err::<(), ()>(())), Duration::from_millis(10))
+                .await
+                .unwrap_err();
+        assert_eq!(error.stage, LocationStage::LocationRestore);
+        assert_eq!(
+            error.message,
+            "WrapPin could not confirm stopping location simulation."
+        );
     }
 
     #[tokio::test]
     async fn clear_has_a_deadline() {
-        assert_eq!(await_location_clear(std::future::pending::<Result<(), ()>>(), Duration::from_millis(1)).await.unwrap_err(),
-            "The iPhone did not confirm stopping location simulation in time.");
+        let error = await_location_clear(
+            std::future::pending::<Result<(), ()>>(),
+            Duration::from_millis(1),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error.stage, LocationStage::LocationRestore);
+        assert_eq!(
+            error.message,
+            "The iPhone did not confirm stopping location simulation in time."
+        );
+    }
+}
+
+#[cfg(test)]
+mod connection_step_tests {
+    use super::*;
+
+    const TIMED_OUT: LocationError = LocationError::new(LocationStage::TunnelCreation, "timed out");
+    const FAILED: LocationError = LocationError::recoverable(LocationStage::TunnelConnection, "failed");
+
+    #[tokio::test]
+    async fn success_passes_the_value_through() {
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let value = connection_step(
+            &cancellation,
+            std::future::ready(Ok::<u16, ()>(7)),
+            TIMED_OUT,
+            FAILED,
+        )
+        .await;
+        assert_eq!(value, Ok(7));
+    }
+
+    #[tokio::test]
+    async fn failure_keeps_its_stage_and_recoverability() {
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let error = connection_step(
+            &cancellation,
+            std::future::ready(Err::<(), ()>(())),
+            TIMED_OUT,
+            FAILED,
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error, FAILED);
+        assert!(error.recoverable);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_stalled_step_times_out() {
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let error = connection_step(
+            &cancellation,
+            std::future::pending::<Result<(), ()>>(),
+            TIMED_OUT,
+            FAILED,
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error, TIMED_OUT);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn cancelling_abandons_a_stalled_step_before_its_timeout() {
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let canceller = Arc::clone(&cancellation);
+        tokio::spawn(async move {
+            sleep(Duration::from_secs(1)).await;
+            canceller.store(true, Ordering::Release);
+        });
+
+        let started = Instant::now();
+        let error = connection_step(
+            &cancellation,
+            std::future::pending::<Result<(), ()>>(),
+            TIMED_OUT,
+            FAILED,
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error.stage, LocationStage::Cancelled);
+        assert!(started.elapsed() < SESSION_TIMEOUT);
     }
 }

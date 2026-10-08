@@ -236,7 +236,8 @@ private struct AnalyticsSignal: Encodable {
     let payload: [String: String]
 }
 
-// Values are fixed categories. Error text is compared locally and is never transmitted.
+// Values are fixed categories. Error text and native stage codes are mapped locally;
+// only the category is ever transmitted.
 enum FailureContext: String {
     case pairing, location, restoration
 }
@@ -270,57 +271,37 @@ enum FailureStage: String, CaseIterable {
     case pairingUnknown
     case locationUnknown
 
-    static func classify(_ message: String, fallback: FailureStage) -> FailureStage {
-        // Keep the native bridge's established host identity compatible while
-        // presenting the current product name in the Swift UI.
-        let normalizedMessage = message.replacingOccurrences(
-            of: "WrapPin",
-            with: "WrapPin"
-        )
+    /// Maps the stage code reported by the native location engine
+    /// (`LocationStage` in Native/WrapPinPairingFFI/src/lib.rs). Unknown,
+    /// cancelled and unrecognised codes have no stage of their own.
+    init?(nativeLocationStage code: Int32) {
+        switch code {
+        case 1: self = .pairingRecord
+        case 2: self = .discovery
+        case 3: self = .vpnConnection
+        case 4: self = .pairVerification
+        case 5: self = .tunnelCreation
+        case 6: self = .tunnelConnection
+        case 7: self = .tunnelSecurity
+        case 8: self = .serviceDirectory
+        case 9: self = .serviceHandshake
+        case 10: self = .locationService
+        case 11: self = .locationInitialWrite
+        case 12: self = .locationActiveWrite
+        case 13: self = .locationEngine
+        case 14: self = .locationRestore
+        default: return nil
+        }
+    }
 
-        switch normalizedMessage {
-        case "The iPhone did not confirm stopping location simulation in time.",
-             "WrapPin could not confirm stopping location simulation.": return .locationRestore
+    static let nativeLocationCancelledCode: Int32 = 15
+
+    /// Classifies the pairing engine's English error text. Pass the original
+    /// message, never a localized one. Location sessions report a stage code
+    /// instead; see `init(nativeLocationStage:)`.
+    static func classify(_ message: String, fallback: FailureStage) -> FailureStage {
+        switch message {
         case "WrapPin could not securely store the new pairing.": return .pairingStorage
-        case "The saved pairing record could not be read.",
-             "The saved pairing record is missing its device identity.",
-             "The discovered device did not match the paired iPhone.": return .pairingRecord
-        case "WrapPin could not identify this iPhone's pairing service.",
-             "WrapPin found an outdated device announcement. Toggle LocalDevVPN off and on, then try again.",
-             "WrapPin could not find this iPhone through LocalDevVPN. Check that the tunnel is enabled and try again.",
-             "Local Network access is required to find this iPhone.": return .discovery
-        case "LocalDevVPN returned an invalid device address.",
-             "LocalDevVPN did not make the iPhone connection available in time.",
-             "WrapPin could not reach the iPhone through LocalDevVPN.",
-             "Install LocalDevVPN before starting a location session.": return .vpnConnection
-        case "The paired iPhone did not respond in time.",
-             "The iPhone rejected the saved pairing session.",
-             "Pairing verification took too long.",
-             "The saved pairing is no longer valid. Reset Device Setup and pair again.": return .pairVerification
-        case "The iPhone did not create its secure tunnel in time.",
-             "The iPhone could not create its secure tunnel.": return .tunnelCreation
-        case "LocalDevVPN did not open the secure tunnel in time.",
-             "WrapPin could not open the secure device tunnel.": return .tunnelConnection
-        case "The encrypted device tunnel took too long to start.",
-             "WrapPin could not secure the device tunnel.",
-             "The iPhone returned an invalid tunnel address.",
-             "The iPhone returned an invalid service address.": return .tunnelSecurity
-        case "The iPhone's service directory took too long to respond.",
-             "WrapPin could not open the iPhone's service directory.": return .serviceDirectory
-        case "The iPhone's service handshake took too long.",
-             "WrapPin could not complete the iPhone service handshake.": return .serviceHandshake
-        case "The location service took too long to open.",
-             "The iPhone did not make its location service available.",
-             "The location service did not become ready in time.",
-             "The iPhone's location service did not become ready.",
-             "The location controls took too long to open.",
-             "WrapPin could not open the iPhone's location controls.": return .locationService
-        case "The iPhone did not accept the selected location.": return .locationInitialWrite
-        case "The iPhone ended the active location session.",
-             "WrapPin could not update the active location.": return .locationActiveWrite
-        case "WrapPin could not start its device session.",
-             "The location session stopped unexpectedly.",
-             "WrapPin could not start its location engine.": return .locationEngine
         case "iOS could not prepare the location session. Close WrapPin, reopen it, and try again.",
              "iOS could not register the secure pairing task. Close WrapPin, reopen it, and try again.": return .schedulerRegistration
         case "iOS could not keep pairing active in the background. Keep WrapPin open and try again.": return .schedulerSubmission

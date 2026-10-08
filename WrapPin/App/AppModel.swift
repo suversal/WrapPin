@@ -637,7 +637,7 @@ final class AppModel {
                 }
             } else {
                 usageAnalytics.record(
-                    analyticsEvent(forLocationStartFailure: message),
+                    analyticsEvent(forLocationStartFailure: deviceSession.lastFailureStage),
                     enabled: sharesAnonymousUsageStatistics
                 )
                 if deviceSession.lastFailureStage != .locationRestore {
@@ -647,15 +647,12 @@ final class AppModel {
         }
     }
 
-    private func analyticsEvent(forLocationStartFailure message: String) -> UsageAnalyticsEvent {
-        let normalizedMessage = message.lowercased()
-        if normalizedMessage.contains("localdevvpn") {
-            return .localDevVPNUnreachable
+    private func analyticsEvent(forLocationStartFailure stage: FailureStage?) -> UsageAnalyticsEvent {
+        switch stage {
+        case .vpnConnection, .tunnelConnection: .localDevVPNUnreachable
+        case .locationPreparation: .locationPreparationFailed
+        default: .locationStartFailed
         }
-        if normalizedMessage.contains("prepare") {
-            return .locationPreparationFailed
-        }
-        return .locationStartFailed
     }
 
     private func persistActiveSessionRecovery(at target: LocationTarget) {

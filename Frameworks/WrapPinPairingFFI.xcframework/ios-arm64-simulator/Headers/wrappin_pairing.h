@@ -38,8 +38,32 @@ typedef struct {
 
 typedef void (*WPLocationStartedCallback)(void *context);
 
+// Where a location session failed. The values mirror `LocationStage` in
+// src/lib.rs and are never renumbered; Swift maps them to its failure stages.
+enum {
+    WPLocationStageUnknown = 0,
+    WPLocationStagePairingRecord = 1,
+    WPLocationStageDiscovery = 2,
+    WPLocationStageVpnConnection = 3,
+    WPLocationStagePairVerification = 4,
+    WPLocationStageTunnelCreation = 5,
+    WPLocationStageTunnelConnection = 6,
+    WPLocationStageTunnelSecurity = 7,
+    WPLocationStageServiceDirectory = 8,
+    WPLocationStageServiceHandshake = 9,
+    WPLocationStageLocationService = 10,
+    WPLocationStageLocationInitialWrite = 11,
+    WPLocationStageLocationActiveWrite = 12,
+    WPLocationStageLocationEngine = 13,
+    WPLocationStageLocationRestore = 14,
+    WPLocationStageCancelled = 15
+};
+
 typedef struct {
     char *error_message;
+    int32_t error_stage;
+    // Non-zero when the device tunnel was not reachable yet and discovery may be retried.
+    int32_t error_is_recoverable;
 } WPLocationResult;
 
 WPRemotePairingSession *wp_remote_pairing_session_create(void);
