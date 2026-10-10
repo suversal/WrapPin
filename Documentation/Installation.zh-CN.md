@@ -59,18 +59,13 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 
 ### 使用 Xcode 和付费开发者账号
 
-1. 克隆本仓库，把 `Configuration/Local.private.xcconfig.example` 复制为 `Configuration/Local.private.xcconfig`。
-2. 填入自己的团队和 App ID，示例文件里用不到的行可以删掉；扩展会自动使用该 ID 加 `.tunnel`：
+这条路线维护者没有实测，以下只是大致步骤，细节请参考 Apple 的开发者文档。
 
-   ```
-   DEVELOPMENT_TEAM = 你的 Team ID
-   WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER = com.example.wrappin.selfsigned
-   ```
+1. 克隆本仓库，把 `Configuration/Local.private.xcconfig.example` 复制为 `Configuration/Local.private.xcconfig`，填入自己的 `DEVELOPMENT_TEAM` 和 `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER`。
+2. 使用 Xcode 27 或更高版本打开 `WrapPin.xcodeproj`，选择 **WrapPin Tunnel** scheme。
+3. 连接 iPhone，选择该设备并运行，由 Xcode 的自动签名处理 App ID 和描述文件。
 
-3. 使用 Xcode 27 或更高版本打开 `WrapPin.xcodeproj`，选择 **WrapPin Tunnel** scheme。
-4. 连接 iPhone，选择该设备并运行。工程使用自动签名，Xcode 会注册设备、创建两个 App ID 并生成带 Network Extensions 能力的描述文件。
-
-如果想用自己的账号重签发布的 IPA 而不编译源码，需要在开发者后台为主 App 和扩展各建一个开启 Network Extensions 的显式 App ID 和描述文件，先签扩展、再签主 App。签名要求和签名后的验收步骤见[内置隧道版说明](BuiltInTunnelResearch.zh-CN.md)。
+也可以用自己的账号重签发布的 IPA：主 App 和扩展各需要一份带 Packet Tunnel 权限的描述文件，先签扩展、再签主 App。签名要求和签名后的验收步骤见[内置隧道版说明](BuiltInTunnelResearch.zh-CN.md)。
 
 更新隧道版时同样直接覆盖安装，并使用与上次相同的证书和 Bundle ID。
 

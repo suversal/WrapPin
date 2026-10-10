@@ -57,18 +57,13 @@ Notes:
 
 ### With Xcode and a paid developer account
 
-1. Clone the repository and copy `Configuration/Local.private.xcconfig.example` to `Configuration/Local.private.xcconfig`.
-2. Fill in your own team and App ID, and delete the example lines you do not need. The extension automatically uses that ID plus `.tunnel`:
+The maintainer has not tested this route. The steps below are an outline only; refer to Apple's developer documentation for details.
 
-   ```
-   DEVELOPMENT_TEAM = YOUR-TEAM-ID
-   WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER = com.example.wrappin.selfsigned
-   ```
+1. Clone the repository, copy `Configuration/Local.private.xcconfig.example` to `Configuration/Local.private.xcconfig`, and fill in your own `DEVELOPMENT_TEAM` and `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER`.
+2. Open `WrapPin.xcodeproj` with Xcode 27 or newer and select the **WrapPin Tunnel** scheme.
+3. Select a connected iPhone and press **Run**, letting Xcode's automatic signing handle the App IDs and provisioning profiles.
 
-3. Open `WrapPin.xcodeproj` with Xcode 27 or newer and select the **WrapPin Tunnel** scheme.
-4. Select a connected iPhone and press **Run**. The project uses automatic signing, so Xcode registers the device, creates both App IDs, and generates profiles with the Network Extensions capability.
-
-To re-sign a released IPA with your own account instead of building from source, create an explicit App ID and provisioning profile with Network Extensions enabled for the main app and for the extension, then sign the extension before the main app. Signing requirements and post-signing checks are described in the [built-in tunnel notes](BuiltInTunnelResearch.zh-CN.md) (Chinese).
+You can also re-sign a released IPA with your own account: the main app and the extension each need a provisioning profile with the Packet Tunnel entitlement, and the extension is signed before the main app. Signing requirements and post-signing checks are described in the [built-in tunnel notes](BuiltInTunnelResearch.zh-CN.md) (Chinese).
 
 Update the Tunnel edition by installing over the existing copy with the same certificate and bundle ID as before.
 
