@@ -15,7 +15,11 @@ All notable public changes to WrapPin are recorded here.
 
 ### Known limitations
 
-- WrapPin cannot inspect another app's VPN state. The Surge configuration and this unsigned build still require physical-iPhone testing.
+- WrapPin cannot inspect another app's VPN state, so Surge must still be configured and enabled independently.
+
+### Tested
+
+- Build 49 was signed and installed on a physical iPhone. Surge 5.102.0 (3864) successfully provided the paired-device channel and WrapPin completed location simulation through Surge; LocalDevVPN was also verified on the same build.
 
 ## [1.0.15] - 2026-10-08
 

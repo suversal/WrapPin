@@ -22,12 +22,13 @@
 - ZIP integrity, bundle identity, version/build, arm64 architecture, unsigned state and absence of extensions in the Standard package.
 - Tunnel handoff policy, localization coverage, native failure stages, background-session lifecycle, coordinate-mode recovery, route-selection compilation and route-recovery compatibility.
 
-## Device acceptance gate
+## Physical-device acceptance
 
-This candidate has not been installed on a physical iPhone. Do not open an upstream pull request until a signed installation verifies:
+Build 49 was signed and installed on a physical iPhone with Surge 5.102.0 (3864). Testing verified:
 
-1. Surge imports or contains the settings in `WrapPin-Surge.sgmodule`.
+1. Surge imports and enables the settings in `WrapPin-Surge.sgmodule`.
 2. Selecting Surge in WrapPin and starting a location opens Surge and starts its selected configuration.
-3. Returning to WrapPin reaches the paired iPhone and starts the location session on Wi-Fi.
-4. Stopping restores the real location.
-5. LocalDevVPN and Shadowrocket selections still open their respective apps.
+3. Returning to WrapPin reaches the paired iPhone and location simulation succeeds through Surge.
+4. LocalDevVPN continues to provide a working paired-device channel on the same build.
+
+The Surge test initially failed on Surge 5.22.1 because IP Rewrite `reflect` requires Surge iOS 5.23.0 or later. Retesting with a compatible Surge build passed. Shadowrocket was not independently regression-tested as part of this acceptance run.
