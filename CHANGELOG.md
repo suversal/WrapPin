@@ -19,10 +19,11 @@ All notable public changes to WrapPin are recorded here.
 
 - WrapPin cannot inspect another app's VPN state, so Shadowrocket, Surge and Loon must still be configured and enabled independently.
 - Shadowrocket, Surge and Loon do not return to WrapPin on their own after starting; switch back manually.
+- On mobile data, the device connection through Shadowrocket, Surge or Loon is unreliable. This is a known issue that is not fixed in this release; use Wi-Fi with these apps, or LocalDevVPN on mobile data.
 
 ### Tested
 
-- The maintainer installed Build 52 of both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon. The contributor's earlier Build 49 completed a location session through Surge 5.102.0 and through LocalDevVPN. Mobile-data behavior of the three apps was not itemised in this round.
+- The maintainer installed Build 52 of both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon. The contributor's earlier Build 49 completed a location session through Surge 5.102.0 and through LocalDevVPN.
 
 ## [1.0.15] - 2026-10-08
 

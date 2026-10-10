@@ -29,7 +29,7 @@
 
 - 三个外部应用启动后不会自动返回 WrapPin，需要手动切回。
 - WrapPin 无法读取其他应用的 VPN 开关，只能检测配对设备通道是否可达。
-- 三个应用在蜂窝网络下的表现本轮没有逐项验证；连接失败时请改用 Wi-Fi。
+- 蜂窝网络下，通过 Shadowrocket、Surge、Loon 建立设备连接目前不可靠。这是已知问题，本版尚未修复；使用这三个应用时请连接 Wi-Fi，需要在蜂窝网络下使用时请选 LocalDevVPN。
 - Surge 5.22.x 及更早版本不支持 IP Rewrite 的 `reflect`，无法提供设备通道。
 
 ### 致谢
@@ -42,6 +42,6 @@ WrapPin 1.0.16 adds Surge and Loon as tunnel handoff apps and brings Shadowrocke
 
 When the paired-device channel is unavailable, WrapPin asks Surge to start its selected configuration through `surge:///start`, asks Loon to turn on its VPN through `loon://on`, and now asks Shadowrocket to connect through `shadowrocket://connect` instead of only opening it. Surge needs iOS 5.23.0 or later and Loon needs build 1007 or later, each with a route and an IP Rewrite `reflect` rule for `10.7.0.1`; Shadowrocket needs **Include Route 10.7.0.1/32** turned on in its Settings. See the [Surge](SurgeIntegration.md), [Loon](LoonIntegration.md) and [Shadowrocket](ShadowrocketIntegration.md) setup guides. The Wi-Fi guidance on mobile data and the connection-check messages now apply to all three apps.
 
-The unsigned packages require iOS 27.0 or later. `WrapPin-Standard-1.0.16-build52-unsigned.ipa` has SHA-256 `653efba12ee92a6a8b6749957850c7ee2f30fe89b6f5276dadd52c680a98ca5e`; `WrapPin-Tunnel-1.0.16-build52-unsigned.ipa` has SHA-256 `1e045e154fc268357fdd5e408c93b1b6b7eefd56529325782b2ef65d00d9d657`. They passed the source checks and archive, identity, version and integrity checks; native engine tests were not rerun because the engine is unchanged. The maintainer installed Build 52 of both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon. The three apps do not return to WrapPin on their own, and their mobile-data behavior was not itemised in this round. Builds 49 to 51 were local test builds and were not published.
+The unsigned packages require iOS 27.0 or later. `WrapPin-Standard-1.0.16-build52-unsigned.ipa` has SHA-256 `653efba12ee92a6a8b6749957850c7ee2f30fe89b6f5276dadd52c680a98ca5e`; `WrapPin-Tunnel-1.0.16-build52-unsigned.ipa` has SHA-256 `1e045e154fc268357fdd5e408c93b1b6b7eefd56529325782b2ef65d00d9d657`. They passed the source checks and archive, identity, version and integrity checks; native engine tests were not rerun because the engine is unchanged. The maintainer installed Build 52 of both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon. The three apps do not return to WrapPin on their own. On mobile data, the device connection through them is unreliable; this is a known issue that is not fixed in this release, so use Wi-Fi with these apps, or LocalDevVPN on mobile data. Builds 49 to 51 were local test builds and were not published.
 
 Surge support was contributed by [@svcvit](https://github.com/svcvit) in [#27](https://github.com/suversal/WrapPin/pull/27).

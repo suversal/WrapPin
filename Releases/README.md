@@ -14,7 +14,7 @@
 - Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+. No TelemetryDeck identifiers were configured for this build, so it sends no usage statistics.
 - Changes: Surge and Loon added as tunnel handoff apps; Shadowrocket is asked to connect through `shadowrocket://connect`; external-tunnel Wi-Fi guidance and diagnostics apply to all three; setup guides and importable Surge and Loon modules added. No native engine change from Build 48.
 - Verification: localization, failure-stage, background-session, coordinate-mode, route-recovery, tunnel-handoff and route-selection checks, both Release archives, IPA ZIP integrity, identifiers, versions and extension presence or absence passed. Native engine tests were not rerun because the engine is unchanged. The maintainer installed both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon.
-- Known issues: the three external apps do not return to WrapPin automatically; mobile-data behavior with them was not itemised in this round. Builds 49 to 51 were local test builds and were not published.
+- Known issues: the device connection through Shadowrocket, Surge or Loon is unreliable on mobile data and is not fixed in this build, so use Wi-Fi with these apps; the three apps do not return to WrapPin automatically. Builds 49 to 51 were local test builds and were not published.
 - Publication: GitHub Release `v1.0.16`.
 
 See [the 1.0.16 build notes](../Documentation/Release-1.0.16.md) for details.
