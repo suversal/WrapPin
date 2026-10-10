@@ -1,6 +1,8 @@
 # Surge iOS 配置
 
-WrapPin 标准版可以把 Surge 作为设备隧道跳转应用。此集成不会读取或修改 Surge 的 VPN 状态；当配对设备通道不可达时，WrapPin 使用 Surge 官方 URL Scheme `surge:///start` 启动当前配置，然后继续检测配对服务。
+[English](SurgeIntegration.md)
+
+WrapPin 可以把 Surge 作为设备隧道跳转应用。标准版始终提供这个选项，隧道版在未启用内置隧道时提供。此集成不会读取或修改 Surge 的 VPN 状态；当配对设备通道不可达时，WrapPin 使用 Surge 官方 URL Scheme `surge:///start` 启动当前配置，然后继续检测配对服务。
 
 ## 要求
 
@@ -27,7 +29,7 @@ tun-included-routes = %INSERT% 10.7.0.1/32
 
 ## WrapPin 设置
 
-1. 在 WrapPin 的“设置 → 隧道应用”中选择 Surge。
+1. 在 WrapPin 的“设置 → 隧道跳转应用”中选择 Surge。
 2. 完成一次设备配对。
 3. 开始模拟定位。若当前设备通道不可达，WrapPin 会请求 Surge 启动当前配置。
 4. Surge 启动后手动返回 WrapPin；WrapPin 会继续检测连接。

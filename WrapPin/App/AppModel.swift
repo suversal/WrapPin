@@ -61,6 +61,7 @@ final class AppModel {
         case .localDevVPN: localDevVPNInstallURL
         case .shadowrocket: URL(string: "https://apps.apple.com/app/shadowrocket/id932747118")!
         case .surge: URL(string: "https://apps.apple.com/app/surge-5/id1442620678")!
+        case .loon: URL(string: "https://apps.apple.com/app/loon/id1373567447")!
         }
     }
 

@@ -2,9 +2,22 @@
 
 ## Active distribution tracks
 
-- Public release: `v1.0.15` Build 48, with both editions attached to the same GitHub Release.
-- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.15-build48-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
-- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.15-build48-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+- Public release: `v1.0.16` Build 52, with both editions attached to the same GitHub Release.
+- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.16-build52-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
+- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.16-build52-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+
+## 1.0.16 (Build 52)
+
+- Created: 10 October 2026 with Xcode 27.0 (`27A266a`) using `scripts/package-ipa.sh standard` and `scripts/package-ipa.sh tunnel` from the same source state
+- Standard IPA: `WrapPin-Standard-1.0.16-build52-unsigned.ipa`; SHA-256 `653efba12ee92a6a8b6749957850c7ee2f30fe89b6f5276dadd52c680a98ca5e`; no Packet Tunnel extension.
+- Tunnel IPA: `WrapPin-Tunnel-1.0.16-build52-unsigned.ipa`; SHA-256 `1e045e154fc268357fdd5e408c93b1b6b7eefd56529325782b2ef65d00d9d657`; contains `WrapPinTunnel.appex`.
+- Both: optimized unsigned Release Archive, arm64 iPhone, iOS 27+. No TelemetryDeck identifiers were configured for this build, so it sends no usage statistics.
+- Changes: Surge and Loon added as tunnel handoff apps; Shadowrocket is asked to connect through `shadowrocket://connect`; external-tunnel Wi-Fi guidance and diagnostics apply to all three; setup guides and importable Surge and Loon modules added. No native engine change from Build 48.
+- Verification: localization, failure-stage, background-session, coordinate-mode, route-recovery, tunnel-handoff and route-selection checks, both Release archives, IPA ZIP integrity, identifiers, versions and extension presence or absence passed. Native engine tests were not rerun because the engine is unchanged. The maintainer installed both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon.
+- Known issues: the three external apps do not return to WrapPin automatically; mobile-data behavior with them was not itemised in this round. Builds 49 to 51 were local test builds and were not published.
+- Publication: GitHub Release `v1.0.16`.
+
+See [the 1.0.16 build notes](../Documentation/Release-1.0.16.md) for details.
 
 ## 1.0.15 (Build 48)
 

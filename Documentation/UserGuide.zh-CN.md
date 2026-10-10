@@ -34,9 +34,13 @@ WrapPin 可以让 iPhone 暂时报告一个固定位置，或沿 Apple 地图规
 
 ## Wi-Fi 与蜂窝网络
 
-可在“设置 → 隧道跳转应用”选择 LocalDevVPN（默认）或 Shadowrocket。使用 Wi-Fi 时，WrapPin 会检查已配对 iPhone 的设备连接：能连通就不跳转，无法连通才打开所选应用。蜂窝网络下，LocalDevVPN 保留原有的建立隧道并返回流程，因此启动时仍会打开一次；Shadowrocket 则先检查设备连接，连不上时只打开应用，由用户自行开启。WrapPin 不能直接读取这两个应用的 VPN 开关状态。
+可在“设置 → 隧道跳转应用”选择 LocalDevVPN（默认）、Shadowrocket、Surge 或 Loon。使用 Wi-Fi 时，WrapPin 会检查已配对 iPhone 的设备连接：能连通就不跳转，无法连通才打开所选应用。蜂窝网络下，LocalDevVPN 保留原有的建立隧道并返回流程，因此启动时仍会打开一次；Shadowrocket、Surge 和 Loon 则先检查设备连接，连不上时才打开应用并请求开启 VPN。WrapPin 不能直接读取这些应用的 VPN 开关状态。
 
-Shadowrocket 选项只决定跳转目标，不表示普通代理配置就能提供本机远程配对通道。蜂窝网络下即使它显示已连接，WrapPin 仍可能无法建立设备连接；此时请改用 Wi-Fi。若 Wi-Fi 下也无法通过连接检测，建议保持默认 LocalDevVPN。Shadowrocket 的各类配置与网络组合尚未完成真机验收。
+选择 Shadowrocket 时，WrapPin 通过 `shadowrocket://connect` 请求它开启 VPN，之后需要手动返回 WrapPin。Shadowrocket 需要按 [Shadowrocket 配置](ShadowrocketIntegration.zh-CN.md) 在“设置 → 其它”中开启“包含路由 10.7.0.1/32”，才能提供设备连接。蜂窝网络下无法连接时，请改用 Wi-Fi；若 Wi-Fi 下也无法通过连接检测，建议保持默认 LocalDevVPN。
+
+选择 Surge 时，WrapPin 通过 `surge:///start` 请求 Surge 启动当前配置，之后需要手动返回 WrapPin。Surge 需要 iOS 版 5.23.0 或更高版本，并按 [Surge iOS 配置](SurgeIntegration.zh-CN.md) 加入路由和 IP Rewrite 设置，才能提供设备连接。蜂窝网络下无法连接时，请改用 Wi-Fi。
+
+选择 Loon 时，WrapPin 通过 `loon://on` 请求 Loon 开启 VPN，之后需要手动返回 WrapPin。Loon 需要 Build 1007 或更高版本，并按 [Loon 配置](LoonIntegration.zh-CN.md) 加入 `include-tun` 和 IP Rewrite 设置，才能提供设备连接。蜂窝网络下无法连接时，请改用 Wi-Fi。
 
 使用 Wi-Fi 时，请确认所选应用的兼容设备隧道已连接。默认使用 LocalDevVPN 时，如果仍然找不到本机，先关闭再开启一次隧道，然后轻点“重试”。连接 Wi-Fi 时不要误选“我正在使用蜂窝网络”。
 
@@ -47,7 +51,7 @@ Shadowrocket 选项只决定跳转目标，不表示普通代理配置就能提�
 3. 回到 WrapPin，等待它自动发现本机；必要时轻点“继续”。
 4. 安全连接建立后，按提示重新开启蜂窝网络。
 
-临时关闭蜂窝网络只用于 LocalDevVPN 建立连接。模拟定位开始后，可以恢复正常使用移动数据。Shadowrocket 不使用这套临时关闭蜂窝数据的引导；如果它在蜂窝网络下无法连接，请切换到 Wi-Fi 后重试。
+临时关闭蜂窝网络只用于 LocalDevVPN 建立连接。模拟定位开始后，可以恢复正常使用移动数据。Shadowrocket、Surge 和 Loon 不使用这套临时关闭蜂窝数据的引导；如果它们在蜂窝网络下无法连接，请切换到 Wi-Fi 后重试。
 
 ## 模拟步行路线
 

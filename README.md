@@ -71,7 +71,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 - 保存常用地点，快速访问最近使用的位置。
 - 会话结束时主动清除模拟坐标并恢复真实位置。
 - 为 Wi-Fi 和蜂窝网络提供分开的连接引导与诊断。
-- 在设置中选择 LocalDevVPN、Shadowrocket 或 Surge 作为连接不可用时的跳转应用。Surge 需要按 [Surge iOS 配置](Documentation/SurgeIntegration.zh-CN.md) 启用 `10.7.0.1` 本机反射。
+- 在设置中选择 LocalDevVPN、Shadowrocket、Surge 或 Loon 作为连接不可用时的跳转应用。Shadowrocket、Surge 和 Loon 需要分别按 [Shadowrocket 配置](Documentation/ShadowrocketIntegration.zh-CN.md)、[Surge iOS 配置](Documentation/SurgeIntegration.zh-CN.md)、[Loon 配置](Documentation/LoonIntegration.zh-CN.md) 启用 `10.7.0.1` 设备通道。
 - 打开 App 时检查最新公开版本，有更新时提醒；也可在设置中手动检查、反馈问题或联系维护者。
 - 支持深浅色外观、不同地图样式、动态字体、VoiceOver 和“减弱动态效果”。
 

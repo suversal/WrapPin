@@ -2,5 +2,5 @@
 // app, the Tunnel app and the Packet Tunnel extension all read these values;
 // an extension must carry the same version and build as the app embedding it.
 MARKETING_VERSION = 1.0.16
-CURRENT_PROJECT_VERSION = 49
-WRAPPIN_BUILD_TIMESTAMP = 2026-10-10T02:59:42Z
+CURRENT_PROJECT_VERSION = 52
+WRAPPIN_BUILD_TIMESTAMP = 2026-10-10T13:11:20Z

@@ -58,12 +58,14 @@ Use this checklist before packaging an IPA or declaring a development build stab
 
 ### Tunnel app handoff (new branch; physical device required)
 
-- [ ] LocalDevVPN is the default; choosing Shadowrocket persists across launch, and reset restores the default.
-- [ ] On Wi-Fi, a currently reachable paired device causes no handoff and an unreachable one opens the selected app. On mobile data, LocalDevVPN keeps its original connect-and-return flow; Shadowrocket opens without enabling its VPN.
+- [ ] LocalDevVPN is the default; choosing Shadowrocket, Surge or Loon persists across launch, and reset restores the default.
+- [ ] On Wi-Fi, a currently reachable paired device causes no handoff and an unreachable one opens the selected app. On mobile data, LocalDevVPN keeps its original connect-and-return flow; Shadowrocket is asked to connect its VPN through `shadowrocket://connect`, Surge is asked to start its selected configuration through `surge:///start`, and Loon is asked to turn on its VPN through `loon://on`.
 - [ ] After a successful session, stopping and starting again rechecks reachability on Wi-Fi. LocalDevVPN still opens once per mobile-data startup.
-- [ ] Shadowrocket on mobile data recommends switching to Wi-Fi after connection failure and never shows the LocalDevVPN mobile-data-off step; LocalDevVPN guidance remains unchanged.
+- [ ] Shadowrocket, Surge or Loon on mobile data recommends switching to Wi-Fi after connection failure and never shows the LocalDevVPN mobile-data-off step; LocalDevVPN guidance remains unchanged.
 - [ ] Returning after manually enabling a compatible tunnel resumes discovery; a missing or unsupported app-link scheme shows an error and the selected app's store link.
-- [ ] Fixed, walking and driving sessions use the same startup path. A Shadowrocket proxy without local device pairing reachability must not be reported as connected.
+- [ ] Fixed, walking and driving sessions use the same startup path. With Shadowrocket's **Include Route 10.7.0.1/32** on, the paired-device channel is reachable and a location session starts; with it off, WrapPin must not report a connection.
+- [ ] Surge iOS 5.23.0+ with the settings in [Surge iOS setup](SurgeIntegration.md) provides the paired-device channel at `10.7.0.1` and a location session starts. Without the `reflect` rule, or on an older Surge, WrapPin must not report a connection.
+- [ ] Loon build 1007+ with the settings in [Loon setup](LoonIntegration.md) provides the paired-device channel at `10.7.0.1` and a location session starts. Without the `reflect` plugin, or on an older Loon, WrapPin must not report a connection.
 
 ## Fixed location on mobile data (LocalDevVPN)
 

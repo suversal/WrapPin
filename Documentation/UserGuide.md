@@ -43,9 +43,13 @@ Tap **Stop & Restore** when you want iOS to return to the real location, then co
 
 ## Wi-Fi connection flow
 
-**Settings → Tunnel App** selects LocalDevVPN (the default) or Shadowrocket. On Wi-Fi, WrapPin checks whether it can reach the paired iPhone and opens the selected app only if that connection fails. On mobile data, LocalDevVPN retains its original connect-and-return startup flow, so it still opens once; Shadowrocket is opened only after the device connection cannot be established. WrapPin cannot inspect either app's VPN switch directly.
+**Settings → Tunnel App** selects LocalDevVPN (the default), Shadowrocket, Surge or Loon. On Wi-Fi, WrapPin checks whether it can reach the paired iPhone and opens the selected app only if that connection fails. On mobile data, LocalDevVPN retains its original connect-and-return startup flow, so it still opens once; Shadowrocket, Surge and Loon are opened, and asked to turn on their VPN, only after the device connection cannot be established. WrapPin cannot inspect any of these apps' VPN switches directly.
 
-The Shadowrocket option selects a handoff destination only. An ordinary proxy profile does not necessarily expose the local remote-pairing service. On mobile data, that device connection may fail even when Shadowrocket appears connected; switch to Wi-Fi and try again. If Wi-Fi also fails the connection check, keep LocalDevVPN as the default. Shadowrocket's profile and network combinations have not all been verified on physical devices.
+With Shadowrocket selected, WrapPin asks it to connect its VPN through `shadowrocket://connect`; return to WrapPin manually afterwards. Shadowrocket provides the device connection only when **Include Route 10.7.0.1/32** is turned on in its Settings, as described in [Shadowrocket setup](ShadowrocketIntegration.md). If it cannot connect over mobile data, use Wi-Fi. If Wi-Fi also fails the connection check, keep LocalDevVPN as the default.
+
+With Surge selected, WrapPin asks Surge to start its selected configuration through `surge:///start`; return to WrapPin manually afterwards. Surge provides the device connection only on Surge iOS 5.23.0 or later with the route and IP Rewrite settings in [Surge iOS setup](SurgeIntegration.md). If it cannot connect over mobile data, use Wi-Fi.
+
+With Loon selected, WrapPin asks Loon to turn on its VPN through `loon://on`; return to WrapPin manually afterwards. Loon provides the device connection only on build 1007 or later with the `include-tun` and IP Rewrite settings in [Loon setup](LoonIntegration.md). If it cannot connect over mobile data, use Wi-Fi.
 
 When Wi-Fi is connected, WrapPin looks for the paired iPhone through a compatible device tunnel immediately. LocalDevVPN remains the supported default.
 
@@ -66,7 +70,7 @@ When the iPhone is using 4G or 5G with LocalDevVPN:
 5. If automatic detection does not continue, tap **Continue** as the manual backup.
 6. When **Turn Mobile Data Back On** appears, restore mobile data and tap **Done**.
 
-Only LocalDevVPN startup needs this temporary change. After the secure location session is active, it can continue while mobile data is back on. Shadowrocket does not use this mobile-data-off guidance; if it cannot connect over mobile data, use Wi-Fi instead.
+Only LocalDevVPN startup needs this temporary change. After the secure location session is active, it can continue while mobile data is back on. Shadowrocket, Surge and Loon do not use this mobile-data-off guidance; if they cannot connect over mobile data, use Wi-Fi instead.
 
 ## Walking routes
 

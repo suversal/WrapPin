@@ -6,20 +6,23 @@ All notable public changes to WrapPin are recorded here.
 
 ### Added
 
-- Added Surge as a Standard-edition tunnel handoff choice. WrapPin uses Surge's official `surge:///start` action when the paired-device channel is unavailable.
-- Documented Surge 5.23+'s official on-device developer-services configuration using `tun-included-routes` and IP Rewrite for `10.7.0.1`.
+- Added Surge as a tunnel handoff choice, available in the Standard edition and in the Tunnel edition when its built-in tunnel is not in use. WrapPin uses Surge's official `surge:///start` action when the paired-device channel is unavailable.
+- Documented Surge 5.23+'s official on-device developer-services configuration using `tun-included-routes` and IP Rewrite for `10.7.0.1`, in [English](Documentation/SurgeIntegration.md) and [Chinese](Documentation/SurgeIntegration.zh-CN.md).
+- Added Loon as a tunnel handoff choice, available in the same cases. WrapPin uses Loon's official `loon://on` action when the paired-device channel is unavailable, and the Loon build 1007+ `include-tun` and IP Rewrite settings are documented in [English](Documentation/LoonIntegration.md) and [Chinese](Documentation/LoonIntegration.zh-CN.md).
 
 ### Improved
 
-- Generalized external-tunnel mobile-data guidance and connection diagnostics so they apply to both Shadowrocket and Surge.
+- Generalized external-tunnel mobile-data guidance and connection diagnostics so they apply to Shadowrocket, Surge and Loon.
+- Shadowrocket is now asked to connect its VPN through `shadowrocket://connect` instead of only being opened, matching Surge and Loon. Its settings footer follows the same wording as the other tunnel apps, and the required **Include Route 10.7.0.1/32** setting is documented in [English](Documentation/ShadowrocketIntegration.md) and [Chinese](Documentation/ShadowrocketIntegration.zh-CN.md).
 
 ### Known limitations
 
-- WrapPin cannot inspect another app's VPN state, so Surge must still be configured and enabled independently.
+- WrapPin cannot inspect another app's VPN state, so Shadowrocket, Surge and Loon must still be configured and enabled independently.
+- Shadowrocket, Surge and Loon do not return to WrapPin on their own after starting; switch back manually.
 
 ### Tested
 
-- Build 49 was signed and installed on a physical iPhone. Surge 5.102.0 (3864) successfully provided the paired-device channel and WrapPin completed location simulation through Surge; LocalDevVPN was also verified on the same build.
+- The maintainer installed Build 52 of both editions on a physical iPhone and confirmed the handoff to Shadowrocket, Surge and Loon. The contributor's earlier Build 49 completed a location session through Surge 5.102.0 and through LocalDevVPN. Mobile-data behavior of the three apps was not itemised in this round.
 
 ## [1.0.15] - 2026-10-08
 

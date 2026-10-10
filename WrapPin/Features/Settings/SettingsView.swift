@@ -98,9 +98,11 @@ struct SettingsView: View {
                         case .localDevVPN:
                             Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
                         case .shadowrocket:
-                            Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
+                            Text("WrapPin asks Shadowrocket to connect its VPN only when it cannot find the paired iPhone's device connection. Shadowrocket requires Include Route 10.7.0.1/32 turned on in its Settings. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Shadowrocket's VPN switch.")
                         case .surge:
                             Text("WrapPin asks Surge to start its selected configuration only when it cannot find the paired iPhone's device connection. Surge 5.23+ requires 10.7.0.1/32 in tun-included-routes and 10.7.0.1 = reflect in IP Rewrite. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Surge's VPN switch.")
+                        case .loon:
+                            Text("WrapPin asks Loon to turn on its VPN only when it cannot find the paired iPhone's device connection. Loon build 1007+ requires include-tun = 10.7.0.1/32 and an enabled plugin with 10.7.0.1 = reflect in IP Rewrite. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Loon's VPN switch.")
                         }
                     }
                 }
