@@ -2,6 +2,21 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.16] - 2026-10-10
+
+### Added
+
+- Added Surge as a Standard-edition tunnel handoff choice. WrapPin uses Surge's official `surge:///start` action when the paired-device channel is unavailable.
+- Documented Surge 5.23+'s official on-device developer-services configuration using `tun-included-routes` and IP Rewrite for `10.7.0.1`.
+
+### Improved
+
+- Generalized external-tunnel mobile-data guidance and connection diagnostics so they apply to both Shadowrocket and Surge.
+
+### Known limitations
+
+- WrapPin cannot inspect another app's VPN state. The Surge configuration and this unsigned build still require physical-iPhone testing.
+
 ## [1.0.15] - 2026-10-08
 
 ### Fixed

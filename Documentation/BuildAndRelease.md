@@ -4,7 +4,7 @@ This guide covers WrapPin's development builds and the planned IPA workflow.
 
 ## Current release tracks
 
-- Marketing version: `1.0.15`, Build `48`, for both editions
+- Marketing version: `1.0.16`, Build `49`, for both editions
 - Standard edition (SideStore): bundle identifier `com.suversal.wrappin`
 - Tunnel edition: bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
 - Minimum deployment target: iOS 27

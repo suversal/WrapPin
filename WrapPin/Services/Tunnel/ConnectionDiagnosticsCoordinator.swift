@@ -81,8 +81,8 @@ final class ConnectionDiagnosticsCoordinator: NSObject {
                     "A device announcement is visible, but it does not match the paired iPhone. Restart the selected tunnel and try again."
                 ))
             } else {
-                self.finish(.failed(tunnelHandoffApp == .shadowrocket
-                    ? "This iPhone was not reachable through the device tunnel. If you are using Shadowrocket on mobile data, connect to Wi-Fi and run the check again."
+                self.finish(.failed(TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp)
+                    ? "This iPhone was not reachable through the device tunnel. If you are using an external tunnel app on mobile data, connect to Wi-Fi and run the check again."
                     : "This iPhone was not reachable through the device tunnel. Check that a compatible tunnel is connected. On mobile data, switch data off briefly and run the check again."
                 ))
             }

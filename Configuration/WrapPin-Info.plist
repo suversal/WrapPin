@@ -37,6 +37,7 @@
 	<array>
 		<string>localdevvpn</string>
 		<string>shadowrocket</string>
+		<string>surge</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

@@ -94,10 +94,13 @@ struct SettingsView: View {
                         }
                         .accessibilityHint("Selects the app to open when WrapPin cannot reach the paired iPhone.")
                     } footer: {
-                        if appModel.tunnelHandoffApp == .shadowrocket {
-                            Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
-                        } else {
+                        switch appModel.tunnelHandoffApp {
+                        case .localDevVPN:
                             Text("On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin.")
+                        case .shadowrocket:
+                            Text("WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel.")
+                        case .surge:
+                            Text("WrapPin asks Surge to start its selected configuration only when it cannot find the paired iPhone's device connection. Surge 5.23+ requires 10.7.0.1/32 in tun-included-routes and 10.7.0.1 = reflect in IP Rewrite. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Surge's VPN switch.")
                         }
                     }
                 }

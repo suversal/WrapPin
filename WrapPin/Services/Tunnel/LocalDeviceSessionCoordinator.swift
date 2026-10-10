@@ -350,7 +350,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
     func retryConnection() {
         guard mobileDataGuidance == .connectionHelp, pendingSession != nil else { return }
         onConnectionEvent?(retryTelemetry.selected())
-        if tunnelHandoffApp == .shadowrocket {
+        if TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp) {
             isMobileDataStartupMode = wifiPathStatusIsKnown && !isWiFiPathSatisfied
         }
         mobileDataGuidance = nil
@@ -922,7 +922,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
         if isMobileDataStartupMode {
             serviceProbeAttemptCount = 0
-            if tunnelHandoffApp == .shadowrocket {
+            if TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp) {
                 showConnectionHelp()
             }
             return
@@ -1084,7 +1084,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
     private func resumeAfterTunnelApp() {
         guard pendingSession != nil, !workerIsRunning else { return }
-        if tunnelHandoffApp == .shadowrocket && wifiPathStatusIsKnown {
+        if TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp), wifiPathStatusIsKnown {
             isMobileDataStartupMode = !isWiFiPathSatisfied
         }
         if isMobileDataStartupMode &&
