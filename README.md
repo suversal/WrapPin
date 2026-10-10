@@ -13,6 +13,10 @@
 </p>
 
 <p align="center">
+  <strong>简体中文</strong> · <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
   <strong>当前版本：</strong>1.0.15（Build 48） · <strong>系统要求：</strong>iOS 27+
 </p>
 
@@ -147,27 +151,114 @@ WrapPin 的主要优点：
 
 ## 安装前准备
 
+下面以免费路线为例：**iLoader + SideStore + LocalDevVPN + WrapPin**。
+
 你需要：
 
-- 一台运行 iOS 27 或更高版本的实体 iPhone。
-- 在“设置 → 隐私与安全性”中开启“开发者模式”。
-- 在 iPhone 上安装并允许 [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044) 创建 VPN 配置。
-- SideStore，或一台安装了 Xcode 27+ 的 Mac。
+- 一台运行 iOS 27 或更高版本的实体 iPhone，并已设置锁屏密码。
+- 一台 Mac、Windows 或 Linux 电脑，只在第一次安装 SideStore 时使用。
+- 一根可以传输数据的 USB 线。
+- 一个 Apple 账号，免费账号即可。
+- Wi-Fi。SideStore 安装或刷新 App 时需要同时连接 Wi-Fi 和 LocalDevVPN。
 
-WrapPin 暂未通过 App Store 或 TestFlight 分发。第一阶段以 GitHub Release 中的未签名 IPA 为主，必须由使用者使用自己的 Apple 账号签名。
+各工具请从官方入口下载：
 
-## 使用 SideStore 安装
+| 工具 | 安装位置 | 入口 |
+| --- | --- | --- |
+| iLoader | 电脑 | [iloader.app](https://iloader.app/) |
+| SideStore | iPhone，由 iLoader 安装 | [SideStore 安装文档（请阅读英文版）](https://docs.sidestore.io/docs/installation/prerequisites) |
+| LocalDevVPN | iPhone | [App Store](https://apps.apple.com/app/localdevvpn/id6755608044) |
+| WrapPin IPA | iPhone | [GitHub Releases](https://github.com/suversal/WrapPin/releases/latest) |
+
+WrapPin 暂未通过 App Store 或 TestFlight 分发，以 GitHub Release 中的未签名 IPA 为主，需要签名后安装。不要使用来源不明的网盘或镜像，安装包可能被重新打包。
+
+### 选择版本
+
+每个 Release 提供两个 IPA，功能相同。
+
+| | 标准版 `WrapPin-Standard-…` | 隧道版 `WrapPin-Tunnel-…` |
+| --- | --- | --- |
+| 设备隧道 | 使用 LocalDevVPN | 内置，自动连接 |
+| 签名要求 | 免费 Apple 账号，通过 SideStore | 带 Packet Tunnel 权限的付费证书 |
+| 续签 | 每七天 | 取决于证书 |
+
+**不确定选哪个就下载标准版**，下面的安装步骤以它为准。隧道版不能用免费账号或 SideStore 签名，有付费证书请看[隧道版](#隧道版)。
+
+## 安装步骤
+
+### 1. 在 iPhone 上安装 LocalDevVPN
+
+1. 从 App Store 安装 [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044)。国区商店无法下载，请使用美区等其他地区的账号。
+2. 打开后轻点 **Connect**。
+3. 允许它添加 VPN 配置，并输入锁屏密码。
+4. 确认它显示已连接。
+
+名称里虽然有 VPN，但它不会改变公网 IP，也不能代理上网，只是让 SideStore 和 WrapPin 访问 iPhone 本机的服务。开启它会断开手机上正在运行的其他代理或 VPN。
+
+### 2. 用 iLoader 安装 SideStore
+
+1. 在电脑上安装 [iLoader](https://iloader.app/)。
+2. 用数据线连接并解锁 iPhone；如果出现“要信任此电脑吗”，选择“信任”并输入锁屏密码。
+3. 打开 iLoader，确认设备列表里出现了这台 iPhone。找不到时先换一根数据线，再确认 Finder、iTunes 或 Apple Devices 能看到这台 iPhone。
+4. 在 iLoader 中登录 Apple 账号，按提示输入双重认证验证码。
+5. 选择这台 iPhone，选择最新的 **SideStore (Stable)**。如果想使用本教程测试时的同一版本，见下方说明。
+6. 等待签名和安装完成，中途不要拔线。
+
+请使用最新的 SideStore Stable 版本，或本教程测试时使用的版本。其他版本尤其是旧版本，在 iOS 27 上很可能出问题。
+
+本教程测试使用的是 Nightly 构建 `SideStore-0.7.0-20260914.1447+1fce70de.ipa`，测试时间为 2026 年 9 月，因为当时的 Stable 版本无法使用。安装这个版本的方法：
+
+1. 登录 GitHub，下载[这个构建产物](https://github.com/SideStore/SideStore/actions/runs/34800395893/artifacts/10331626491)，解压后找到上述 IPA。
+2. 按上面的第 1–4 步操作，并在 iLoader 中选中这台 iPhone。
+3. 点 **INSTALLERS → Import IPA**，选择该 IPA，按提示完成安装。不要点 **SideStore (Nightly)**，它会下载当前的 Nightly 新版，而不是测试用的版本。
+4. 打开 SideStore，核对底部版本是否为 `0.7.0-20260914.1447+1fce70de`。
+
+如果已经安装了其他版本的 SideStore，先用之前的同一个 Apple 账号尝试直接覆盖安装。提示不能覆盖时，在 iPhone 上删除 SideStore，再重做第 3 步。删除会清掉原来的配对文件，所以安装后要在 iLoader 点 **Manage Pairing File**，在 SideStore 旁点 **Place**，放置成功后再打开 SideStore。
+
+GitHub 的构建产物有保留期限，上面的下载链接可能失效；失效后请使用最新的 Stable 版本。
+
+如果 iLoader 询问是否撤销已有证书，先确认这个 Apple 账号有没有给其他侧载工具使用；撤销证书可能让此前用它签名的 App 失效。
+
+### 3. 信任开发者并开启开发者模式
+
+1. 打开“设置 → 通用 → VPN 与设备管理”，在“开发者 App”下选择你的 Apple 账号，轻点“信任”。
+2. 打开“设置 → 隐私与安全性 → 开发者模式”并开启。
+3. 按提示重启 iPhone，重启并解锁后再次确认开启。
+
+开启开发者模式不需要付费加入 Apple Developer Program。WrapPin 依赖开发者模式，这一步不能跳过。如果暂时看不到“开发者模式”开关，先确认 SideStore 已安装并完成信任，再重新检查。
+
+如果 Apple 提示账号没有可用的开发团队，登录 [developer.apple.com/register](https://developer.apple.com/register/) 并接受协议即可，这一步免费。
+
+### 4. 第一次刷新 SideStore
+
+1. 连接 Wi-Fi，并连接 LocalDevVPN。
+2. 打开 SideStore，用在 iLoader 中使用的同一个 Apple 账号登录。
+3. 进入 **My Apps**，轻点 SideStore 右侧的 **7 DAYS** 刷新一次。
+4. 如果弹出创建新证书的提示，按页面说明继续。
+
+这次刷新成功后，SideStore 才算安装完整，日常使用不再需要电脑。
+
+### 5. 下载 WrapPin IPA
+
+1. 打开 [GitHub Releases](https://github.com/suversal/WrapPin/releases/latest)，下载 `WrapPin-Standard-…-unsigned.ipa`。
+2. 保存到 iPhone 的“文件”App。如果是在电脑上下载的，可以用 AirDrop、iCloud Drive 或数据线传到手机。
+
+每个 Release 都列出了 IPA 的 SHA-256。需要校验时，在 Mac 终端运行 `shasum -a 256 文件名.ipa`，确认结果与 Release 页面一致。
+
+### 6. 用 SideStore 侧载 WrapPin
 
 > [!IMPORTANT]
-> 不要在 SideStore 中使用“通过 URL 安装”或直接粘贴 GitHub Release 的 IPA 链接。部分 SideStore 版本会把远程文件名误当成 Bundle ID，从而出现 `com.suversal.wrappin` 与 `WrapPin-版本-build编号` 不匹配的安装错误。请先将 IPA 下载并保存到 iPhone 的“文件”App，再进入 `SideStore → My Apps → + → Choose Files`，从本地选择 IPA 安装。
+> 不要在 SideStore 中使用“通过 URL 安装”或直接粘贴 GitHub Release 的 IPA 链接。部分 SideStore 版本会把远程文件名误当成 Bundle ID，从而出现 Bundle ID 不匹配的安装错误。请先将 IPA 保存到 iPhone 的“文件”App，再从本地选择。
 
-1. 打开本仓库的 GitHub Releases，下载与版本号对应的 IPA 和 SHA-256 校验值。
-2. 在 Mac 终端运行 `shasum -a 256 文件名.ipa`，确认结果与 Release 页面完全一致。
-3. 将 IPA 保存到 iPhone 的“文件”App，在 SideStore 的 **My Apps** 中轻点 **+**，选择 **Choose Files** 后选中该 IPA。
-4. 让 SideStore 使用你的 Apple 账号完成签名和安装。
-5. 更新版本时直接覆盖安装，不要先删除旧版；删除 App 会一并删除本地设置，并可能需要重新配对。
+1. 确认 Wi-Fi 和 LocalDevVPN 都已连接。
+2. 打开 SideStore，进入 **My Apps**。
+3. 轻点 **+**，从“文件”中选择 WrapPin 的 IPA。
+4. 等待 SideStore 完成签名和安装。期间保持 SideStore 打开，不要断开 Wi-Fi 或 LocalDevVPN。
+5. 回到桌面确认 WrapPin 图标已经出现。
 
-免费 Apple 账号通常需要每七天刷新一次侧载 App，并受同时启用的 App 和 App ID 数量限制。这是 Apple 的签名限制，不是 WrapPin 的订阅规则。完整说明见[安装与侧载](Documentation/Installation.zh-CN.md)。
+以后更新 WrapPin 时直接用新 IPA 覆盖安装，不要先删除旧版；删除 App 会清掉收藏、历史和设置，并可能需要重新配对。
+
+更多说明见[安装与侧载](Documentation/Installation.zh-CN.md)。
 
 ## 第一次连接
 
@@ -175,7 +266,7 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。第一阶段以 GitHub Re
 2. 进入“设备连接”，轻点“配对本机”。
 3. iOS 询问时，允许本地网络权限。
 4. 打开“设置 → 隐私与安全性 → 开发者模式 → 与 WrapPin 配对”。
-5. 输入 WrapPin 显示的六位数配对码。
+5. 如果系统要求，先输入 iPhone 锁屏密码，再输入 WrapPin 显示的六位数配对码；这是两个不同的码，配对码也可以在通知中查看。
 6. 回到 WrapPin，确认设备状态显示已配对。
 7. 打开 LocalDevVPN，允许它创建 VPN 配置并连接本地隧道。
 8. 若正在使用其他代理或 VPN，先暂停其系统隧道，再回到 WrapPin 开始连接。
@@ -218,6 +309,36 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。第一阶段以 GitHub Re
 
 临时关闭蜂窝网络只用于建立本机连接。定位会话启动后，可以恢复正常使用移动数据。
 
+## SideStore 日常刷新
+
+免费 Apple 账号签名的 App 七天后过期。只要 SideStore 自己还没过期，就可以直接在 iPhone 上续签，不需要电脑。
+
+1. 连接 Wi-Fi，并连接 LocalDevVPN。
+2. 打开 SideStore，进入 **My Apps**。
+3. 轻点 **Refresh All**，或轻点各 App 右侧的剩余天数。
+4. 等待 SideStore 和 WrapPin 都刷新成功。
+
+刷新只是延长签名有效期，不会删除 WrapPin 的数据。如果 SideStore 自己已经过期，它无法打开，也无法给自己续期：这时重新连接电脑，用 iLoader 覆盖安装 SideStore，再回到手机刷新各 App。
+
+七天期限以及 App 和 App ID 的数量限制是 Apple 对免费账号的规定，不是 WrapPin 的订阅规则。
+
+## 隧道版
+
+隧道版自带设备隧道，不需要 LocalDevVPN。主 App 和内嵌扩展都必须用付费证书签名，并且描述文件要授予 Packet Tunnel（Network Extension）权限。
+
+签名有两种方式，以下只是大致步骤：
+
+- **付费证书加 iPhone 上的签名工具。** 把证书和描述文件导入 IPA 签名工具，再导入 `WrapPin-Tunnel-…-unsigned.ipa`，签名并安装。事先确认证书支持 VPN / Network Extension 类 App。本项目不提供、不推荐也不担保任何证书服务。
+- **Xcode 加付费 Apple Developer 账号。** 在 `Configuration/Local.private.xcconfig` 中填入自己的团队和 Bundle ID，选择 **WrapPin Tunnel** scheme 并运行到 iPhone。这条路线维护者没有实测。
+
+安装之后：
+
+1. 按本文的说明开启开发者模式并完成本机配对，两个版本都需要。
+2. 首次启动隧道时，允许 WrapPin Tunnel 添加 VPN 配置。
+3. 开始模拟定位。在设置中选择“使用内置隧道”后，隧道会在会话开始时自动连接，并在恢复真实位置后自动断开。
+
+本文中凡是要求先连接 LocalDevVPN 再使用 WrapPin 的地方，隧道版都由内置隧道代替。更多说明见[安装与侧载](Documentation/Installation.zh-CN.md)。
+
 ## 停止、恢复与排障
 
 正常结束时务必在 WrapPin 内停止会话。恢复完成前，不要使用导航、出行、紧急求助或位置共享类 App。
@@ -226,6 +347,10 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。第一阶段以 GitHub Re
 
 常见问题：
 
+- **SideStore 提示没有 Wi-Fi 或 LocalDevVPN：**确认两者都已连接，关闭其他 DNS、代理或 VPN 工具，再重启 LocalDevVPN 和 SideStore。
+- **SideStore 安装 IPA 卡在中途：**先确认使用的是最新的 SideStore Stable 或“安装步骤”第 2 步中的测试版本。然后依次尝试重新打开 SideStore、清理缓存、切换 Anisette Server、重启 iPhone；仍然失败时，用 iLoader 重新放置配对文件或重装 SideStore。
+- **SideStore 的配对文件失效：**系统升级或还原设备都可能导致失效。连接电脑，在 iLoader 中删除旧配对并重新信任，再通过 **Manage Pairing File** 把新的配对文件放入 SideStore。
+- **停止后位置没有立即恢复：**重新打开 WrapPin，选择“恢复真实位置”并保持 App 在前台，再用 Apple 地图核对；必要时关闭并重新开启“定位服务”。
 - **一直找不到 iPhone：**确认 LocalDevVPN 已连接、关闭其他系统 VPN、重新开关 LocalDevVPN，并确认配对记录属于当前设备。
 - **提示配对记录失效：**移除旧配对后重新执行“配对本机”。
 - **某个 App 的位置没变：**先用 Apple 地图确认。目标 App 可能仍在使用缓存、IP、Wi-Fi、基站或账号地区。
@@ -236,8 +361,8 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。第一阶段以 GitHub Re
 ## 从源码编译
 
 1. 克隆仓库，使用 Xcode 27 或更高版本打开 `WrapPin.xcodeproj`。
-2. 选择 `WrapPin` target。
-3. 在 **Signing & Capabilities** 中选择你自己的 Apple 开发者团队。
+2. 选择 **WrapPin Standard** scheme。
+3. 在 `WrapPinStandard` target 的 **Signing & Capabilities** 中选择你自己的 Apple 开发者团队。
 4. 连接实体 iPhone，选择该设备并按 **Run**。
 
 工程文件、target、scheme 和源码目录使用内部标识 `WrapPin`；安装后的 App 名称显示为 `WrapPin`。

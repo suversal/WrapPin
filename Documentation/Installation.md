@@ -1,15 +1,28 @@
 # Installation
 
-WrapPin is not distributed through the App Store or TestFlight. Release builds are supplied as unsigned IPA files for users to sign with their own Apple account.
+WrapPin is not distributed through the App Store or TestFlight. Release builds are supplied as unsigned IPA files that must be signed before installation.
+
+## Choose an edition
+
+Each GitHub Release provides two IPA files. They offer the same features and differ in where the device tunnel comes from and how they must be signed.
+
+| | Standard `WrapPin-Standard-…` | Tunnel `WrapPin-Tunnel-…` |
+| --- | --- | --- |
+| Device tunnel | Requires an external tunnel such as LocalDevVPN | Built in; connects automatically when a location starts |
+| Signing | A free Apple account is enough (SideStore) | A paid certificate with the Packet Tunnel entitlement |
+| Renewal | Every seven days with a free account | Depends on the certificate and provisioning profile |
+
+The two editions use different App IDs and can be installed side by side, but each keeps its own settings and pairing record. Use the Standard edition if you do not have a paid certificate.
 
 ## Requirements
 
 - An iPhone running iOS 27 or newer.
-- Developer Mode enabled under **Settings → Privacy & Security**.
-- [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044) installed on the iPhone.
-- SideStore, or Xcode on a Mac with an Apple development team.
+- Developer Mode enabled under **Settings → Privacy & Security**. Both editions need it: the on-device pairing and location simulation WrapPin relies on are system developer services, regardless of which certificate signs the app.
+- Standard edition: [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044) installed on the iPhone. The Tunnel edition does not need it.
+- Standard edition: SideStore, or Xcode on a Mac with an Apple development team.
+- Tunnel edition: a paid signing configuration with the Packet Tunnel entitlement. See "Install the Tunnel edition" below.
 
-## Install with SideStore
+## Install the Standard edition with SideStore
 
 1. Download the IPA attached to the matching GitHub Release. Do not download an IPA from an untrusted mirror.
 2. In SideStore, tap **+** and choose the downloaded IPA.
@@ -21,10 +34,43 @@ Free Apple accounts normally require sideloaded apps to be refreshed within seve
 
 When updating, install the newer IPA over the existing copy. Deleting the app first also deletes its local settings and may require pairing again.
 
-## Build with Xcode
+## Install the Tunnel edition
+
+Both the main app and the embedded `WrapPinTunnel.appex` extension must be signed, and both provisioning profiles must actually grant `packet-tunnel-provider` under `com.apple.developer.networking.networkextension`. Free Apple accounts cannot obtain this entitlement, so SideStore's free signing cannot be used for the Tunnel edition.
+
+### With a paid certificate and a signing tool
+
+This route needs no Mac and is completed on the iPhone.
+
+1. Obtain a paid certificate and provisioning profile that include this device's UDID. They can come from your own Apple Developer account or from a third-party certificate service.
+2. Install an IPA signing tool that can import certificates on the iPhone, then import the certificate and profile.
+3. Download `WrapPin-Tunnel-…-unsigned.ipa` from the matching GitHub Release and import it into the signing tool.
+4. Sign and install it.
+5. Open WrapPin Tunnel, allow it to add a VPN configuration the first time the tunnel starts, then complete device pairing.
+
+Notes:
+
+- Before obtaining a certificate, confirm that it supports VPN / Network Extension apps. A certificate that only supports ordinary IPA files produces an app that installs but cannot start the built-in tunnel.
+- The signing tool must also re-sign the embedded extension. The bundle ID may be changed, but the extension's bundle ID must be the main app's bundle ID plus `.tunnel`, otherwise the app cannot find its extension.
+- A third-party certificate belongs to someone else's developer account: a registered device usually cannot be changed or refunded, and the certificate may be revoked. This project does not provide, recommend, or vouch for any certificate service.
+- Do not post certificate private keys, p12 passwords, provisioning profiles, or UDIDs in issues or public channels.
+
+### With Xcode and a paid developer account
+
+The maintainer has not tested this route. The steps below are an outline only; refer to Apple's developer documentation for details.
+
+1. Clone the repository, copy `Configuration/Local.private.xcconfig.example` to `Configuration/Local.private.xcconfig`, and fill in your own `DEVELOPMENT_TEAM` and `WRAPPIN_TUNNEL_BUNDLE_IDENTIFIER`.
+2. Open `WrapPin.xcodeproj` with Xcode 27 or newer and select the **WrapPin Tunnel** scheme.
+3. Select a connected iPhone and press **Run**, letting Xcode's automatic signing handle the App IDs and provisioning profiles.
+
+You can also re-sign a released IPA with your own account: the main app and the extension each need a provisioning profile with the Packet Tunnel entitlement, and the extension is signed before the main app. Signing requirements and post-signing checks are described in the [built-in tunnel notes](BuiltInTunnelResearch.zh-CN.md) (Chinese).
+
+Update the Tunnel edition by installing over the existing copy with the same certificate and bundle ID as before.
+
+## Build the Standard edition with Xcode
 
 1. Clone the repository and open `WrapPin.xcodeproj`.
-2. Select the `WrapPin` target and choose your own team under **Signing & Capabilities**.
+2. Select the **WrapPin Standard** scheme and choose your own team under **Signing & Capabilities** for the `WrapPinStandard` target.
 3. Select a connected iPhone and press **Run**.
 
 The tracked build configuration has no Apple team or TelemetryDeck destination. Xcode may save your selected team locally. Do not commit signing material or `Configuration/Local.private.xcconfig`.
