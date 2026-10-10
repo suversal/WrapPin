@@ -8,6 +8,8 @@ WrapPin 标准版可以把 Surge 作为设备隧道跳转应用。此集成不�
 - Surge 使用 VIF 接管流量。
 - 当前配置包含下面的路由和 IP Rewrite 设置。
 
+Surge 5.22.x 及更早版本没有 `IP Rewrite` 的 `reflect` 动作，仅添加路由或 `DIRECT` 规则不能替代本机反射，因此无法完成这个设备通道。若 App Store 尚未提供 5.23.0，请先加入 Surge 官方 TestFlight，或继续使用 LocalDevVPN/Shadowrocket。
+
 ```ini
 [General]
 ipv6-vif = disabled
@@ -20,6 +22,8 @@ tun-included-routes = %INSERT% 10.7.0.1/32
 `tun-included-routes` 让发往 `10.7.0.1` 的连接进入 Surge VIF；`reflect` 把该连接反射回本机，使 WrapPin 可以访问 iPhone 自己的开发者服务。`ipv6-vif = disabled` 避免依赖此 IPv4 本机通道的工具选择 IPv6 VPN 接口。
 
 仓库同时提供可导入的 [`WrapPin-Surge.sgmodule`](WrapPin-Surge.sgmodule)。也可以手动把上面的配置合并到现有区段；不要创建重复的 `[General]` 或 `[IP Rewrite]`。托管配置无法编辑时，请使用模块。
+
+模块不是必需文件，必需的是启用后最终生效的三项配置。仓库模块额外包含 `CORE_VERSION>=6010000` 的版本要求，避免旧版 Surge 看似启用、实际却不支持 `reflect`。
 
 ## WrapPin 设置
 
