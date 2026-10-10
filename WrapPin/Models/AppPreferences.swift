@@ -3,6 +3,8 @@ import Foundation
 enum TunnelHandoffApp: String, CaseIterable, Identifiable {
     case localDevVPN
     case shadowrocket
+    case surge
+    case loon
 
     var id: Self { self }
 
@@ -10,6 +12,8 @@ enum TunnelHandoffApp: String, CaseIterable, Identifiable {
         switch self {
         case .localDevVPN: "LocalDevVPN"
         case .shadowrocket: "Shadowrocket"
+        case .surge: "Surge"
+        case .loon: "Loon"
         }
     }
 
@@ -18,14 +22,18 @@ enum TunnelHandoffApp: String, CaseIterable, Identifiable {
         switch self {
         case .localDevVPN: URL(string: "localdevvpn://")!
         case .shadowrocket: URL(string: "shadowrocket://")!
+        case .surge: URL(string: "surge://")!
+        case .loon: URL(string: "loon://")!
         }
     }
 
-    // Keep LocalDevVPN's working enable-and-return callback; Shadowrocket only opens its app.
+    // LocalDevVPN returns through a callback; Shadowrocket, Surge and Loon each have a start action.
     var launchURL: URL {
         switch self {
         case .localDevVPN: URL(string: "localdevvpn://enable?scheme=\(BuildEdition.callbackScheme)")!
-        case .shadowrocket: URL(string: "shadowrocket://")!
+        case .shadowrocket: URL(string: "shadowrocket://connect")!
+        case .surge: URL(string: "surge:///start")!
+        case .loon: URL(string: "loon://on")!
         }
     }
 }
@@ -33,6 +41,10 @@ enum TunnelHandoffApp: String, CaseIterable, Identifiable {
 enum TunnelHandoffPolicy {
     static func offersMobileDataWorkaround(for app: TunnelHandoffApp) -> Bool {
         app == .localDevVPN
+    }
+
+    static func recommendsWiFiWhenUnavailable(for app: TunnelHandoffApp) -> Bool {
+        app != .localDevVPN
     }
 
     static func requiresLocalDevVPNCellularHandoff(

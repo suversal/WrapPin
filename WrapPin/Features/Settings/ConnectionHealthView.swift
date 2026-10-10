@@ -233,8 +233,13 @@ struct ConnectionHealthView: View {
                 if appModel.usesBuiltInTunnel {
                     Text("WrapPin uses its built-in device tunnel. If another VPN is active, stop it before testing this tunnel.")
                         .foregroundStyle(.secondary)
-                } else if appModel.tunnelHandoffApp == .shadowrocket {
-                    Text("Shadowrocket on mobile data may not expose the device connection WrapPin needs. Use Wi-Fi if the connection check fails.")
+                } else if TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: appModel.tunnelHandoffApp) {
+                    Text(
+                        String(
+                            format: NSLocalizedString("%@ on mobile data may not expose the device connection WrapPin needs. Use Wi-Fi if the connection check fails.", comment: ""),
+                            appModel.tunnelHandoffApp.title
+                        )
+                    )
                         .foregroundStyle(.secondary)
                 }
             }

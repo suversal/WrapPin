@@ -513,7 +513,9 @@
 "If the paired iPhone is unreachable, WrapPin opens this app on Wi-Fi or mobile data. Turn on its tunnel yourself, then return to WrapPin. This only selects the app to open; it does not ensure that app's tunnel supports device pairing." = "Wi-Fi 或蜂窝网络下，若无法连接已配对的 iPhone，就打开所选应用。请自行开启隧道后返回 WrapPin。这里只决定跳转目标，不保证所选隧道支持设备配对连接。";
 "If the paired iPhone is unreachable, WrapPin asks LocalDevVPN to connect and return. If it does not return automatically, check its tunnel and come back to WrapPin." = "若无法连接已配对的 iPhone，WrapPin 会请求 LocalDevVPN 建立隧道并返回。若没有自动返回，请检查隧道状态，再手动回到 WrapPin。";
 "On Wi-Fi, WrapPin opens LocalDevVPN if the paired iPhone is unreachable. On mobile data, it uses LocalDevVPN's connect-and-return flow before continuing. If it does not return automatically, check its tunnel and come back to WrapPin." = "使用 Wi-Fi 时，若无法连接已配对的 iPhone，WrapPin 会打开 LocalDevVPN；使用蜂窝网络时，会先走 LocalDevVPN 建立隧道并返回的流程。若没有自动返回，请检查隧道后手动回到 WrapPin。";
-"WrapPin opens Shadowrocket only when it cannot find the paired iPhone's device connection. On mobile data, this connection may fail even with Shadowrocket on; use Wi-Fi for location simulation. The selection does not guarantee a compatible device tunnel." = "仅在找不到已配对 iPhone 的设备连接时，WrapPin 才会打开 Shadowrocket。蜂窝网络下，即使 Shadowrocket 已连接也可能无法使用；模拟定位请优先连接 Wi-Fi。选择跳转应用不保证隧道兼容。";
+"WrapPin asks Shadowrocket to connect its VPN only when it cannot find the paired iPhone's device connection. Shadowrocket requires Include Route 10.7.0.1/32 turned on in its Settings. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Shadowrocket's VPN switch." = "仅在找不到已配对 iPhone 的设备连接时，WrapPin 才会请求 Shadowrocket 开启 VPN。Shadowrocket 需要在“设置 → 其它”中开启“包含路由 10.7.0.1/32”；蜂窝网络失败时请改用 Wi-Fi。WrapPin 无法读取 Shadowrocket 的 VPN 开关状态。";
+"WrapPin asks Surge to start its selected configuration only when it cannot find the paired iPhone's device connection. Surge 5.23+ requires 10.7.0.1/32 in tun-included-routes and 10.7.0.1 = reflect in IP Rewrite. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Surge's VPN switch." = "仅在找不到已配对 iPhone 的设备连接时，WrapPin 才会请求 Surge 启动当前配置。Surge 5.23+ 需要在 tun-included-routes 中加入 10.7.0.1/32，并在 IP Rewrite 中设置 10.7.0.1 = reflect；蜂窝网络失败时请改用 Wi-Fi。WrapPin 无法读取 Surge 的 VPN 开关状态。";
+"WrapPin asks Loon to turn on its VPN only when it cannot find the paired iPhone's device connection. Loon build 1007+ requires include-tun = 10.7.0.1/32 and an enabled plugin with 10.7.0.1 = reflect in IP Rewrite. If mobile data fails, use Wi-Fi. WrapPin cannot inspect Loon's VPN switch." = "仅在找不到已配对 iPhone 的设备连接时，WrapPin 才会请求 Loon 开启 VPN。Loon Build 1007+ 需要设置 include-tun = 10.7.0.1/32，并启用在 IP Rewrite 中声明 10.7.0.1 = reflect 的插件；蜂窝网络失败时请改用 Wi-Fi。WrapPin 无法读取 Loon 的 VPN 开关状态。";
 "Opening tunnel app" = "正在打开隧道应用";
 "Opening %@…" = "正在打开 %@…";
 "Turn on the tunnel in the selected app, then return to WrapPin." = "请在所选应用中手动开启隧道，然后返回 WrapPin。";
@@ -523,19 +525,19 @@
 "Open %@" = "打开 %@";
 "WrapPin has not found the paired iPhone's device connection yet." = "WrapPin 还没有找到这台已配对 iPhone 的设备连接。";
 "Make sure the selected app's tunnel is connected, then try again. Choose mobile data only when you're actually using 4G or 5G." = "请确认所选应用的隧道已连接，然后重试。只有确实在使用 4G/5G 时才选择蜂窝网络流程。";
-"Use Wi-Fi with Shadowrocket" = "请连接 Wi-Fi 后重试";
-"Shadowrocket may not provide the device connection WrapPin needs over mobile data. Connect to Wi-Fi, keep a compatible tunnel on, then return and try again." = "蜂窝网络下，即使 Shadowrocket 显示已连接，也可能无法建立 WrapPin 所需的设备连接。请连接 Wi-Fi，保持兼容的隧道开启，再返回重试。";
+"Use Wi-Fi with %@" = "请连接 Wi-Fi 后使用 %@ 重试";
+"%@ may not provide the device connection WrapPin needs over mobile data. Connect to Wi-Fi, keep a compatible tunnel on, then return and try again." = "蜂窝网络下，%@ 可能无法建立 WrapPin 所需的设备连接。请连接 Wi-Fi，保持兼容隧道开启，再返回重试。";
 "Make sure the selected app's tunnel is connected, switch mobile data off briefly, then return to WrapPin." = "确认所选应用的隧道已连接，暂时关闭蜂窝数据，然后返回 WrapPin。";
 "Device Tunnel" = "设备隧道";
 "Check the selected tunnel app, then run the connection check or try starting the location again." = "请检查所选隧道应用，再运行连接检测或重新启动模拟定位。";
 "This checks the saved pairing record and whether the paired iPhone is reachable through a compatible device tunnel. It cannot inspect another app's VPN switch or change your location." = "这里检查保存的配对记录及能否通过兼容的设备隧道连接本机，无法读取其他应用的 VPN 开关，也不会更改位置。";
 "Another VPN may affect local device connections. Keep a compatible device tunnel enabled when starting a location session; a regular proxy alone may not work." = "其他 VPN 可能影响本机连接。启动定位会话时需要兼容的设备隧道，仅有普通代理可能无法使用。";
-"Shadowrocket on mobile data may not expose the device connection WrapPin needs. Use Wi-Fi if the connection check fails." = "蜂窝网络下，Shadowrocket 可能无法提供 WrapPin 所需的设备连接。若检测失败，请改用 Wi-Fi。";
+"%@ on mobile data may not expose the device connection WrapPin needs. Use Wi-Fi if the connection check fails." = "蜂窝网络下，%@ 可能无法提供 WrapPin 所需的设备连接。若检测失败，请改用 Wi-Fi。";
 "Device tunnel reachability can only be checked on a physical iPhone." = "只能在实体 iPhone 上检测设备隧道连通性。";
 "The paired iPhone was announced, but its tunnel address was not reachable. Reconnect the selected tunnel and check its device and tunnel IP settings." = "已发现配对的 iPhone，但隧道地址无法连接。请重连所选隧道，并检查设备 IP 和隧道 IP 设置。";
 "A device announcement is visible, but it does not match the paired iPhone. Restart the selected tunnel and try again." = "已发现设备广播，但与配对的 iPhone 不匹配。请重启所选隧道后重试。";
 "This iPhone was not reachable through the device tunnel. Check that a compatible tunnel is connected. On mobile data, switch data off briefly and run the check again." = "无法通过设备隧道连接这台 iPhone。请确认兼容隧道已连接；若使用蜂窝网络，请暂时关闭蜂窝数据后再次检测。";
-"This iPhone was not reachable through the device tunnel. If you are using Shadowrocket on mobile data, connect to Wi-Fi and run the check again." = "无法通过设备隧道连接这台 iPhone。如果正通过蜂窝网络使用 Shadowrocket，请连接 Wi-Fi 后重新检测。";
+"This iPhone was not reachable through the device tunnel. If you are using an external tunnel app on mobile data, connect to Wi-Fi and run the check again." = "无法通过设备隧道连接这台 iPhone。如果正通过蜂窝网络使用外部隧道应用，请连接 Wi-Fi 后重新检测。";
 "The pairing record is valid and this iPhone is reachable through the device tunnel." = "配对记录有效，且可通过设备隧道连接这台 iPhone。";
 
 /* Status and map errors */

@@ -17,14 +17,14 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.15（Build 48） · <strong>系统要求：</strong>iOS 27+
+  <strong>当前版本：</strong>1.0.16（Build 52） · <strong>系统要求：</strong>iOS 27+
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/iOS-27%2B-blue" alt="iOS 27+">
   <img src="https://img.shields.io/badge/UI-SwiftUI-orange" alt="SwiftUI">
   <img src="https://img.shields.io/badge/%E7%BB%B4%E6%8A%A4%E8%80%85-suversal-purple" alt="由 suversal 维护">
-  <img src="https://img.shields.io/badge/Version-1.0.15-lightgrey" alt="Version 1.0.15">
+  <img src="https://img.shields.io/badge/Version-1.0.16-lightgrey" alt="Version 1.0.16">
   <img src="https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0">
 </p>
 
@@ -38,20 +38,20 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 如果这个项目帮到了你，欢迎点一个 **Star**；如果你发现界面、文案、兼容性或连接流程还有改进空间，也欢迎提交 Issue 或 Pull Request。贡献前请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-项目面向开发、质量测试和个人负责任测试，支持固定位置、步行与驾车路线、收藏与历史记录，并通过本机配对和兼容的设备隧道建立安全的开发者定位会话。默认使用 LocalDevVPN；设置中的 Shadowrocket 选项只决定跳转目标，不保证普通代理配置能提供所需的设备连接。
+项目面向开发、质量测试和个人负责任测试，支持固定位置、步行与驾车路线、收藏与历史记录，并通过本机配对和兼容的设备隧道建立安全的开发者定位会话。默认使用 LocalDevVPN；也可在设置中选择 Shadowrocket、Surge 或 Loon，它们需要按各自的配置说明启用 `10.7.0.1` 设备通道，普通代理配置不能提供所需的设备连接。
 
 > 请只在你拥有并控制的设备上使用。不要用于欺骗他人、伪造证据、规避安全限制，或违反第三方服务规则。
 
 ## 当前进展
 
-- 当前公开版本为 **1.0.15（Build 48）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.15) 为准。
+- 当前公开版本为 **1.0.16（Build 52）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.16) 为准。
 - 标准版（`WrapPin-Standard-…`）供 SideStore 等自签方式安装，使用 LocalDevVPN 等外部隧道。隧道版（`WrapPin-Tunnel-…`）内置设备隧道，主 App 和扩展都需要带 Packet Tunnel 权限的签名配置，免费账号无法签名；它使用独立 App ID，不替换标准版。
 - 已完成完整简体中文界面、地图标签本地化、配对与连接引导、中文安装文档和使用手册。
 - 已完善地址与坐标复制、连接检测、诊断信息复制、异常会话恢复和真实位置恢复流程。
 - 配对和定位启动不再依赖可能受 SideStore 重签 Bundle ID 影响的 `BGTaskScheduler`，并优先使用 LocalDevVPN 端点。
 - 已使用正式 Xcode Release Archive 流程生成并校验可供 SideStore 签名的未签名 IPA。
 - 已验证前台固定位置、模拟步行和停止恢复流程；长时间锁屏保持仍需更多机型和系统版本测试。
-- 可选择设备隧道跳转应用；蜂窝网络下优先使用 LocalDevVPN，Shadowrocket 建议连接 Wi-Fi。不同地图或地点仍可能出现位置偏移，可在两种坐标模式间切换；不能保证所有地点都准确。
+- 可选择设备隧道跳转应用；蜂窝网络下优先使用 LocalDevVPN，Shadowrocket、Surge 和 Loon 建议连接 Wi-Fi。不同地图或地点仍可能出现位置偏移，可在两种坐标模式间切换；不能保证所有地点都准确。
 
 ## 界面预览
 
@@ -75,7 +75,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 - 保存常用地点，快速访问最近使用的位置。
 - 会话结束时主动清除模拟坐标并恢复真实位置。
 - 为 Wi-Fi 和蜂窝网络提供分开的连接引导与诊断。
-- 在设置中选择 LocalDevVPN 或 Shadowrocket 作为连接不可用时的跳转应用。
+- 在设置中选择 LocalDevVPN、Shadowrocket、Surge 或 Loon 作为连接不可用时的跳转应用。Shadowrocket、Surge 和 Loon 需要分别按 [Shadowrocket 配置](Documentation/ShadowrocketIntegration.zh-CN.md)、[Surge iOS 配置](Documentation/SurgeIntegration.zh-CN.md)、[Loon 配置](Documentation/LoonIntegration.zh-CN.md) 启用 `10.7.0.1` 设备通道。
 - 打开 App 时检查最新公开版本，有更新时提醒；也可在设置中手动检查、反馈问题或联系维护者。
 - 支持深浅色外观、不同地图样式、动态字体、VoiceOver 和“减弱动态效果”。
 

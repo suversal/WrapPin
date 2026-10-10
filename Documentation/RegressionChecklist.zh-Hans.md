@@ -31,12 +31,14 @@
 
 ## 隧道跳转应用（新分支，待真机）
 
-- [ ] 默认 LocalDevVPN；切换 Shadowrocket 后重启 App 仍保留选择，重置后恢复默认。
-- [ ] Wi-Fi 下本次能连接配对设备时不跳转，连接不可用时打开所选应用；蜂窝下 LocalDevVPN 保留原有建立隧道并返回流程，Shadowrocket 只打开应用。
+- [ ] 默认 LocalDevVPN；切换 Shadowrocket、Surge 或 Loon 后重启 App 仍保留选择，重置后恢复默认。
+- [ ] Wi-Fi 下本次能连接配对设备时不跳转，连接不可用时打开所选应用；蜂窝下 LocalDevVPN 保留原有建立隧道并返回流程，Shadowrocket 通过 `shadowrocket://connect` 开启 VPN，Surge 通过 `surge:///start` 启动当前配置，Loon 通过 `loon://on` 开启 VPN。
 - [ ] 连续停止并重新开始模拟定位：Wi-Fi 下本次已断开应重新跳转，本次仍可连通不应重复跳转；蜂窝下 LocalDevVPN 会按原流程打开一次。
-- [ ] Shadowrocket + 蜂窝网络连接失败时，引导改用 Wi-Fi，不显示 LocalDevVPN 的“暂时关闭蜂窝数据”步骤；LocalDevVPN 原蜂窝流程保持不变。
+- [ ] Shadowrocket、Surge 或 Loon + 蜂窝网络连接失败时，引导改用 Wi-Fi，不显示 LocalDevVPN 的“暂时关闭蜂窝数据”步骤；LocalDevVPN 原蜂窝流程保持不变。
 - [ ] 手动开启隧道返回 WrapPin 后继续发现和连接；未安装或不支持跳转链接时显示明确错误及所选应用的商店入口。
-- [ ] 固定位置、步行、驾车都经过同一启动检查；Shadowrocket 普通代理配置若不能提供本机配对通道，不得显示连接成功。
+- [ ] 固定位置、步行、驾车都经过同一启动检查；Shadowrocket 开启“包含路由 10.7.0.1/32”后可提供配对设备通道并启动定位会话；关闭该开关时不得显示连接成功。
+- [ ] Surge iOS 5.23.0+ 按 [Surge iOS 配置](SurgeIntegration.zh-CN.md) 设置后，可提供 `10.7.0.1` 配对设备通道并启动定位会话；缺少 `reflect` 规则或 Surge 版本过旧时，不得显示连接成功。
+- [ ] Loon Build 1007+ 按 [Loon 配置](LoonIntegration.zh-CN.md) 设置后，可提供 `10.7.0.1` 配对设备通道并启动定位会话；未启用 `reflect` 插件或 Loon 版本过旧时，不得显示连接成功。
 - [ ] 切换 App 或锁屏、蜂窝数据暂关和恢复后，可停止模拟并恢复真实位置。
 
 ## 定位会话

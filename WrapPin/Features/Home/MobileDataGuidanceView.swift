@@ -144,8 +144,10 @@ struct MobileDataGuidanceView: View {
     private var title: String {
         switch guidance {
         case .connectionHelp:
-            if !usesBuiltInTunnel && tunnelHandoffApp == .shadowrocket && isUsingMobileData {
-                String(localized: "Use Wi-Fi with Shadowrocket")
+            if !usesBuiltInTunnel,
+               TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp),
+               isUsingMobileData {
+                String(format: NSLocalizedString("Use Wi-Fi with %@", comment: ""), tunnelHandoffApp.title)
             } else {
                 String(localized: "Still Connecting")
             }
@@ -162,8 +164,11 @@ struct MobileDataGuidanceView: View {
             if usesBuiltInTunnel {
                 return String(localized: "Check that WrapPin's built-in tunnel is connected, then try again. If you are using mobile data, follow the mobile data steps below.")
             }
-            if tunnelHandoffApp == .shadowrocket && isUsingMobileData {
-                return String(localized: "Shadowrocket may not provide the device connection WrapPin needs over mobile data. Connect to Wi-Fi, keep a compatible tunnel on, then return and try again.")
+            if TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp), isUsingMobileData {
+                return String(
+                    format: NSLocalizedString("%@ may not provide the device connection WrapPin needs over mobile data. Connect to Wi-Fi, keep a compatible tunnel on, then return and try again.", comment: ""),
+                    tunnelHandoffApp.title
+                )
             } else {
                 return String(localized: "Make sure the selected app's tunnel is connected, then try again. Choose mobile data only when you're actually using 4G or 5G.")
             }

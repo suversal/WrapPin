@@ -1,0 +1,10 @@
+#!name=WrapPin Device Tunnel
+#!desc=Reflects the on-device developer-services address required by WrapPin.
+#!requirement=CORE_VERSION>=6010000 && SYSTEM=='iOS'
+
+[General]
+ipv6-vif = disabled
+tun-included-routes = %INSERT% 10.7.0.1/32
+
+[IP Rewrite]
+10.7.0.1 = reflect
