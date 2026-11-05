@@ -2,14 +2,16 @@
 
 WrapPin lets you choose where your iPhone reports its location. You can hold one fixed place or simulate movement along an Apple Maps walking or driving route.
 
+See [iPad layout](iPadLayout.md) for Build 70 landscape and window-width behavior. Physical iPad pairing and location acceptance are pending.
+
 ## First-time setup
 
-On iOS 26, first [create and import an RPPairing file with a computer](iOS26Pairing.md). The six-digit pairing steps below apply to iOS 27 or later. Standard needs an external device tunnel; Tunnel asks to add its built-in VPN configuration.
+On iOS 18–26, first [create and import an RPPairing file with a computer](iOS26Pairing.md). The six-digit pairing steps below apply to iOS 27 or later. Standard needs an external device tunnel; Tunnel asks to add its built-in VPN configuration.
 
 You need your physical iPhone and Developer Mode. Standard also needs LocalDevVPN or another configured device tunnel; Tunnel uses its built-in tunnel.
 
 1. Open WrapPin and complete the three-page introduction.
-2. On **Device Setup**, tap **Pair This iPhone**.
+2. On **Device Setup**, tap **Pair This Device**.
 3. Allow Local Network access when iOS asks.
 4. Open **Settings → Privacy & Security → Developer Mode → Pair with WrapPin**.
 5. Enter the six-digit code shown by WrapPin.
@@ -192,7 +194,7 @@ Check whether you are using Wi-Fi or mobile data. On Wi-Fi, tap **Try Again**. O
 
 ### The discovered device does not match the paired iPhone
 
-The saved pairing record does not match the device announcement. Toggle LocalDevVPN off and on. If the problem remains, confirm that the record belongs to this iPhone. On iOS 26, [create, validate and import a fresh computer-generated record](iOS26Pairing.md); on iOS 27, repeat on-device pairing.
+The saved pairing record does not match the device announcement. Toggle LocalDevVPN off and on. If the problem remains, confirm that the record belongs to this iPhone. On iOS 18–26, [create, validate and import a fresh computer-generated record](iOS26Pairing.md); on iOS 27, repeat on-device pairing.
 
 An invalid saved pairing message can also represent other verification failures. Copy diagnostics before concluding that the record has expired.
 

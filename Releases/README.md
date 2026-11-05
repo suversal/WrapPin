@@ -1,5 +1,9 @@
 # WrapPin releases
 
+## Local Build 70 development
+
+The working source adds native iPad layout support. No Build 70 IPA has been packaged or published; see [iPad layout notes](../Documentation/iPadLayout.md). The Build 69 packages below remain unchanged.
+
 ## Local iOS 26 compatibility candidate — 1.0.21 Build 69
 
 Not published. Both unsigned packages and their SHA-256 hashes are recorded in [the receipt](iOS26-build69/receipt.json). See [Chinese test instructions](iOS26-build69/测试说明.md) and [candidate notes](../Documentation/Release-1.0.21.md). Minimum OS: iOS 26.0. Both Debug builds and Release archives, all 11 offline checks and package checks passed; the user reported initial Standard success on iOS 26.5 after saving and importing a verified Remote pairing record. The remaining physical-device regression is pending. The public distribution below remains unchanged.

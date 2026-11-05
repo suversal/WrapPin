@@ -2,7 +2,14 @@
 
 All notable public changes to WrapPin are recorded here.
 
-## [Unreleased] — 1.0.21 Build 69 candidate
+## [Unreleased] — 1.0.21 Build 70 candidate
+
+- Lower the deployment target to iOS 18.0 with legacy MapKit and foreground Shortcuts compatibility; iOS 18–26 imports RPPairing and iOS 27 keeps PIN pairing. iOS 18 runtime acceptance is pending.
+- Add native iPad device-family and orientation settings for both editions and the tunnel extension.
+- Use separate map and scrollable controls in wide windows, with bounded overlays and setup content in narrower windows. See [iPad layout](Documentation/iPadLayout.md) for validation and remaining acceptance.
+- No new IPA has been packaged.
+
+## 1.0.21 Build 69 local candidate
 
 - Target iOS 26.0 in both editions, with computer-generated RPPairing import on iOS 26 and the existing PIN pairing on iOS 27.
 - Add explicit XML paste, actionable import validation and safe replacement behavior.

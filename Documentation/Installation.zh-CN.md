@@ -4,7 +4,7 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 
 [返回中文首页](../README.md) · [English](Installation.md)
 
-本分支的 iOS 26 适配候选最低系统为 26.0。标准版 iOS 26.5 已有首轮成功反馈，其他项目仍待验收；iOS 26 请先按[电脑配对说明](iOS26Pairing.zh-CN.md)生成并导入 RPPairing 文件。iOS 27 保留原有本机配对流程。
+本分支的 iOS 18+ 适配候选最低系统为 18.0。标准版 iOS 26.5 已有首轮成功反馈，其他项目仍待验收；iOS 18–26 请先按[电脑配对说明](iOS26Pairing.zh-CN.md)生成并导入 RPPairing 文件。iOS 27 保留原有本机配对流程。
 
 ## 选择版本
 
@@ -20,7 +20,7 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 
 ## 准备工作
 
-- 一台运行 iOS 26 或更高版本的实体 iPhone。
+- 一台运行 iOS 18 或更高版本的实体 iPhone。
 - 在“设置 → 隐私与安全性”中开启开发者模式。两个版本都需要：WrapPin 依赖的设备连接和定位模拟属于系统的开发者服务，与使用哪种证书签名无关。
 - 标准版：在 iPhone 上安装 [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044)。隧道版不需要。
 - 标准版：准备 SideStore；也可以在 Mac 上使用 Xcode 和自己的开发者团队编译安装。
@@ -44,7 +44,7 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 
 ### 使用付费证书和签名工具
 
-签名和安装可在 iPhone 上完成。iOS 26 的首次配对仍需电脑生成 RPPairing 文件；iOS 27 可使用本机配对。
+签名和安装可在 iPhone 上完成。iOS 18–26 的首次配对仍需电脑生成 RPPairing 文件；iOS 27 可使用本机配对。
 
 1. 取得一份绑定了本机 UDID 的付费证书和描述文件。可以来自你自己的 Apple Developer 账号，也可以来自第三方证书服务。
 2. 在 iPhone 上安装支持导入证书的 IPA 签名工具，并导入证书和描述文件。

@@ -21,6 +21,8 @@ struct PairingSetupView: View {
                     privacyCard
                 }
                 .padding(16)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Device Setup")
@@ -126,7 +128,7 @@ struct PairingSetupView: View {
                         Button {
                             appModel.startOnDevicePairing()
                         } label: {
-                            Label("Pair This iPhone", systemImage: "iphone.and.arrow.forward")
+                            Label("Pair This Device", systemImage: "iphone.and.arrow.forward")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
@@ -179,9 +181,9 @@ struct PairingSetupView: View {
             requirementRow(number: "1", text: String(localized: "Download idevice_pair on your Mac, Windows or Linux computer."))
             Link("Download idevice_pair", destination: URL(string: "https://github.com/jkcoxson/idevice_pair/releases/latest")!)
                 .frame(minHeight: 44, alignment: .leading)
-            requirementRow(number: "2", text: String(localized: "Connect this iPhone by USB, unlock it and tap Trust when asked."))
-            requirementRow(number: "3", text: String(localized: "Select this iPhone in idevice_pair, choose Remote pairing (RPPairing), then create and save the file."))
-            requirementRow(number: "4", text: String(localized: "Transfer the file to this iPhone, save it in Files, then tap Import RPPairing File above."))
+            requirementRow(number: "2", text: String(localized: "Connect this device by USB, unlock it and tap Trust when asked."))
+            requirementRow(number: "3", text: String(localized: "Select this device in idevice_pair, choose Remote pairing (RPPairing), then create and save the file."))
+            requirementRow(number: "4", text: String(localized: "Transfer the file to this device, save it in Files, then tap Import RPPairing File above."))
             Text("Choose Remote pairing, not Lockdown. A SideStore .mobiledevicepairing file is not a substitute for an RPPairing file.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -261,7 +263,7 @@ struct PairingSetupView: View {
                 number: "1",
                 text: DevicePairingSupport.supportsOnDevicePairing
                     ? String(localized: "Pair this iPhone here, or import its existing RPPairing file.")
-                    : String(localized: "Import this iPhone's RPPairing file created with idevice_pair on your computer.")
+                    : String(localized: "Import this device's RPPairing file created with idevice_pair on your computer.")
             )
             requirementRow(
                 number: "2",
@@ -460,7 +462,7 @@ struct PairingSetupView: View {
             return String(localized: "Validating the record and its keys.")
         case .notPaired:
             if !DevicePairingSupport.supportsOnDevicePairing {
-                return String(localized: "On iOS 26, create an RPPairing file with idevice_pair on your computer, then import it here.")
+                return String(localized: "On iOS 18–26, create an RPPairing file with idevice_pair on your computer, then import it here.")
             }
             return appModel.onDevicePairing.isAvailableOnThisDevice
                 ? String(localized: "Create the pairing securely on this iPhone, or import an existing file.")

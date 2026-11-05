@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概览
 
-WrapPin 是 iOS 26+ 的 SwiftUI App（仅 iPhone；iOS 26 通过电脑生成 RPPairing，iOS 27 保留本机配对），通过 iOS **开发者位置模拟服务**（LocationSimulation）设置固定坐标或沿路线移动。它是 Roam Control 的非官方中文社区分支，许可证为 PolyForm Noncommercial 1.0.0，必须保留上游署名与第三方许可证文件。
+WrapPin 是 iOS 18+ 的 SwiftUI App（iPhone 与 iPad；iPad 真机定位待验收；iOS 18–26 通过电脑生成 RPPairing，iOS 27 保留本机配对），通过 iOS **开发者位置模拟服务**（LocationSimulation）设置固定坐标或沿路线移动。它是 Roam Control 的非官方中文社区分支，许可证为 PolyForm Noncommercial 1.0.0，必须保留上游署名与第三方许可证文件。
 
 没有 SPM/CocoaPods 依赖，没有 XCTest target。唯一的原生依赖是仓库内预编译的 `Frameworks/WrapPinPairingFFI.xcframework`（Rust 静态库）。
 
@@ -64,9 +64,9 @@ scripts/build-pairing-engine.sh               # 仅在改动 Native/WrapPinPairi
 - `package-ipa.sh` 拒绝覆盖已有 build 号的 IPA：先在 `Configuration/Version.xcconfig` 递增 `CURRENT_PROJECT_VERSION`。IPA 必须用 `ditto` 打包（SideStore 对 ZIP 布局敏感）。
 - `build-pairing-engine.sh` 需要 Rust target `aarch64-apple-ios` 和 `aarch64-apple-ios-sim`，且输出目录已存在时会中止——先把旧的 xcframework 移开。
 
-Debug 构建的启动参数：`--skip-onboarding`、`--show-device-setup`、`--show-settings`（用于在模拟器中直接进入某个界面）。`--preview-computer-pairing` 仅在 Debug 中预览 iOS 26 的电脑配对说明，不模拟握手。
+Debug 构建的启动参数：`--skip-onboarding`、`--show-device-setup`、`--show-settings`（用于在模拟器中直接进入某个界面）。`--preview-computer-pairing` 仅在 Debug 中预览 iOS 18–26 的电脑配对说明，不模拟握手。
 
-真实的配对与定位会话只能在实体 iPhone 上验证；模拟器路径通过 `#if targetEnvironment(simulator)` 被桩掉。真机回归项见 `Documentation/RegressionChecklist.md`。
+真实的配对与定位会话只能在实体设备上验证；模拟器路径通过 `#if targetEnvironment(simulator)` 被桩掉。真机回归项见 `Documentation/RegressionChecklist.md`。
 
 ## 架构
 

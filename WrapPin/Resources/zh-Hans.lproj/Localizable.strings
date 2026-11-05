@@ -825,3 +825,13 @@
 "The generated pairing identity was not valid." = "生成的配对身份信息无效。";
 "The stored pairing record could not be read." = "无法读取已保存的配对记录。";
 "The pairing record could not be stored securely (Keychain error %d)." = "无法安全保存配对记录（钥匙串错误 %d）。";
+"Connect this device by USB, unlock it and tap Trust when asked." = "用 USB 连接这台 设备，解锁后按提示轻点“信任”。";
+"Import this device's RPPairing file created with idevice_pair on your computer." = "导入通过电脑上的 idevice_pair 为这台 设备 生成的 RPPairing 文件。";
+"Pair This Device" = "配对这台 设备";
+"Pair this device" = "配对本机";
+"Select this device in idevice_pair, choose Remote pairing (RPPairing), then create and save the file." = "在 idevice_pair 中选择这台 设备，选择 Remote pairing（RPPairing），然后生成并保存文件。";
+"Set Up This Device" = "开始设置本机";
+"Set up device" = "设置本机";
+"Transfer the file to this device, save it in Files, then tap Import RPPairing File above." = "把文件传到这台 设备，保存到“文件”App，然后轻点上方的“导入 RPPairing 文件”。";
+"On iOS 18–26, use idevice_pair on a computer once to create a Remote pairing file. The next screen explains how to import it." = "iOS 18–26 需要用电脑上的 idevice_pair 完成一次远程配对，生成配对文件。下一页会说明如何导入。";
+"On iOS 18–26, create an RPPairing file with idevice_pair on your computer, then import it here." = "iOS 18–26 需要先用电脑上的 idevice_pair 生成 RPPairing 配对文件，再到这里导入。";

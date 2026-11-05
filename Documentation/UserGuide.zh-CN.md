@@ -4,9 +4,11 @@ WrapPin 可以让 iPhone 暂时报告一个固定位置，或沿 Apple 地图规
 
 [返回中文首页](../README.md) · [English](UserGuide.md)
 
+Build 70 的 iPad 横屏和窗口宽度适配见 [iPad 布局说明](iPadLayout.zh-CN.md)。真机配对与定位尚待验收。
+
 ## 首次设置
 
-iOS 26 请先按[电脑配对说明](iOS26Pairing.zh-CN.md)生成并导入 RPPairing 文件。下面的六位码配对步骤适用于 iOS 27 或更高版本。标准版连接外部设备隧道；隧道版允许添加内置 VPN 配置。
+iOS 18–26 请先按[电脑配对说明](iOS26Pairing.zh-CN.md)生成并导入 RPPairing 文件。下面的六位码配对步骤适用于 iOS 27 或更高版本。标准版连接外部设备隧道；隧道版允许添加内置 VPN 配置。
 
 开始前需要实体 iPhone 和开发者模式。标准版另需 LocalDevVPN 等设备隧道；隧道版使用内置隧道。
 
@@ -125,7 +127,7 @@ WrapPin 会在“快捷指令”App 中自动提供两条现成的快捷指令�
 
 ## 连接排查
 
-如果 LocalDevVPN 已连接但仍找不到本机，先确认当前使用的是 Wi-Fi 还是蜂窝网络，再按对应流程重试。如果提示设备与配对记录不符，请重新打开 LocalDevVPN；仍未解决时，确认记录属于这台 iPhone。iOS 26 按[电脑配对说明](iOS26Pairing.zh-CN.md)重新生成、验证并导入记录，iOS 27 可重新配对本机。
+如果 LocalDevVPN 已连接但仍找不到本机，先确认当前使用的是 Wi-Fi 还是蜂窝网络，再按对应流程重试。如果提示设备与配对记录不符，请重新打开 LocalDevVPN；仍未解决时，确认记录属于这台 iPhone。iOS 18–26 按[电脑配对说明](iOS26Pairing.zh-CN.md)重新生成、验证并导入记录，iOS 27 可重新配对本机。
 
 “已保存的配对已失效”也可能来自其他配对校验错误，单凭提示不能确认记录过期；请先复制下面的诊断信息。
 

@@ -74,6 +74,6 @@ struct PairingImportCheck {
         } catch let error as PairingServiceError {
             precondition(error == .lockdownRecord)
         }
-        print("Pairing import and iOS 26/27 capability checks passed; no Keychain writes made.")
+        print("Pairing import and iOS 18–26/27 capability checks passed; no Keychain writes made.")
     }
 }

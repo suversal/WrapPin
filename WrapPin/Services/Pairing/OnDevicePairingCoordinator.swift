@@ -86,7 +86,7 @@ final class OnDevicePairingCoordinator {
 
     func start(storeRecord: @escaping RecordStore) {
         guard DevicePairingSupport.supportsOnDevicePairing else {
-            phase = .failed(String(localized: "On iOS 26, create an RPPairing file with idevice_pair on your computer, then import it here."))
+            phase = .failed(String(localized: "On iOS 18–26, create an RPPairing file with idevice_pair on your computer, then import it here."))
             return
         }
         guard isAvailableOnThisDevice else {

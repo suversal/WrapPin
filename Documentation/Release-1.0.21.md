@@ -1,4 +1,12 @@
-# 1.0.21 Build 69 — iOS 26 compatibility candidate
+# 1.0.21 development and candidate notes
+
+## Build 70 — iOS 18+ and iPad compatibility candidate
+
+The minimum OS is now 18.0. iOS 18–26 uses imported computer-generated RPPairing files; iOS 27 keeps on-device pairing. Pre-26 MapKit uses placemarks and CLGeocoder, and Shortcuts uses openAppWhenRun while keeping foreground execution. Both editions remain single packages across supported OS versions. iOS 18 execution is not yet device-verified.
+
+Both editions and the tunnel extension now declare iPad support, including both landscape orientations. Wide windows separate scrollable controls from the map; narrower windows use bounded overlays. Setup pages have readable content widths. No new IPA has been packaged. See [iPad layout](iPadLayout.md) for validation and pending physical-device acceptance.
+
+## 1.0.21 Build 69 — iOS 26 compatibility candidate
 
 Local candidate dated 5 November 2026 (Asia/Shanghai); not a public release. Based on v1.0.20, with the existing feature set retained and no Build 67/68 experiment changes.
 

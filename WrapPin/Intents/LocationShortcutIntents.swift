@@ -6,6 +6,9 @@ import AppIntents
 struct StartFavouriteSimulationIntent: AppIntent {
     static let title: LocalizedStringResource = "Simulate Favourite Place"
     static let description = IntentDescription("Opens WrapPin and starts simulating a saved favourite place on this iPhone.")
+    static let openAppWhenRun = true
+
+    @available(iOS 26, *)
     static let supportedModes: IntentModes = .foreground(.immediate)
 
     @Parameter(title: "Favourite Place")
@@ -33,6 +36,9 @@ struct StartFavouriteSimulationIntent: AppIntent {
 struct RestoreRealLocationIntent: AppIntent {
     static let title: LocalizedStringResource = "Stop and Restore Real Location"
     static let description = IntentDescription("Opens WrapPin, stops the running simulation or restores the real location after an interrupted one, and waits for the result.")
+    static let openAppWhenRun = true
+
+    @available(iOS 26, *)
     static let supportedModes: IntentModes = .foreground(.immediate)
 
     @Dependency private var appModel: AppModel

@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Compatibility candidate:</strong>1.0.21 (Build 69) · <strong>Minimum:</strong>iOS 26.0 (full regression pending)
+  <strong>Local development:</strong>1.0.21 (Build 70) · <strong>Minimum:</strong>iOS 18.0 (full regression pending)
 </p>
 
 <p align="center">
@@ -26,13 +26,15 @@
   <a href="https://x.com/suversal">@suversal on X</a>
 </p>
 
-WrapPin sets a fixed location or moves along a walking or driving route on an iPhone running **iOS 26 or newer**, without a jailbreak and without installing a MITM root certificate. It uses the iOS developer location simulation service. The app interface is available in English and Simplified Chinese and follows the system language.
+WrapPin sets a fixed location or moves along a walking or driving route on an iPhone running **iOS 18 or newer**, without a jailbreak and without installing a MITM root certificate. It uses the iOS developer location simulation service. The app interface is available in English and Simplified Chinese and follows the system language.
 
 WrapPin is an unofficial community fork of [Roam Control](https://github.com/seanhowarthdev/Roam-Control) by Sean Howarth, maintained by suversal. Upstream provides the core pairing, fixed-location, walking and restore features. WrapPin adds Simplified Chinese localisation, setup and connection guidance, coordinate-mode selection, driving routes, connection diagnostics and an optional built-in tunnel. It keeps the original author's attribution and is not an official upstream release.
 
 > Use WrapPin only on devices you own and control. Do not use it to deceive other people, fabricate evidence, bypass security restrictions, or break the rules of third-party services.
 
-This branch is an iOS 26 compatibility candidate. The user reported initial Standard success on iOS 26.5; restoration, routes, background operation, Tunnel and other OS versions still need acceptance. The public 1.0.20 Build 66 still requires iOS 27. See [computer pairing on iOS 26](Documentation/iOS26Pairing.md).
+This branch is an iOS 18+ compatibility candidate. The user reported initial Standard success on iOS 26.5; restoration, routes, background operation, Tunnel and other OS versions still need acceptance. The public 1.0.20 Build 66 still requires iOS 27. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
+
+Build 70 adds a native iPad interface with side-by-side controls and map in wide windows, and compact overlays in narrow windows. No new IPA has been packaged. Physical iPad pairing and location acceptance are pending; see [iPad layout](Documentation/iPadLayout.md).
 
 ## Contents
 
@@ -53,8 +55,8 @@ This branch is an iOS 26 compatibility candidate. The user reported initial Stan
 
 This guide uses the free route: **iLoader + SideStore + LocalDevVPN + WrapPin**.
 
-- A physical iPhone running iOS 26 or newer, with a passcode set. iOS 26 needs a computer for initial pairing.
-- A Mac, Windows or Linux computer for initial SideStore installation; iOS 26 also needs it to generate an RPPairing file.
+- A physical iPhone running iOS 18 or newer, with a passcode set. iOS 18–26 needs a computer for initial pairing.
+- A Mac, Windows or Linux computer for initial SideStore installation; iOS 18–26 also needs it to generate an RPPairing file.
 - A USB cable that carries data.
 - An Apple account. A free account is enough.
 - Wi-Fi. SideStore needs Wi-Fi and LocalDevVPN whenever it installs or refreshes an app.
@@ -158,10 +160,10 @@ To update WrapPin later, install the new IPA over the existing app. Do not delet
 
 ## Pair this iPhone
 
-On iOS 26, first create and import an RPPairing file using the [computer pairing guide](Documentation/iOS26Pairing.md). The six-digit-code steps below apply to iOS 27 or later; tunnel and location use after importing stay the same.
+On iOS 18–26, first create and import an RPPairing file using the [computer pairing guide](Documentation/iOS26Pairing.md). The six-digit-code steps below apply to iOS 27 or later; tunnel and location use after importing stay the same.
 
 1. Open WrapPin and read the introduction. Allow Local Network access when iOS asks; without it, WrapPin cannot find the device.
-2. On **Device Setup**, tap **Pair This iPhone**. WrapPin shows a six-digit code. The code also appears in a notification.
+2. On **Device Setup**, tap **Pair This Device**. WrapPin shows a six-digit code. The code also appears in a notification.
 3. Open **Settings → Privacy & Security → Developer Mode → Pair with WrapPin**.
 4. Enter your iPhone passcode if asked, then enter the six-digit code from WrapPin. These are two different codes.
 5. Return to WrapPin and check that the status shows **Ready**.
@@ -241,7 +243,7 @@ There are two ways to sign it. These are outlines only:
 
 After installing:
 
-1. Turn on Developer Mode, then import a computer-generated RPPairing record on iOS 26 or pair on-device on iOS 27. Both editions need a pairing record.
+1. Turn on Developer Mode, then import a computer-generated RPPairing record on iOS 18–26 or pair on-device on iOS 27. Both editions need a pairing record.
 2. The first time the tunnel starts, allow WrapPin Tunnel to add a VPN configuration.
 3. Start a location. With **Use Built-in Tunnel** selected in Settings, the tunnel connects when a session starts and disconnects after the real location is restored.
 
@@ -257,7 +259,7 @@ Wherever this guide tells you to connect LocalDevVPN before using WrapPin, the b
 
 **WrapPin cannot find this iPhone.** Check that LocalDevVPN is connected, that no other VPN is using the system tunnel, that Local Network access is allowed for WrapPin, and that you are following the right flow for Wi-Fi or mobile data. Turn LocalDevVPN off and on, then try again.
 
-**WrapPin reports an invalid pairing record.** Several verification failures share this message, so first copy diagnostics from **Settings → Connection Health**. On iOS 26, follow [computer pairing](Documentation/iOS26Pairing.md) to create, validate and import the same RPPairing record. On iOS 27, you can repeat on-device pairing.
+**WrapPin reports an invalid pairing record.** Several verification failures share this message, so first copy diagnostics from **Settings → Connection Health**. On iOS 18–26, follow [computer pairing](Documentation/iOS26Pairing.md) to create, validate and import the same RPPairing record. On iOS 27, you can repeat on-device pairing.
 
 **WrapPin shows the location as active, but another app has not changed.** Check Apple Maps. If Apple Maps has moved and the other app has not, that app is using cached data or other signals. WrapPin does not change your IP address, Wi-Fi, cell towers, Apple account region or anything stored on a third-party server.
 
@@ -267,7 +269,7 @@ Wherever this guide tells you to connect LocalDevVPN before using WrapPin, the b
 
 ## Limits you should know
 
-- This branch targets physical iPhones running iOS 26 or newer; the remaining iOS 26 regression is pending. The simulator can show the interface but cannot pair or simulate a location.
+- This branch targets physical iPhones running iOS 18 or newer; the remaining iOS 18–26 regression is pending. The simulator can show the interface but cannot pair or simulate a location.
 - WrapPin changes the developer-simulated location. It does not change your public IP address, carrier, Apple account region or App Store region.
 - Not every third-party app accepts a simulated location.
 - LocalDevVPN usually cannot run at the same time as another app that controls the system VPN.
@@ -278,7 +280,7 @@ Wherever this guide tells you to connect LocalDevVPN before using WrapPin, the b
 
 WrapPin uses the iOS **developer location simulation** channel. It does not fake an IP address through a proxy and does not intercept or rewrite Apple's location requests.
 
-1. WrapPin imports a computer-generated pairing record on iOS 26 or creates one on-device on iOS 27, then stores it in the Keychain.
+1. WrapPin imports a computer-generated pairing record on iOS 18–26 or creates one on-device on iOS 27, then stores it in the Keychain.
 2. LocalDevVPN, or the built-in tunnel in the Tunnel edition, exposes the iPhone's own remote pairing service so that WrapPin can find it.
 3. WrapPin verifies the device identity and opens an encrypted developer session.
 4. WrapPin sets coordinates through the iOS LocationSimulation service, and keeps updating them along a route.

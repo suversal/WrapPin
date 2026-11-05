@@ -6,6 +6,7 @@ struct HomeView: View {
     @Environment(ReleaseUpdateModel.self) private var releaseUpdates
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .body) private var mapControlSymbolSize = 17
     @State private var mapModel = MapViewModel()
     @State private var walkingRoutePlanner = WalkingRoutePlanner()
     @State private var walkingSimulation = WalkingSimulationController()
@@ -32,536 +33,38 @@ struct HomeView: View {
     }
 
     var body: some View {
-        ZStack {
-            MapReader { proxy in
-                Map(position: $mapModel.cameraPosition) {
-                    // Draw the alternatives first so the selected route stays on top.
-                    ForEach(
-                        Array(walkingRoutePlanner.routes.enumerated()),
-                        id: \.offset
-                    ) { index, alternative in
-                        if index != walkingRoutePlanner.selectedRouteIndex {
-                            MapPolyline(alternative)
-                                .stroke(.blue.opacity(0.35), lineWidth: 5)
-                        }
-                    }
-
-                    if let route = walkingRoutePlanner.route {
-                        MapPolyline(route)
-                            .stroke(.blue, lineWidth: 6)
-                    }
-
-                    if shouldShowRealLocation {
-                        UserAnnotation()
-                    }
-
-                    if let target = mapModel.selectedLocation {
-                        Marker(target.name, coordinate: target.coordinate)
-                            .tint(.blue)
-                    }
-
-                    if let coordinate = walkingSimulation.currentCoordinate {
-                        Annotation("Simulated route location", coordinate: coordinate) {
-                            Image(systemName: walkingSimulation.mode == .walking ? "figure.walk.circle.fill" : "car.circle.fill")
-                                .font(.title.weight(.semibold))
-                                .foregroundStyle(.white, .green)
-                                .padding(4)
-                                .background(.regularMaterial, in: Circle())
-                                .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
-                        }
-                    }
-                }
-                .roamControlMapStyle(appModel.mapDisplayStyle)
-                .mapControls {
-                    MapScaleView()
-                }
-                .onMapCameraChange(frequency: .continuous) { context in
-                    visibleMapCamera = context.camera
-                }
-                .onTapGesture { point in
-                    if isSearchFocused {
-                        isSearchFocused = false
-                        return
-                    }
-
-                    guard !walkingSimulation.locksDestination else { return }
-                    guard let coordinate = proxy.convert(point, from: .local) else { return }
-                    if selectPreviewedRoute(at: point, coordinate: coordinate, proxy: proxy) { return }
-                    Task { await mapModel.selectDroppedPin(at: coordinate) }
-                }
-            }
-            .ignoresSafeArea()
-
-            VStack(spacing: 12) {
-                MapSearchBar(
-                    query: Binding(
-                        get: { mapModel.searchQuery },
-                        set: { mapModel.updateSearchQuery($0) }
-                    ),
-                    isFocused: $isSearchFocused,
-                    isSearching: mapModel.isSearching,
-                    isOverseasSearch: mapModel.isOverseasSearchAvailable
-                        ? mapModel.isOverseasSearch
-                        : nil,
-                    onToggleOverseasSearch: {
-                        mapModel.setOverseasSearch(!mapModel.isOverseasSearch)
-                    },
-                    onSubmit: {
-                        Task { await mapModel.search() }
-                    },
-                    onClear: mapModel.clearSearch
-                )
-                .disabled(walkingSimulation.locksDestination)
-
-                if mapModel.isShowingSuggestions && !walkingSimulation.locksDestination {
-                    SearchSuggestionsView(
-                        suggestions: mapModel.searchSuggestions,
-                        onSelect: { suggestion in
-                            isSearchFocused = false
-                            Task { await mapModel.selectSuggestion(suggestion) }
-                        }
-                    )
-                }
-
-                if mapModel.isShowingOverseasResults && !walkingSimulation.locksDestination {
-                    OverseasResultsView(
-                        places: mapModel.overseasResults,
-                        onSelect: { place in
-                            isSearchFocused = false
-                            mapModel.selectOverseasPlace(place)
-                        }
-                    )
-                }
-
-                if !isSearchingForLocation {
-                    HStack {
-                        Button {
-                            isShowingDeviceSetup = true
-                        } label: {
-                            ConnectionBadge(state: appModel.connectionState)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("Opens device pairing setup")
-
-                        Spacer()
-
-                        HStack(spacing: 10) {
-                            Button {
-                                isShowingSavedPlaces = true
-                            } label: {
-                                Image(systemName: "heart.text.square.fill")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                    .frame(width: 36, height: 36)
-                                    .background(.regularMaterial, in: Circle())
-                                    .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
-                                    .frame(width: 44, height: 44)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Favourites and history")
-
-                            Button {
-                                isShowingSettings = true
-                            } label: {
-                                Image(systemName: "gearshape.fill")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                    .frame(width: 36, height: 36)
-                                    .background(.regularMaterial, in: Circle())
-                                    .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
-                                    .frame(width: 44, height: 44)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Settings")
-                        }
-                    }
-
-                    if let release = releaseUpdates.visibleRelease {
-                        HStack(spacing: 8) {
-                            Link(destination: release.releaseURL) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "arrow.down.circle.fill")
-                                        .font(.title3)
-                                        .foregroundStyle(.blue)
-
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(String(
-                                            format: NSLocalizedString("WrapPin %@ is available.", comment: ""),
-                                            release.version
-                                        ))
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(.primary)
-
-                                        Text("View release and download")
-                                            .font(.caption.weight(.semibold))
-                                            .foregroundStyle(.blue)
-                                    }
-                                    Spacer(minLength: 0)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-
-                            Button(action: releaseUpdates.dismissBanner) {
-                                Image(systemName: "xmark")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 44, height: 44)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Dismiss update reminder")
-                        }
-                        .padding(.leading, 14)
-                        .padding(.trailing, 6)
-                        .padding(.vertical, 6)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
-                    }
-
-                    if needsPairingPrompt {
-                    Button {
-                        isShowingDeviceSetup = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "iphone.and.arrow.forward")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.blue)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Pair this iPhone")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                Text("Required before location control")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(14)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
-                    }
-                    .buttonStyle(.plain)
-                    }
-
-                    Spacer()
-
-                    if case .active = appModel.deviceSession.phase,
-                       !appModel.deviceSession.backgroundKeepAlive.started,
-                       appModel.deviceSession.backgroundKeepAlive.status != .awaitingAuthorization {
-                        Label(
-                            "The current simulation can still work in the foreground, but background continuity is unavailable. Check Location access for WrapPin in Settings.",
-                            systemImage: "exclamationmark.triangle.fill"
-                        )
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(14)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .accessibilityElement(children: .combine)
-                    }
-
-                    HStack {
-                    Spacer()
-
-                    VStack(spacing: 10) {
-                        if walkingSimulation.mode == .driving,
-                           let coordinate = walkingSimulation.currentCoordinate,
-                           let route = walkingRoutePlanner.route {
-                            Button {
-                                followsSimulatedLocation.toggle()
-                                if followsSimulatedLocation {
-                                    mapModel.center(on: coordinate)
-                                } else {
-                                    mapModel.show(route)
-                                }
-                            } label: {
-                                Image(systemName: followsSimulatedLocation ? "car.fill" : "car")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(followsSimulatedLocation ? .blue : .primary)
-                                    .frame(width: 44, height: 44)
-                                    .background(.regularMaterial, in: Circle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(followsSimulatedLocation
-                                ? "Show whole route"
-                                : "Follow simulated car")
-                        }
-
-                        if shouldShowMapCompass {
-                            Button(action: resetMapHeading) {
-                                CompassRoseDial()
-                                    .rotationEffect(.degrees(-normalisedMapHeading))
-                                    .frame(width: 44, height: 44)
-                                    .background(.regularMaterial, in: Circle())
-                                    .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Return map to north")
-                            .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
-                        }
-
-                        if canRequestRealLocation {
-                            Button {
-                                showCurrentLocationNorthUp()
-                            } label: {
-                                Group {
-                                    if mapModel.isFindingRealLocation {
-                                        ProgressView()
-                                            .controlSize(.small)
-                                    } else {
-                                        Image(systemName: "location.fill")
-                                            .font(.body.weight(.semibold))
-                                            .foregroundStyle(.blue)
-                                    }
-                                }
-                                .frame(width: 44, height: 44)
-                                .background(.regularMaterial, in: Circle())
-                                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(mapModel.isFindingRealLocation)
-                            .accessibilityLabel("Show my current location")
-                        }
-                    }
-                    }
-
-                    if isLocatingRealLocationAfterRestoration {
-                    RestoringRealLocationCard()
-                    } else if let route = walkingRoutePlanner.route,
-                   let destination = walkingRoutePlanner.destination {
-                    WalkingRoutePreviewCard(
-                        route: route,
-                        routes: walkingRoutePlanner.routes,
-                        selectedRouteIndex: walkingRoutePlanner.selectedRouteIndex,
-                        destination: walkingSimulation.destination ?? destination,
-                        simulation: walkingSimulation,
-                        isPaired: isPaired,
-                        onSelectRoute: selectPreviewedRoute,
-                        onStart: {
-                            walkingRoutePlanner.discardAlternativeRoutes()
-                            followsSimulatedLocation = walkingSimulation.mode == .driving
-                            Task { await walkingSimulation.start(using: appModel) }
-                        },
-                        onTogglePause: walkingSimulation.togglePause,
-                        onWalkBack: {
-                            guard let returnTarget = walkingSimulation.prepareReturnTrip() else { return }
-                            walkingRoutePlanner.retargetExistingRoute(to: returnTarget)
-                            mapModel.show(returnTarget)
-                        },
-                        onChooseNewLocation: {
-                            walkingSimulation.reset()
-                            walkingRoutePlanner.clear()
-                            mapModel.clearSelectedLocation()
-                        },
-                        onStop: {
-                            shouldClearLocationAfterRestoration = true
-                            walkingSimulation.stop(using: appModel.deviceSession)
-                        },
-                        onDone: {
-                            walkingSimulation.reset()
-                            walkingRoutePlanner.clear()
-                            mapModel.show(destination)
-                        }
-                    )
-                    } else {
-                    LocationSelectionCard(
-                        location: mapModel.selectedLocation,
-                        isFavourite: mapModel.selectedLocation.map(appModel.isFavourite) ?? false,
-                        isResolvingAddress: mapModel.isResolvingAddress,
-                        isPaired: isPaired,
-                        sessionPhase: appModel.deviceSession.phase,
-                        tunnelHandoffApp: appModel.tunnelHandoffApp,
-                        usesBuiltInTunnel: appModel.usesBuiltInTunnel,
-                        tunnelAppInstallURL: appModel.selectedTunnelAppInstallURL,
-                        previewingRouteMode: walkingRoutePlanner.isLoading ? walkingRoutePlanner.mode : nil,
-                        routeError: walkingRoutePlanner.errorMessage,
-                        coordinateMode: fixedCoordinateMode,
-                        recommendedCoordinateMode: mapModel.selectedLocation.map(
-                            FixedCoordinateMode.recommended
-                        ) ?? .wgs84,
-                        onCoordinateModeChange: { mode in
-                            fixedCoordinateMode = mode
-                            if let target = mapModel.selectedLocation {
-                                appModel.rememberManualCoordinateMode(mode, for: target)
-                            }
-                            guard
-                                let target = mapModel.selectedLocation,
-                                case .active(let activeTarget) = appModel.deviceSession.phase,
-                                activeTarget.id == target.id,
-                                appModel.activeFixedCoordinateMode != mode
-                            else { return }
-                            Task {
-                                await appModel.startLocationSession(
-                                    at: target,
-                                    coordinateMode: mode
-                                )
-                            }
-                        },
-                        onToggleFavourite: {
-                            guard !mapModel.isResolvingAddress else { return }
-                            guard let target = mapModel.selectedLocation else { return }
-                            appModel.toggleFavourite(target)
-                        },
-                        onClearSelection: {
-                            walkingSimulation.reset()
-                            walkingRoutePlanner.clear()
-                            mapModel.clearSelectedLocation()
-                        },
-                        onPreviewRoute: { mode in
-                            guard !mapModel.isResolvingAddress else { return }
-                            guard let target = mapModel.selectedLocation else { return }
-                            Task {
-                                if let route = await walkingRoutePlanner.preview(to: target, mode: mode) {
-                                    walkingSimulation.prepare(
-                                        route: route,
-                                        destination: target,
-                                        mode: mode,
-                                        coordinateMode: fixedCoordinateMode
-                                    )
-                                    mapModel.show(walkingRoutePlanner.routes)
+        GeometryReader { geometry in
+            ZStack {
+                if geometry.size.width >= 900 {
+                    HStack(spacing: 0) {
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                searchPanel
+                                if !isSearchingForLocation {
+                                    statusPanel
+                                    backgroundWarning
+                                    selectionCard
                                 }
                             }
-                        },
-                        onStart: {
-                            guard !mapModel.isResolvingAddress else { return }
-                            guard let target = mapModel.selectedLocation else { return }
-                            shouldRefreshRealLocationWhenActive = false
-                            mapModel.show(target)
-                            Task {
-                                await appModel.startLocationSession(
-                                    at: target,
-                                    coordinateMode: fixedCoordinateMode
-                                )
-                            }
-                        },
-                        onStop: {
-                            shouldClearLocationAfterRestoration = true
-                            appModel.stopLocationSession()
+                            .padding(16)
                         }
-                    )
+                        .scrollDismissesKeyboard(.interactively)
+                        .frame(width: min(400, max(360, geometry.size.width * 0.3)))
+                        .background(Color(uiColor: .systemGroupedBackground))
+                        .accessibilityIdentifier("map.sidebar")
+
+                        mapContent
+                            .overlay(alignment: .bottomTrailing) {
+                                mapControls
+                                    .padding(16)
+                            }
                     }
                 } else {
-                    Spacer()
+                    mapContent
+                    compactControls(availableHeight: geometry.size.height)
                 }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 8)
 
-            // Always present so the banner animates both in and out, whether it
-            // is dismissed by a tap or by its timer.
-            VStack {
-                Spacer()
-                if let message = mapModel.errorMessage {
-                    Text(message)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(.red, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .padding(.horizontal, 16)
-                        .onTapGesture(perform: mapModel.dismissError)
-                        .accessibilityAddTraits(.isButton)
-                        .accessibilityHint("Dismisses this message")
-                        .padding(.bottom, 196)
-                        .transition(
-                            reduceMotion
-                                ? .opacity
-                                : .asymmetric(
-                                    insertion: .opacity.combined(with: .offset(y: 12)),
-                                    removal: .opacity.combined(with: .scale(scale: 0.92))
-                                )
-                        )
-                }
-            }
-            .animation(
-                reduceMotion ? .easeInOut(duration: 0.2) : .spring(duration: 0.35, bounce: 0.15),
-                value: mapModel.errorMessage
-            )
-
-            if let guidance = appModel.deviceSession.mobileDataGuidance {
-                Color.black.opacity(0.34)
-                    .ignoresSafeArea()
-
-                VStack {
-                    Spacer()
-                    MobileDataGuidanceView(
-                        guidance: guidance,
-                        tunnelHandoffApp: appModel.tunnelHandoffApp,
-                        usesBuiltInTunnel: appModel.usesBuiltInTunnel,
-                        isUsingMobileData: appModel.deviceSession.isUsingMobileDataForStartup,
-                        onOpenTunnelApp: appModel.deviceSession.openSelectedTunnelApp,
-                        onRetry: appModel.deviceSession.retryConnection,
-                        onUseMobileData: appModel.deviceSession.useMobileDataGuidance,
-                        onMobileDataOff: appModel.deviceSession.confirmMobileDataIsOff,
-                        onCancel: appModel.stopLocationSession,
-                        onDone: {
-                            if appModel.isRestoringInterruptedSession {
-                                appModel.completeInterruptedSessionRestorationAfterMobileData()
-                            } else {
-                                appModel.deviceSession.dismissMobileDataGuidance()
-                            }
-                        }
-                    )
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
-                }
-                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
-                .zIndex(10)
-            }
-
-            if
-                let recovery = appModel.interruptedSession,
-                appModel.deviceSession.mobileDataGuidance == nil
-            {
-                Color.black.opacity(0.34)
-                    .ignoresSafeArea()
-
-                VStack {
-                    Spacer()
-                    SessionRecoveryView(
-                        recovery: recovery,
-                        isPaired: isPaired,
-                        isResuming: isPreparingRecoveredWalk || appModel.isStartingLocationSession,
-                        isRestoring: appModel.isRestoringInterruptedSession,
-                        errorMessage: recoveredWalkError ?? appModel.interruptedSessionError,
-                        onResume: {
-                            resumeInterruptedSession(recovery)
-                        },
-                        onRestore: {
-                            recoveredWalkError = nil
-                            walkingSimulation.reset()
-                            walkingRoutePlanner.clear()
-                            Task { await appModel.restoreRealLocationFromInterruptedSession() }
-                        },
-                        onAlreadyRestored: {
-                            dismissInterruptedSessionRecovery()
-                        },
-                        onCancel: {
-                            if appModel.isRestoringInterruptedSession {
-                                appModel.cancelInterruptedSessionRestoration()
-                            } else if appModel.isStartingLocationSession {
-                                appModel.stopLocationSession()
-                            } else if isPreparingRecoveredWalk {
-                                recoveredWalkPreparationIdentifier = nil
-                                isPreparingRecoveredWalk = false
-                                walkingRoutePlanner.clear()
-                            }
-                        }
-                    )
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
-                }
-                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
-                .zIndex(9)
+                sessionOverlays
             }
         }
         .task {
@@ -685,6 +188,575 @@ struct HomeView: View {
                 onClearFavourites: appModel.clearFavouriteLocations,
                 onClearHistory: appModel.clearLocationHistory
             )
+        }
+    }
+
+    // Use the available window width so rotation and iPad window resizing use
+    // the same layout rules. Session state stays in the shared models above.
+    private var mapContent: some View {
+        MapReader { proxy in
+            Map(position: $mapModel.cameraPosition) {
+                // Draw the alternatives first so the selected route stays on top.
+                ForEach(
+                    Array(walkingRoutePlanner.routes.enumerated()),
+                    id: \.offset
+                ) { index, alternative in
+                    if index != walkingRoutePlanner.selectedRouteIndex {
+                        MapPolyline(alternative)
+                            .stroke(.blue.opacity(0.35), lineWidth: 5)
+                    }
+                }
+
+                if let route = walkingRoutePlanner.route {
+                    MapPolyline(route)
+                        .stroke(.blue, lineWidth: 6)
+                }
+
+                if shouldShowRealLocation {
+                    UserAnnotation()
+                }
+
+                if let target = mapModel.selectedLocation {
+                    Marker(target.name, coordinate: target.coordinate)
+                        .tint(.blue)
+                }
+
+                if let coordinate = walkingSimulation.currentCoordinate {
+                    Annotation("Simulated route location", coordinate: coordinate) {
+                        Image(systemName: walkingSimulation.mode == .walking ? "figure.walk.circle.fill" : "car.circle.fill")
+                            .font(.title.weight(.semibold))
+                            .foregroundStyle(.white, .green)
+                            .padding(4)
+                            .background(.regularMaterial, in: Circle())
+                            .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
+                    }
+                }
+            }
+            .roamControlMapStyle(appModel.mapDisplayStyle)
+            .mapControls {
+                MapScaleView()
+            }
+            .onMapCameraChange(frequency: .continuous) { context in
+                visibleMapCamera = context.camera
+            }
+            .onTapGesture { point in
+                if isSearchFocused {
+                    isSearchFocused = false
+                    return
+                }
+
+                guard !walkingSimulation.locksDestination else { return }
+                guard let coordinate = proxy.convert(point, from: .local) else { return }
+                if selectPreviewedRoute(at: point, coordinate: coordinate, proxy: proxy) { return }
+                Task { await mapModel.selectDroppedPin(at: coordinate) }
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    private func compactControls(availableHeight: CGFloat) -> some View {
+        VStack(spacing: 12) {
+            searchPanel
+            if !isSearchingForLocation {
+                statusPanel
+                Spacer(minLength: 0)
+                backgroundWarning
+                mapControls
+                ViewThatFits(in: .vertical) {
+                    selectionCard
+                    ScrollView {
+                        selectionCard
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                }
+                .frame(maxHeight: max(160, availableHeight * 0.6))
+            } else {
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var searchPanel: some View {
+        VStack(spacing: 12) {
+            MapSearchBar(
+                query: Binding(
+                    get: { mapModel.searchQuery },
+                    set: { mapModel.updateSearchQuery($0) }
+                ),
+                isFocused: $isSearchFocused,
+                isSearching: mapModel.isSearching,
+                isOverseasSearch: mapModel.isOverseasSearchAvailable
+                    ? mapModel.isOverseasSearch
+                    : nil,
+                onToggleOverseasSearch: {
+                    mapModel.setOverseasSearch(!mapModel.isOverseasSearch)
+                },
+                onSubmit: {
+                    Task { await mapModel.search() }
+                },
+                onClear: mapModel.clearSearch
+            )
+            .disabled(walkingSimulation.locksDestination)
+
+            if mapModel.isShowingSuggestions && !walkingSimulation.locksDestination {
+                SearchSuggestionsView(
+                    suggestions: mapModel.searchSuggestions,
+                    onSelect: { suggestion in
+                        isSearchFocused = false
+                        Task { await mapModel.selectSuggestion(suggestion) }
+                    }
+                )
+            }
+
+            if mapModel.isShowingOverseasResults && !walkingSimulation.locksDestination {
+                OverseasResultsView(
+                    places: mapModel.overseasResults,
+                    onSelect: { place in
+                        isSearchFocused = false
+                        mapModel.selectOverseasPlace(place)
+                    }
+                )
+            }
+        }
+    }
+
+    private var statusPanel: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Button {
+                    isShowingDeviceSetup = true
+                } label: {
+                    ConnectionBadge(state: appModel.connectionState)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens device pairing setup")
+
+                Spacer()
+
+                HStack(spacing: 10) {
+                    Button {
+                        isShowingSavedPlaces = true
+                    } label: {
+                        Image(systemName: "heart.text.square.fill")
+                            .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: Circle())
+                            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Favourites and history")
+
+                    Button {
+                        isShowingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: Circle())
+                            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Settings")
+                }
+            }
+
+            if let release = releaseUpdates.visibleRelease {
+                HStack(spacing: 8) {
+                    Link(destination: release.releaseURL) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.blue)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(String(
+                                    format: NSLocalizedString("WrapPin %@ is available.", comment: ""),
+                                    release.version
+                                ))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+
+                                Text("View release and download")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.blue)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: releaseUpdates.dismissBanner) {
+                        Image(systemName: "xmark")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Dismiss update reminder")
+                }
+                .padding(.leading, 14)
+                .padding(.trailing, 6)
+                .padding(.vertical, 6)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+            }
+
+            if needsPairingPrompt {
+            Button {
+                isShowingDeviceSetup = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "iphone.and.arrow.forward")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.blue)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Pair this device")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Required before location control")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(14)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+            }
+            .buttonStyle(.plain)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var backgroundWarning: some View {
+        if case .active = appModel.deviceSession.phase,
+           !appModel.deviceSession.backgroundKeepAlive.started,
+           appModel.deviceSession.backgroundKeepAlive.status != .awaitingAuthorization {
+            Label(
+                "The current simulation can still work in the foreground, but background continuity is unavailable. Check Location access for WrapPin in Settings.",
+                systemImage: "exclamationmark.triangle.fill"
+            )
+            .font(.subheadline)
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(14)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private var mapControls: some View {
+        HStack {
+        Spacer()
+
+        VStack(spacing: 10) {
+            if walkingSimulation.mode == .driving,
+               let coordinate = walkingSimulation.currentCoordinate,
+               let route = walkingRoutePlanner.route {
+                Button {
+                    followsSimulatedLocation.toggle()
+                    if followsSimulatedLocation {
+                        mapModel.center(on: coordinate)
+                    } else {
+                        mapModel.show(route)
+                    }
+                } label: {
+                    Image(systemName: followsSimulatedLocation ? "car.fill" : "car")
+                        .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                        .foregroundStyle(followsSimulatedLocation ? .blue : .primary)
+                        .frame(width: 44, height: 44)
+                        .background(.regularMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(followsSimulatedLocation
+                    ? "Show whole route"
+                    : "Follow simulated car")
+            }
+
+            if shouldShowMapCompass {
+                Button(action: resetMapHeading) {
+                    CompassRoseDial()
+                        .rotationEffect(.degrees(-normalisedMapHeading))
+                        .frame(width: 44, height: 44)
+                        .background(.regularMaterial, in: Circle())
+                        .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Return map to north")
+                .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
+            }
+
+            if canRequestRealLocation {
+                Button {
+                    showCurrentLocationNorthUp()
+                } label: {
+                    Group {
+                        if mapModel.isFindingRealLocation {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .frame(width: 44, height: 44)
+                    .background(.regularMaterial, in: Circle())
+                    .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+                }
+                .buttonStyle(.plain)
+                .disabled(mapModel.isFindingRealLocation)
+                .accessibilityLabel("Show my current location")
+            }
+        }
+        }
+    }
+
+    @ViewBuilder
+    private var selectionCard: some View {
+         if isLocatingRealLocationAfterRestoration {
+         RestoringRealLocationCard()
+         } else if let route = walkingRoutePlanner.route,
+        let destination = walkingRoutePlanner.destination {
+         WalkingRoutePreviewCard(
+             route: route,
+             routes: walkingRoutePlanner.routes,
+             selectedRouteIndex: walkingRoutePlanner.selectedRouteIndex,
+             destination: walkingSimulation.destination ?? destination,
+             simulation: walkingSimulation,
+             isPaired: isPaired,
+             onSelectRoute: selectPreviewedRoute,
+             onStart: {
+                 walkingRoutePlanner.discardAlternativeRoutes()
+                 followsSimulatedLocation = walkingSimulation.mode == .driving
+                 Task { await walkingSimulation.start(using: appModel) }
+             },
+             onTogglePause: walkingSimulation.togglePause,
+             onWalkBack: {
+                 guard let returnTarget = walkingSimulation.prepareReturnTrip() else { return }
+                 walkingRoutePlanner.retargetExistingRoute(to: returnTarget)
+                 mapModel.show(returnTarget)
+             },
+             onChooseNewLocation: {
+                 walkingSimulation.reset()
+                 walkingRoutePlanner.clear()
+                 mapModel.clearSelectedLocation()
+             },
+             onStop: {
+                 shouldClearLocationAfterRestoration = true
+                 walkingSimulation.stop(using: appModel.deviceSession)
+             },
+             onDone: {
+                 walkingSimulation.reset()
+                 walkingRoutePlanner.clear()
+                 mapModel.show(destination)
+             }
+         )
+         } else {
+         LocationSelectionCard(
+             location: mapModel.selectedLocation,
+             isFavourite: mapModel.selectedLocation.map(appModel.isFavourite) ?? false,
+             isResolvingAddress: mapModel.isResolvingAddress,
+             isPaired: isPaired,
+             sessionPhase: appModel.deviceSession.phase,
+             tunnelHandoffApp: appModel.tunnelHandoffApp,
+             usesBuiltInTunnel: appModel.usesBuiltInTunnel,
+             tunnelAppInstallURL: appModel.selectedTunnelAppInstallURL,
+             previewingRouteMode: walkingRoutePlanner.isLoading ? walkingRoutePlanner.mode : nil,
+             routeError: walkingRoutePlanner.errorMessage,
+             coordinateMode: fixedCoordinateMode,
+             recommendedCoordinateMode: mapModel.selectedLocation.map(
+                 FixedCoordinateMode.recommended
+             ) ?? .wgs84,
+             onCoordinateModeChange: { mode in
+                 fixedCoordinateMode = mode
+                 if let target = mapModel.selectedLocation {
+                     appModel.rememberManualCoordinateMode(mode, for: target)
+                 }
+                 guard
+                     let target = mapModel.selectedLocation,
+                     case .active(let activeTarget) = appModel.deviceSession.phase,
+                     activeTarget.id == target.id,
+                     appModel.activeFixedCoordinateMode != mode
+                 else { return }
+                 Task {
+                     await appModel.startLocationSession(
+                         at: target,
+                         coordinateMode: mode
+                     )
+                 }
+             },
+             onToggleFavourite: {
+                 guard !mapModel.isResolvingAddress else { return }
+                 guard let target = mapModel.selectedLocation else { return }
+                 appModel.toggleFavourite(target)
+             },
+             onClearSelection: {
+                 walkingSimulation.reset()
+                 walkingRoutePlanner.clear()
+                 mapModel.clearSelectedLocation()
+             },
+             onPreviewRoute: { mode in
+                 guard !mapModel.isResolvingAddress else { return }
+                 guard let target = mapModel.selectedLocation else { return }
+                 Task {
+                     if let route = await walkingRoutePlanner.preview(to: target, mode: mode) {
+                         walkingSimulation.prepare(
+                             route: route,
+                             destination: target,
+                             mode: mode,
+                             coordinateMode: fixedCoordinateMode
+                         )
+                         mapModel.show(walkingRoutePlanner.routes)
+                     }
+                 }
+             },
+             onStart: {
+                 guard !mapModel.isResolvingAddress else { return }
+                 guard let target = mapModel.selectedLocation else { return }
+                 shouldRefreshRealLocationWhenActive = false
+                 mapModel.show(target)
+                 Task {
+                     await appModel.startLocationSession(
+                         at: target,
+                         coordinateMode: fixedCoordinateMode
+                     )
+                 }
+             },
+             onStop: {
+                 shouldClearLocationAfterRestoration = true
+                 appModel.stopLocationSession()
+             }
+         )
+         }
+    }
+
+    @ViewBuilder
+    private var sessionOverlays: some View {
+        // Always present so the banner animates both in and out, whether it
+        // is dismissed by a tap or by its timer.
+        VStack {
+            Spacer()
+            if let message = mapModel.errorMessage {
+                Text(message)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.red, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .padding(.horizontal, 16)
+                    .onTapGesture(perform: mapModel.dismissError)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityHint("Dismisses this message")
+                    .padding(.bottom, 196)
+                    .transition(
+                        reduceMotion
+                            ? .opacity
+                            : .asymmetric(
+                                insertion: .opacity.combined(with: .offset(y: 12)),
+                                removal: .opacity.combined(with: .scale(scale: 0.92))
+                            )
+                    )
+            }
+        }
+        .animation(
+            reduceMotion ? .easeInOut(duration: 0.2) : .spring(duration: 0.35, bounce: 0.15),
+            value: mapModel.errorMessage
+        )
+
+        if let guidance = appModel.deviceSession.mobileDataGuidance {
+            Color.black.opacity(0.34)
+                .ignoresSafeArea()
+
+            VStack {
+                Spacer()
+                MobileDataGuidanceView(
+                    guidance: guidance,
+                    tunnelHandoffApp: appModel.tunnelHandoffApp,
+                    usesBuiltInTunnel: appModel.usesBuiltInTunnel,
+                    isUsingMobileData: appModel.deviceSession.isUsingMobileDataForStartup,
+                    onOpenTunnelApp: appModel.deviceSession.openSelectedTunnelApp,
+                    onRetry: appModel.deviceSession.retryConnection,
+                    onUseMobileData: appModel.deviceSession.useMobileDataGuidance,
+                    onMobileDataOff: appModel.deviceSession.confirmMobileDataIsOff,
+                    onCancel: appModel.stopLocationSession,
+                    onDone: {
+                        if appModel.isRestoringInterruptedSession {
+                            appModel.completeInterruptedSessionRestorationAfterMobileData()
+                        } else {
+                            appModel.deviceSession.dismissMobileDataGuidance()
+                        }
+                    }
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+            }
+            .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
+            .zIndex(10)
+        }
+
+        if
+            let recovery = appModel.interruptedSession,
+            appModel.deviceSession.mobileDataGuidance == nil
+        {
+            Color.black.opacity(0.34)
+                .ignoresSafeArea()
+
+            VStack {
+                Spacer()
+                SessionRecoveryView(
+                    recovery: recovery,
+                    isPaired: isPaired,
+                    isResuming: isPreparingRecoveredWalk || appModel.isStartingLocationSession,
+                    isRestoring: appModel.isRestoringInterruptedSession,
+                    errorMessage: recoveredWalkError ?? appModel.interruptedSessionError,
+                    onResume: {
+                        resumeInterruptedSession(recovery)
+                    },
+                    onRestore: {
+                        recoveredWalkError = nil
+                        walkingSimulation.reset()
+                        walkingRoutePlanner.clear()
+                        Task { await appModel.restoreRealLocationFromInterruptedSession() }
+                    },
+                    onAlreadyRestored: {
+                        dismissInterruptedSessionRecovery()
+                    },
+                    onCancel: {
+                        if appModel.isRestoringInterruptedSession {
+                            appModel.cancelInterruptedSessionRestoration()
+                        } else if appModel.isStartingLocationSession {
+                            appModel.stopLocationSession()
+                        } else if isPreparingRecoveredWalk {
+                            recoveredWalkPreparationIdentifier = nil
+                            isPreparingRecoveredWalk = false
+                            walkingRoutePlanner.clear()
+                        }
+                    }
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+            }
+            .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
+            .zIndex(9)
         }
     }
 
