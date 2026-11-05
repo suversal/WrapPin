@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>本地开发版：</strong>1.0.21（Build 70） · <strong>最低系统：</strong>iOS 18.0（完整回归待完成）
+  <strong>本地测试候选：</strong>1.0.21（Build 70） · <strong>最低系统：</strong>iOS 18.0（完整回归待完成）
 </p>
 
 <p align="center">
@@ -44,7 +44,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 本分支是 iOS 18+ 适配候选。公开的 1.0.20 Build 66 仍要求 iOS 27；标准版已收到 iOS 26.5 的首轮成功反馈，恢复位置、路线、后台、隧道版及其他系统版本仍待分别验收。iOS 18–26 的首次配对步骤见[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)。
 
-Build 70 新增原生 iPad 横竖屏界面：宽窗口采用操作侧栏和地图双栏，窄窗口保留浮层布局。尚未打包新 IPA；iPad 真机配对与定位仍待验收，见 [iPad 布局说明](Documentation/iPadLayout.zh-CN.md)。
+Build 70 新增原生 iPad 横竖屏界面：宽窗口采用操作侧栏和地图双栏，窄窗口保留浮层布局。两个未签名 IPA 已打包到 `Releases/Compatibility-build70/`，最低系统均为 18.0；iPad 真机配对与定位仍待验收，见 [iPad 布局说明](Documentation/iPadLayout.zh-CN.md)。
 
 ## 当前进展
 

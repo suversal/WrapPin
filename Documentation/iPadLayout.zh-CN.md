@@ -1,6 +1,6 @@
-# iPad 布局：Build 70 本地开发版
+# iPad 布局：Build 70 本地测试候选
 
-本次调整解决原先仅为 iPhone 设计的方向和布局限制。尚未打包新的 IPA；Build 69 的既有安装包保持原样。
+本次调整解决原先仅为 iPhone 设计的方向和布局限制。两个未签名 Build 70 安装包已生成到 `Releases/Compatibility-build70/`；Build 69 的既有安装包保持原样。
 
 Build 70 同时将最低系统调整为 18.0。本文的 iPad 界面检查使用 iOS 26.3.1，iOS 18 运行效果仍待验收；两个版本分别使用一个包覆盖全部受支持系统。
 

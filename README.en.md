@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Local development:</strong>1.0.21 (Build 70) · <strong>Minimum:</strong>iOS 18.0 (full regression pending)
+  <strong>Local candidate:</strong>1.0.21 (Build 70) · <strong>Minimum:</strong>iOS 18.0 (full regression pending)
 </p>
 
 <p align="center">
@@ -34,7 +34,7 @@ WrapPin is an unofficial community fork of [Roam Control](https://github.com/sea
 
 This branch is an iOS 18+ compatibility candidate. The user reported initial Standard success on iOS 26.5; restoration, routes, background operation, Tunnel and other OS versions still need acceptance. The public 1.0.20 Build 66 still requires iOS 27. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
 
-Build 70 adds a native iPad interface with side-by-side controls and map in wide windows, and compact overlays in narrow windows. No new IPA has been packaged. Physical iPad pairing and location acceptance are pending; see [iPad layout](Documentation/iPadLayout.md).
+Build 70 adds a native iPad interface with side-by-side controls and map in wide windows, and compact overlays in narrow windows. Both unsigned IPAs are packaged in `Releases/Compatibility-build70/`, with minimum OS 18.0. Physical iPad pairing and location acceptance are pending; see [iPad layout](Documentation/iPadLayout.md).
 
 ## Contents
 

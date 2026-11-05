@@ -1,0 +1,67 @@
+{
+  "version": "1.0.21",
+  "build": 70,
+  "created_date_local": "2026-11-06",
+  "timezone": "Asia/Shanghai",
+  "build_timestamp_utc": "2026-11-05T16:08:39Z",
+  "status": "local unsigned compatibility candidate; not publicly released",
+  "source_commit": "4a42f48b67027709a9057d6eb716bafc7737695a",
+  "branch": "codex/ios26-compat",
+  "minimum_ios": "18.0",
+  "xcode": "27.0 (27A266a)",
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.21-build70-unsigned.ipa",
+      "sha256": "6f25f4a49d0c02b06a8390fdef7f7bffec8026a190f8c8bdd225ac2e5ad118f6",
+      "bytes": 6905026,
+      "minimum_ios": "18.0",
+      "device_families": [
+        "iPhone",
+        "iPad"
+      ],
+      "architecture": "arm64",
+      "has_tunnel_extension": false
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.21-build70-unsigned.ipa",
+      "sha256": "bf333b87f104d336eb5bdf133e0e90bf79f74d7154d22681a03cf608c54a8d1f",
+      "bytes": 6962249,
+      "minimum_ios": "18.0",
+      "device_families": [
+        "iPhone",
+        "iPad"
+      ],
+      "architecture": "arm64",
+      "has_tunnel_extension": true
+    }
+  ],
+  "pairing_policy": {
+    "iOS 18–26": "import computer-generated RPPairing",
+    "iOS 27 or later": "on-device PIN pairing"
+  },
+  "verification": {
+    "device_debug_builds": [
+      "Standard: min iOS 18.0",
+      "Tunnel: min iOS 18.0"
+    ],
+    "release_archives": [
+      "Standard",
+      "Tunnel"
+    ],
+    "offline_checks": 11,
+    "native_engine": "unchanged from v1.0.20; inspected native Mach-O objects declare iOS 10.0",
+    "ipad_ui": "iOS 26.3.1: two landscape orientations, portrait, selection preserved, Settings/import access, Chinese maximum accessibility text and dark introduction checked before iOS 18 API fallback work",
+    "geoapify_configured": true,
+    "telemetry_configured": false,
+    "signing_profiles_included": false
+  },
+  "acceptance_limits": [
+    "iOS 18 runtime not tested; no old simulator runtime downloaded",
+    "iPad physical pairing/location and Tunnel connections not tested",
+    "Only Build 69 Standard had initial user-reported iOS 26.5 success",
+    "iOS 27 pairing regression and full route/background/restoration acceptance remain pending",
+    "Generic native pair-verification error message remains unchanged"
+  ]
+}

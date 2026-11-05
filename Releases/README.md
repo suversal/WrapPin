@@ -1,8 +1,17 @@
 # WrapPin releases
 
-## Local Build 70 development
+## Local compatibility candidate — 1.0.21 Build 70
 
-The working source adds native iPad layout support. No Build 70 IPA has been packaged or published; see [iPad layout notes](../Documentation/iPadLayout.md). The Build 69 packages below remain unchanged.
+Created 6 November 2026 (Asia/Shanghai), using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all` from source commit `4a42f48b67027709a9057d6eb716bafc7737695a`. Not publicly released. Both editions target iOS 18.0 and include native iPad orientation/layout support. Subsequent package-record documentation does not change the packaged source.
+
+- Standard: `WrapPin-Standard-1.0.21-build70-unsigned.ipa`; SHA-256 `6f25f4a49d0c02b06a8390fdef7f7bffec8026a190f8c8bdd225ac2e5ad118f6`; 6905026 bytes.
+- Tunnel: `WrapPin-Tunnel-1.0.21-build70-unsigned.ipa`; SHA-256 `bf333b87f104d336eb5bdf133e0e90bf79f74d7154d22681a03cf608c54a8d1f`; 6962249 bytes.
+
+Both device Debug builds, all 11 offline checks, both Release archives and package checks passed. IPA checks cover versions, arm64, minimum OS in plist and Mach-O, iPhone/iPad families, iPad orientations, extension inclusion/absence, no embedded signing profiles, and preservation of the existing overseas search configuration. Standard has no NetworkExtension linkage. The native engine is unchanged.
+
+iOS 18–26 imports a computer-generated RPPairing file; iOS 27 keeps on-device PIN pairing. Only two packages are needed. iOS 18 runtime, iPad physical pairing/location, Tunnel and full iOS 27 regression still need acceptance; prior initial iOS 26.5 success was on Standard Build 69.
+
+See the [receipt](Compatibility-build70/receipt.json), [Chinese test instructions](Compatibility-build70/测试说明.md), [candidate notes](../Documentation/Release-1.0.21.md) and [iPad layout validation](../Documentation/iPadLayout.md). Build 69 packages below remain unchanged.
 
 ## Local iOS 26 compatibility candidate — 1.0.21 Build 69
 

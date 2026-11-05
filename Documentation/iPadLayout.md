@@ -1,6 +1,6 @@
-# iPad layout: local Build 70 development
+# iPad layout: local Build 70 candidate
 
-This change removes the orientation and layout restrictions inherited from the iPhone-only interface. No new IPA has been packaged; existing Build 69 packages are unchanged.
+This change removes the orientation and layout restrictions inherited from the iPhone-only interface. Both unsigned Build 70 packages are available in `Releases/Compatibility-build70/`; existing Build 69 packages are unchanged.
 
 Build 70 also lowers the minimum OS to 18.0. Its iPad layout checks used iOS 26.3.1; iOS 18 runtime acceptance remains pending. Both editions use one package across supported OS versions.
 
