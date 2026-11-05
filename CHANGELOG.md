@@ -2,6 +2,12 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [Unreleased] — 1.0.21 Build 69 candidate
+
+- Target iOS 26.0 in both editions, with computer-generated RPPairing import on iOS 26 and the existing PIN pairing on iOS 27.
+- Add explicit XML paste, actionable import validation and safe replacement behavior.
+- Both Debug builds, Release archives, all 11 offline checks and package checks passed; the user reported initial Standard success on iOS 26.5, while restoration, routes, background operation, Tunnel and other OS versions still need acceptance. See the [candidate notes](Documentation/Release-1.0.21.md).
+
 ## [1.0.20] - 2026-10-28
 
 ### Added

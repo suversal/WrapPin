@@ -2,6 +2,8 @@
 
 WrapPin is not distributed through the App Store or TestFlight. Release builds are supplied as unsigned IPA files that must be signed before installation.
 
+The iOS 26 compatibility candidate targets 26.0. Standard has initial user-reported success on iOS 26.5; the remaining acceptance is pending. On iOS 26 follow [computer pairing](iOS26Pairing.md); on iOS 27 keep on-device pairing.
+
 ## Choose an edition
 
 Each GitHub Release provides two IPA files. They offer the same features and differ in where the device tunnel comes from and how they must be signed.
@@ -16,8 +18,8 @@ The two editions use different App IDs and can be installed side by side, but ea
 
 ## Requirements
 
-- An iPhone running iOS 27 or newer.
-- Developer Mode enabled under **Settings → Privacy & Security**. Both editions need it: the on-device pairing and location simulation WrapPin relies on are system developer services, regardless of which certificate signs the app.
+- An iPhone running iOS 26 or newer.
+- Developer Mode enabled under **Settings → Privacy & Security**. Both editions need it: the device connection and location simulation WrapPin relies on are system developer services, regardless of which certificate signs the app.
 - Standard edition: [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044) installed on the iPhone. The Tunnel edition does not need it.
 - Standard edition: SideStore, or Xcode on a Mac with an Apple development team.
 - Tunnel edition: a paid signing configuration with the Packet Tunnel entitlement. See "Install the Tunnel edition" below.
@@ -40,7 +42,7 @@ Both the main app and the embedded `WrapPinTunnel.appex` extension must be signe
 
 ### With a paid certificate and a signing tool
 
-This route needs no Mac and is completed on the iPhone.
+Signing and installation can be completed on the iPhone. On iOS 26, initial pairing still needs a computer-generated RPPairing file; iOS 27 can pair on-device.
 
 1. Obtain a paid certificate and provisioning profile that include this device's UDID. They can come from your own Apple Developer account or from a third-party certificate service.
 2. Install an IPA signing tool that can import certificates on the iPhone, then import the certificate and profile.

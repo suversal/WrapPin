@@ -17,14 +17,14 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.20（Build 66） · <strong>系统要求：</strong>iOS 27+
+  <strong>适配候选：</strong>1.0.21（Build 69） · <strong>最低系统：</strong>iOS 26.0（完整回归待完成）
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/iOS-27%2B-blue" alt="iOS 27+">
+  <img src="https://img.shields.io/badge/iOS-26%2B-blue" alt="iOS 26+">
   <img src="https://img.shields.io/badge/UI-SwiftUI-orange" alt="SwiftUI">
   <img src="https://img.shields.io/badge/%E7%BB%B4%E6%8A%A4%E8%80%85-suversal-purple" alt="由 suversal 维护">
-  <img src="https://img.shields.io/badge/Version-1.0.20-lightgrey" alt="Version 1.0.20">
+  <img src="https://img.shields.io/badge/Candidate-1.0.21-orange" alt="Candidate 1.0.21">
   <img src="https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0">
 </p>
 
@@ -38,9 +38,11 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 如果这个项目帮到了你，欢迎点一个 **Star**；如果你发现界面、文案、兼容性或连接流程还有改进空间，也欢迎提交 Issue 或 Pull Request。贡献前请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-项目面向开发、质量测试和个人负责任测试，支持固定位置、步行与驾车路线、收藏与历史记录，并通过本机配对和兼容的设备隧道建立安全的开发者定位会话。默认使用 LocalDevVPN；也可在设置中选择 Shadowrocket、Surge、Loon、Stash、Egern、Quantumult X 或 sing-box，它们需要按各自的配置说明启用 `10.7.0.1` 设备通道，普通代理配置不能提供所需的设备连接。
+项目面向开发、质量测试和个人负责任测试，支持固定位置、步行与驾车路线、收藏与历史记录，并通过配对记录和兼容的设备隧道建立安全的开发者定位会话。默认使用 LocalDevVPN；也可在设置中选择 Shadowrocket、Surge、Loon、Stash、Egern、Quantumult X 或 sing-box，它们需要按各自的配置说明启用 `10.7.0.1` 设备通道，普通代理配置不能提供所需的设备连接。
 
 > 请只在你拥有并控制的设备上使用。不要用于欺骗他人、伪造证据、规避安全限制，或违反第三方服务规则。
+
+本分支是 iOS 26 适配候选。公开的 1.0.20 Build 66 仍要求 iOS 27；标准版已收到 iOS 26.5 的首轮成功反馈，恢复位置、路线、后台、隧道版及其他系统版本仍待分别验收。iOS 26 的首次配对步骤见[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)。
 
 ## 当前进展
 
@@ -112,7 +114,7 @@ SwiftUI 界面与原生定位会话之间通过一层精简的 Rust-to-Swift 桥
 | 核心原理 | 使用 iOS 开发者位置模拟服务设置坐标 | 拦截并改写 Apple 的 Wi-Fi/基站网络定位响应 |
 | 主要影响 | 系统向 App 报告的开发者模拟位置 | 网络定位结果；硬件 GPS 仍可能覆盖它 |
 | 公网 IP | **不会改变** | **不会改变**，除非另行使用出口代理/VPN |
-| 前置条件 | iOS 27+、开发者模式、本机配对、LocalDevVPN | Packet Tunnel/代理环境、本地 CA；具体要求随实现变化 |
+| 前置条件 | iOS 26+（本分支）、开发者模式、对应设备的配对记录和设备隧道 | Packet Tunnel/代理环境、本地 CA；具体要求随实现变化 |
 | 证书信任 | 不需要安装 MITM 根证书 | 通常需要安装并信任本地 CA |
 | 签名门槛 | 可用 SideStore 或个人开发签名安装，受 Apple 侧载限制 | 原生 Packet Tunnel 版本通常还需要相应 entitlement，部分实现要求付费开发者账号 |
 | 使用体验 | 固定位置、路线预览、模拟步行、收藏和恢复流程集成在 App 内 | 通常围绕隧道、证书和目标坐标配置，能力取决于具体客户端 |
@@ -125,7 +127,7 @@ WLOC 的优点是思路直接，在兼容系统和已有代理环境中可以只
 
 ### 怎么选
 
-- 如果你的设备是 iOS 27+，希望使用系统开发者模拟通道、模拟连续步行，并且不想安装 MITM 根证书，优先考虑 WrapPin。
+- 如果你的设备是 iOS 26+，希望使用系统开发者模拟通道、模拟连续步行，并且不想安装 MITM 根证书，优先考虑 WrapPin。
 - 如果你只研究 Wi-Fi/基站网络定位、已经了解代理和证书信任，并且确认目标 iOS 版本与某个 WLOC 实现兼容，可以评估对应 WLOC 分支。
 - 如果目标是更改公网 IP、Apple 账号地区、App Store 商店地区或运营商归属，**两者都不适用**。
 
@@ -141,8 +143,8 @@ WrapPin 的主要优点：
 
 当前限制：
 
-- 只支持 iOS 27 或更高版本的实体 iPhone；模拟器只能检查界面。
-- 必须开启开发者模式，并完成一次本机配对。
+- 本分支最低系统为 iOS 26.0；iOS 26 先用电脑生成并导入 RPPairing，iOS 27 保留本机配对。标准版 iOS 26.5 已有首轮成功反馈，其他项目仍待验收。
+- 必须开启开发者模式，并完成本机配对（iOS 27+）或导入对应设备的 RPPairing 文件（iOS 26）。
 - LocalDevVPN 用于本机隧道，通常不能和另一个正在接管系统 VPN 的工具同时工作。
 - SideStore 免费签名受 Apple 的七天刷新、App 数量和 App ID 数量限制。
 - 某些 App 会同时检查 IP、Wi-Fi、基站、账号地区、历史缓存或风控信号，因此不保证所有第三方 App 都接受模拟位置。
@@ -155,8 +157,8 @@ WrapPin 的主要优点：
 
 你需要：
 
-- 一台运行 iOS 27 或更高版本的实体 iPhone，并已设置锁屏密码。
-- 一台 Mac、Windows 或 Linux 电脑，只在第一次安装 SideStore 时使用。
+- 一台运行 iOS 26 或更高版本的实体 iPhone，并已设置锁屏密码；iOS 26 首次配对需要电脑。
+- 一台 Mac、Windows 或 Linux 电脑，用于首次安装 SideStore；iOS 26 还需要用电脑生成 RPPairing 文件。
 - 一根可以传输数据的 USB 线。
 - 一个 Apple 账号，免费账号即可。
 - Wi-Fi。SideStore 安装或刷新 App 时需要同时连接 Wi-Fi 和 LocalDevVPN。
@@ -262,6 +264,8 @@ GitHub 的构建产物有保留期限，上面的下载链接可能失效；失�
 
 ## 第一次连接
 
+iOS 26 请先按[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)生成并导入 RPPairing 文件。以下六位码步骤适用于 iOS 27 或更高版本；导入后的隧道与定位操作相同。
+
 1. 打开 WrapPin，完成首次使用说明。
 2. 进入“设备连接”，轻点“配对本机”。
 3. iOS 询问时，允许本地网络权限。
@@ -333,7 +337,7 @@ GitHub 的构建产物有保留期限，上面的下载链接可能失效；失�
 
 安装之后：
 
-1. 按本文的说明开启开发者模式并完成本机配对，两个版本都需要。
+1. 开启开发者模式，按系统版本完成配对：iOS 26 导入电脑生成的 RPPairing，iOS 27 使用本机配对。两个版本都需要配对记录。
 2. 首次启动隧道时，允许 WrapPin Tunnel 添加 VPN 配置。
 3. 开始模拟定位。在设置中选择“使用内置隧道”后，隧道会在会话开始时自动连接，并在恢复真实位置后自动断开。
 
@@ -352,7 +356,7 @@ GitHub 的构建产物有保留期限，上面的下载链接可能失效；失�
 - **SideStore 的配对文件失效：**系统升级或还原设备都可能导致失效。连接电脑，在 iLoader 中删除旧配对并重新信任，再通过 **Manage Pairing File** 把新的配对文件放入 SideStore。
 - **停止后位置没有立即恢复：**重新打开 WrapPin，选择“恢复真实位置”并保持 App 在前台，再用 Apple 地图核对；必要时关闭并重新开启“定位服务”。
 - **一直找不到 iPhone：**确认 LocalDevVPN 已连接、关闭其他系统 VPN、重新开关 LocalDevVPN，并确认配对记录属于当前设备。
-- **提示配对记录失效：**移除旧配对后重新执行“配对本机”。
+- **提示配对记录失效：**这条提示也可能来自其他配对校验错误，先在“设置 → 连接检测”复制诊断。iOS 26 请按[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)生成、验证并导入同一份 RPPairing；iOS 27 可重新执行“配对本机”。
 - **某个 App 的位置没变：**先用 Apple 地图确认。目标 App 可能仍在使用缓存、IP、Wi-Fi、基站或账号地区。
 - **需要提交问题：**打开“设置 → 连接检测”，运行检查并复制诊断信息。不要上传配对文件、PIN、签名材料、账号凭据或私人位置。
 

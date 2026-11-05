@@ -798,3 +798,30 @@
 "Country" = "国家";
 "Approximate" = "大致位置";
 "Dismisses this message" = "关闭此提示";
+
+/* iOS 26 computer pairing */
+"Import an RPPairing file" = "导入 RPPairing 配对文件";
+"Import RPPairing File" = "导入 RPPairing 文件";
+"Paste RPPairing from Clipboard" = "从剪贴板粘贴 RPPairing";
+"Could Not Import Pairing File" = "无法导入配对文件";
+"Create a pairing file on your computer" = "在电脑上生成配对文件";
+"Download idevice_pair" = "下载 idevice_pair";
+"On iOS 26, create an RPPairing file with idevice_pair on your computer, then import it here." = "iOS 26 需要先用电脑上的 idevice_pair 生成 RPPairing 配对文件，再到这里导入。";
+"On iOS 26, use idevice_pair on a computer once to create a Remote pairing file. The next screen explains how to import it." = "iOS 26 需要用电脑上的 idevice_pair 完成一次远程配对，生成配对文件。下一页会说明如何导入。";
+"Download idevice_pair on your Mac, Windows or Linux computer." = "在 Mac、Windows 或 Linux 电脑上下载 idevice_pair。";
+"Connect this iPhone by USB, unlock it and tap Trust when asked." = "用 USB 连接这台 iPhone，解锁后按提示轻点“信任”。";
+"Select this iPhone in idevice_pair, choose Remote pairing (RPPairing), then create and save the file." = "在 idevice_pair 中选择这台 iPhone，选择 Remote pairing（RPPairing），然后生成并保存文件。";
+"Transfer the file to this iPhone, save it in Files, then tap Import RPPairing File above." = "把文件传到这台 iPhone，保存到“文件”App，然后轻点上方的“导入 RPPairing 文件”。";
+"Choose Remote pairing, not Lockdown. A SideStore .mobiledevicepairing file is not a substitute for an RPPairing file." = "请选择 Remote pairing，不要选择 Lockdown。SideStore 使用的 .mobiledevicepairing 文件不能代替 RPPairing 文件。";
+"Import this iPhone's RPPairing file created with idevice_pair on your computer." = "导入通过电脑上的 idevice_pair 为这台 iPhone 生成的 RPPairing 文件。";
+"Copy the XML contents of your RPPairing file, then try pasting again." = "请先复制 RPPairing 文件中的 XML 内容，再尝试粘贴。";
+"The pairing file could not be opened. Save it in Files and try importing it again." = "无法打开配对文件。请先把文件保存到“文件”App，再尝试导入。";
+"Stop the current session before changing its pairing file." = "请先停止当前会话，再更换配对文件。";
+"That file is not a valid property list." = "这个文件不是有效的属性列表文件。";
+"That is not a valid RPPairing file." = "这不是有效的 RPPairing 配对文件。";
+"This is a Lockdown pairing file. In idevice_pair on your computer, choose Remote pairing (RPPairing), create a new file, and import it here." = "这是 Lockdown 配对文件。请在电脑上的 idevice_pair 中选择 Remote pairing（RPPairing），重新生成文件后导入。";
+"This RPPairing file is missing its device identity. Create a new Remote pairing file with idevice_pair and import it again." = "这个 RPPairing 文件缺少设备身份信息。请用 idevice_pair 重新生成 Remote pairing 文件，再次导入。";
+"The pairing file's public and private keys do not match." = "配对文件中的公钥和私钥不匹配。";
+"The generated pairing identity was not valid." = "生成的配对身份信息无效。";
+"The stored pairing record could not be read." = "无法读取已保存的配对记录。";
+"The pairing record could not be stored securely (Keychain error %d)." = "无法安全保存配对记录（钥匙串错误 %d）。";

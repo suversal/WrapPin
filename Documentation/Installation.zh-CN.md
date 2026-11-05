@@ -2,7 +2,9 @@
 
 WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 IPA 的形式发布，需要签名后安装。
 
-[返回中文首页](../README.zh-CN.md) · [English](Installation.md)
+[返回中文首页](../README.md) · [English](Installation.md)
+
+本分支的 iOS 26 适配候选最低系统为 26.0。标准版 iOS 26.5 已有首轮成功反馈，其他项目仍待验收；iOS 26 请先按[电脑配对说明](iOS26Pairing.zh-CN.md)生成并导入 RPPairing 文件。iOS 27 保留原有本机配对流程。
 
 ## 选择版本
 
@@ -18,8 +20,8 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 
 ## 准备工作
 
-- 一台运行 iOS 27 或更高版本的实体 iPhone。
-- 在“设置 → 隐私与安全性”中开启开发者模式。两个版本都需要：WrapPin 依赖的本机配对和定位模拟属于系统的开发者服务，与使用哪种证书签名无关。
+- 一台运行 iOS 26 或更高版本的实体 iPhone。
+- 在“设置 → 隐私与安全性”中开启开发者模式。两个版本都需要：WrapPin 依赖的设备连接和定位模拟属于系统的开发者服务，与使用哪种证书签名无关。
 - 标准版：在 iPhone 上安装 [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044)。隧道版不需要。
 - 标准版：准备 SideStore；也可以在 Mac 上使用 Xcode 和自己的开发者团队编译安装。
 - 隧道版：准备带 Packet Tunnel 权限的付费签名配置，见下文“安装隧道版”。
@@ -29,7 +31,7 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 1. 从本仓库对应的 GitHub Release 下载 IPA，不要使用来源不明的网盘或镜像。
 2. 在 SideStore 中轻点 **+**，选择下载好的 IPA。
 3. 让 SideStore 使用你的 Apple 账号完成签名和安装。
-4. 打开 WrapPin，完成首次使用说明和本机配对。
+4. 打开 WrapPin，完成首次使用说明，再按系统版本完成本机配对或导入 RPPairing。
 5. 打开 LocalDevVPN 并连接本地隧道，然后再启动模拟定位。
 
 免费 Apple 账号通常需要在七天内刷新侧载 App，并受同时启用的 App 和 App ID 数量限制。这是 Apple 的签名限制，不是 WrapPin 的订阅规则。
@@ -42,13 +44,13 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发。正式版本以未签名 
 
 ### 使用付费证书和签名工具
 
-适合没有 Mac 的情况，全程在 iPhone 上完成。
+签名和安装可在 iPhone 上完成。iOS 26 的首次配对仍需电脑生成 RPPairing 文件；iOS 27 可使用本机配对。
 
 1. 取得一份绑定了本机 UDID 的付费证书和描述文件。可以来自你自己的 Apple Developer 账号，也可以来自第三方证书服务。
 2. 在 iPhone 上安装支持导入证书的 IPA 签名工具，并导入证书和描述文件。
 3. 从本仓库对应的 GitHub Release 下载 `WrapPin-Tunnel-…-unsigned.ipa`，导入签名工具。
 4. 签名并安装。
-5. 打开 WrapPin Tunnel，首次启动隧道时允许添加 VPN 配置，然后完成本机配对。
+5. 打开 WrapPin Tunnel，首次启动隧道时允许添加 VPN 配置，然后按系统版本完成本机配对或导入 RPPairing。
 
 注意事项：
 

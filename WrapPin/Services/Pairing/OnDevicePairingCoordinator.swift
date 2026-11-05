@@ -71,7 +71,7 @@ final class OnDevicePairingCoordinator {
 #if targetEnvironment(simulator)
         false
 #else
-        true
+        DevicePairingSupport.supportsOnDevicePairing
 #endif
     }
 
@@ -85,6 +85,10 @@ final class OnDevicePairingCoordinator {
     }
 
     func start(storeRecord: @escaping RecordStore) {
+        guard DevicePairingSupport.supportsOnDevicePairing else {
+            phase = .failed(String(localized: "On iOS 26, create an RPPairing file with idevice_pair on your computer, then import it here."))
+            return
+        }
         guard isAvailableOnThisDevice else {
             phase = .failed(String(localized: "On-device pairing needs your physical iPhone."))
             return

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 struct PairingSetupView: View {
@@ -13,6 +14,9 @@ struct PairingSetupView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     statusCard
+                    if !DevicePairingSupport.supportsOnDevicePairing {
+                        computerPairingCard
+                    }
                     requirementsCard
                     privacyCard
                 }
@@ -32,8 +36,23 @@ struct PairingSetupView: View {
             allowedContentTypes: allowedPairingTypes,
             allowsMultipleSelection: false
         ) { result in
-            guard case .success(let urls) = result, let url = urls.first else { return }
-            Task { await appModel.importPairingRecord(from: url) }
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                Task { await appModel.importPairingRecord(from: url) }
+            case .failure(let error):
+                let nsError = error as NSError
+                guard !(nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError) else { return }
+                appModel.pairingImportError = String(localized: "The pairing file could not be opened. Save it in Files and try importing it again.")
+            }
+        }
+        .alert("Could Not Import Pairing File", isPresented: Binding(
+            get: { appModel.pairingImportError != nil },
+            set: { if !$0 { appModel.pairingImportError = nil } }
+        )) {
+            Button("OK", role: .cancel) { appModel.pairingImportError = nil }
+        } message: {
+            Text(appModel.pairingImportError ?? "")
         }
         .confirmationDialog(
             "Remove this pairing record?",
@@ -86,11 +105,13 @@ struct PairingSetupView: View {
                 }
                 .buttonStyle(.bordered)
                 .frame(maxWidth: .infinity)
+                .disabled(isBusy)
 
                 Button("Remove Pairing", role: .destructive) {
                     isConfirmingRemoval = true
                 }
                 .frame(maxWidth: .infinity)
+                .disabled(isBusy)
             } else {
                 pairingProgress
 
@@ -112,21 +133,59 @@ struct PairingSetupView: View {
                         .controlSize(.large)
                         .disabled(isBusy)
                     }
-                } else {
+                } else if DevicePairingSupport.supportsOnDevicePairing {
                     Label("On-device pairing needs your physical iPhone.", systemImage: "iphone")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
-                Button {
-                    isImporting = true
-                } label: {
-                    Label("Import Existing File", systemImage: "doc.badge.plus")
-                        .frame(maxWidth: .infinity)
+                if DevicePairingSupport.supportsOnDevicePairing {
+                    importButton.buttonStyle(.bordered)
+                } else {
+                    importButton.buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                 }
-                .buttonStyle(.bordered)
+
+                Button {
+                    guard let text = UIPasteboard.general.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                        appModel.pairingImportError = String(localized: "Copy the XML contents of your RPPairing file, then try pasting again.")
+                        return
+                    }
+                    Task { await appModel.importPairingRecord(data: Data(text.utf8)) }
+                } label: {
+                    Label("Paste RPPairing from Clipboard", systemImage: "doc.on.clipboard")
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderless)
                 .disabled(isBusy)
             }
+        }
+    }
+
+    private var importButton: some View {
+        Button {
+            isImporting = true
+        } label: {
+            Label("Import RPPairing File", systemImage: "doc.badge.plus")
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .disabled(isBusy)
+    }
+
+    private var computerPairingCard: some View {
+        setupCard {
+            Text("Create a pairing file on your computer")
+                .font(.headline)
+            requirementRow(number: "1", text: String(localized: "Download idevice_pair on your Mac, Windows or Linux computer."))
+            Link("Download idevice_pair", destination: URL(string: "https://github.com/jkcoxson/idevice_pair/releases/latest")!)
+                .frame(minHeight: 44, alignment: .leading)
+            requirementRow(number: "2", text: String(localized: "Connect this iPhone by USB, unlock it and tap Trust when asked."))
+            requirementRow(number: "3", text: String(localized: "Select this iPhone in idevice_pair, choose Remote pairing (RPPairing), then create and save the file."))
+            requirementRow(number: "4", text: String(localized: "Transfer the file to this iPhone, save it in Files, then tap Import RPPairing File above."))
+            Text("Choose Remote pairing, not Lockdown. A SideStore .mobiledevicepairing file is not a substitute for an RPPairing file.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -200,7 +259,9 @@ struct PairingSetupView: View {
 
             requirementRow(
                 number: "1",
-                text: String(localized: "Pair this iPhone here, or import its existing RPPairing file.")
+                text: DevicePairingSupport.supportsOnDevicePairing
+                    ? String(localized: "Pair this iPhone here, or import its existing RPPairing file.")
+                    : String(localized: "Import this iPhone's RPPairing file created with idevice_pair on your computer.")
             )
             requirementRow(
                 number: "2",
@@ -218,10 +279,12 @@ struct PairingSetupView: View {
                     .buttonStyle(.bordered)
             }
 
-            Text("New on-device pairing is available on iOS 27. The simulator can test the screen, but Apple only exposes the real handshake on a physical iPhone.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if DevicePairingSupport.supportsOnDevicePairing {
+                Text("New on-device pairing is available on iOS 27. The simulator can test the screen, but Apple only exposes the real handshake on a physical iPhone.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -302,7 +365,10 @@ struct PairingSetupView: View {
     }
 
     private var allowedPairingTypes: [UTType] {
-        var types: [UTType] = [.propertyList]
+        var types: [UTType] = [.propertyList, .xml]
+        if let remotePairing = UTType(filenameExtension: "rppairing") {
+            types.append(remotePairing)
+        }
         if let mobileDevicePairing = UTType(filenameExtension: "mobiledevicepairing") {
             types.append(mobileDevicePairing)
         }
@@ -310,9 +376,7 @@ struct PairingSetupView: View {
     }
 
     private var isBusy: Bool {
-        appModel.pairingStatus == .checking
-            || appModel.pairingStatus == .importing
-            || appModel.onDevicePairing.isRunning
+        appModel.isChangingPairingUnavailable
     }
 
     private var statusSymbol: String {
@@ -395,6 +459,9 @@ struct PairingSetupView: View {
         case .importing:
             return String(localized: "Validating the record and its keys.")
         case .notPaired:
+            if !DevicePairingSupport.supportsOnDevicePairing {
+                return String(localized: "On iOS 26, create an RPPairing file with idevice_pair on your computer, then import it here.")
+            }
             return appModel.onDevicePairing.isAvailableOnThisDevice
                 ? String(localized: "Create the pairing securely on this iPhone, or import an existing file.")
                 : String(localized: "Connect your physical iPhone to create the pairing, or import an existing file.")

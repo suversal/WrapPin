@@ -4,10 +4,10 @@ This guide covers WrapPin's development builds and the planned IPA workflow.
 
 ## Current release tracks
 
-- Marketing version: `1.0.20`, Build `66`, for both editions
+- Local compatibility candidate: `1.0.21`, Build `69`, for both editions; public release remains `1.0.20` Build `66`
 - Standard edition (SideStore): bundle identifier `com.suversal.wrappin`
 - Tunnel edition: bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
-- Minimum deployment target: iOS 27
+- Minimum deployment target: iOS 26.0; iOS 26 requires an imported computer-generated RPPairing record
 - Supported device family: iPhone
 
 The version and build are shown in **Settings** inside the app. The built date and time come from the timestamp embedded for that packaged build.
@@ -117,3 +117,7 @@ For each distributed build, record:
 - Known issues.
 
 This makes a problem report traceable to the exact binary shown in WrapPin's Settings screen.
+
+## iOS 26 pairing check
+
+Compile `scripts/test-pairing-import.swift` with `WrapPin/Services/Pairing/PairingService.swift` and `WrapPin/Services/Pairing/DevicePairingSupport.swift` using `xcrun swiftc -parse-as-library`. It checks XML/binary records, pasted XML, invalid keys, missing device identity and the iOS 26/27 capability boundary without writing Keychain data. See [iOS 26 pairing](iOS26Pairing.md) for acceptance.

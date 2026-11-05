@@ -314,9 +314,13 @@ private struct OnboardingPage {
                         : String(localized: "Keep its local tunnel connected while starting a location.")
                 ),
                 OnboardingRequirement(
-                    symbol: "iphone.and.arrow.forward",
-                    title: String(localized: "Pair this iPhone"),
-                    message: String(localized: "The next screen will guide you through the private on-device pairing.")
+                    symbol: DevicePairingSupport.supportsOnDevicePairing ? "iphone.and.arrow.forward" : "doc.badge.plus",
+                    title: DevicePairingSupport.supportsOnDevicePairing
+                        ? String(localized: "Pair this iPhone")
+                        : String(localized: "Import an RPPairing file"),
+                    message: DevicePairingSupport.supportsOnDevicePairing
+                        ? String(localized: "The next screen will guide you through the private on-device pairing.")
+                        : String(localized: "On iOS 26, use idevice_pair on a computer once to create a Remote pairing file. The next screen explains how to import it.")
                 )
             ]
         ),
