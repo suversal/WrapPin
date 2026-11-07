@@ -1,5 +1,9 @@
 # WrapPin releases
 
+## Local Build 71 panel refinement
+
+The working source adds collapsible landscape controls and bottom-docked portrait cards. Packaging is pending; see [layout validation](../Documentation/iPadLayout.md). Build 70 packages below remain unchanged.
+
 ## Local compatibility candidate — 1.0.21 Build 70
 
 Created 6 November 2026 (Asia/Shanghai), using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all` from source commit `4a42f48b67027709a9057d6eb716bafc7737695a`. Not publicly released. Both editions target iOS 18.0 and include native iPad orientation/layout support. Subsequent package-record documentation does not change the packaged source.

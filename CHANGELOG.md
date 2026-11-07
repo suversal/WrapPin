@@ -2,7 +2,15 @@
 
 All notable public changes to WrapPin are recorded here.
 
-## [Unreleased] — 1.0.21 Build 70 candidate
+## [Unreleased] — 1.0.21 Build 71 candidate
+
+- Add hide/restore controls for the iPad landscape sidebar, while preserving a compact session card with Stop available.
+- Dock portrait/narrow-window cards at the bottom, cap their width at 420 pt, and use content height rather than centering short cards in a tall fitting container.
+- Share fixed/route disclosure state, default iPad to compact presentation, limit drag gestures to the header, and keep status and primary session controls visible when collapsed.
+- Let map error messages clear the current dock and sidebar instead of using a fixed offset.
+- Packaging and physical-device regression for Build 71 are pending.
+
+## 1.0.21 Build 70 local candidate
 
 - Lower the deployment target to iOS 18.0 with legacy MapKit and foreground Shortcuts compatibility; iOS 18–26 imports RPPairing and iOS 27 keeps PIN pairing. iOS 18 runtime acceptance is pending.
 - Add native iPad device-family and orientation settings for both editions and the tunnel extension.

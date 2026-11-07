@@ -1,5 +1,11 @@
 # 1.0.21 development and candidate notes
 
+## Build 71 — collapsible map controls
+
+Landscape sidebars can hide and reopen; portrait and narrow-window cards are bottom docked with a 420 pt content width. iPad defaults to a compact place/status/action summary. Fixed-location and route cards share disclosure state and retain session controls when collapsed. Header-only dragging avoids competing with scrolling and sliders. Map messages clear the current dock.
+
+The user reported working location and landscape on iPad iOS 26, while identifying the persistent sidebar and oversized/floating portrait card. The screenshots did not establish the exact build or edition, so this is initial feedback rather than a completed acceptance matrix. Build 71 packaging and physical regression are pending. See [layout notes](iPadLayout.md).
+
 ## Build 70 — iOS 18+ and iPad compatibility candidate
 
 The minimum OS is now 18.0. iOS 18–26 uses imported computer-generated RPPairing files; iOS 27 keeps on-device pairing. Pre-26 MapKit uses placemarks and CLGeocoder, and Shortcuts uses openAppWhenRun while keeping foreground execution. Both editions remain single packages across supported OS versions. iOS 18 execution is not yet device-verified.

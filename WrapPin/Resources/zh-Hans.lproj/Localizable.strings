@@ -835,3 +835,8 @@
 "Transfer the file to this device, save it in Files, then tap Import RPPairing File above." = "把文件传到这台 设备，保存到“文件”App，然后轻点上方的“导入 RPPairing 文件”。";
 "On iOS 18–26, use idevice_pair on a computer once to create a Remote pairing file. The next screen explains how to import it." = "iOS 18–26 需要用电脑上的 idevice_pair 完成一次远程配对，生成配对文件。下一页会说明如何导入。";
 "On iOS 18–26, create an RPPairing file with idevice_pair on your computer, then import it here." = "iOS 18–26 需要先用电脑上的 idevice_pair 生成 RPPairing 配对文件，再到这里导入。";
+"Show Details" = "展开详情";
+"Hide Details" = "收起详情";
+"Map Controls" = "地图控制";
+"Hide Controls" = "收起控制面板";
+"Show Controls" = "显示控制面板";

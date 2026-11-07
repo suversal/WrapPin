@@ -2,7 +2,7 @@
 
 WrapPin lets you choose where your iPhone reports its location. You can hold one fixed place or simulate movement along an Apple Maps walking or driving route.
 
-See [iPad layout](iPadLayout.md) for Build 70 landscape and window-width behavior. Physical iPad pairing and location acceptance are pending.
+On iPad, use Show/Hide Controls for the landscape sidebar. Show/Hide Details changes the bottom card without ending the session; Stop remains available when collapsed. See [map controls](iPadLayout.md).
 
 ## First-time setup
 
@@ -34,7 +34,7 @@ Apple Maps data on iPhones in mainland China often has no overseas places. When 
 
 Choosing a search result clears the search box automatically. The close button on a selected-location card clears a dropped pin or selection. The copy button copies the readable place and address.
 
-To see more of the map, swipe down on the selected-location card or tap the handle at its top to collapse it; swipe up or tap the handle again to expand it. WrapPin remembers the choice. While collapsed, the card shows the simulation coordinate mode as a small menu next to the address, and the route preview and copy buttons are hidden.
+To see more of the map, tap Hide Details or swipe down on the card header; tap Show Details or swipe up on the header to expand it. WrapPin remembers the choice for both fixed locations and routes. Compact cards keep status and primary session controls. Expand details to change coordinate mode, copy coordinates or preview a route. Tall cards scroll within the available space, including at accessibility text sizes.
 
 ## Start a fixed location
 
