@@ -1,0 +1,105 @@
+{
+  "version": "1.0.21",
+  "build": 71,
+  "created_date_local": "2026-11-07",
+  "timezone": "Asia/Shanghai",
+  "build_timestamp_utc": "2026-11-07T07:14:43Z",
+  "status": "local unsigned UI refinement candidate; not publicly released",
+  "source_commit": "e227b46624120696c82653a5dabd89ca9b864485",
+  "branch": "codex/ios26-compat",
+  "minimum_ios": "18.0",
+  "xcode": "27.0 (27A266a)",
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.21-build71-unsigned.ipa",
+      "sha256": "d576b512ee3d38e7aeb8468de9b2577a89b776fef765404ec2d4f88f0e62feea",
+      "bytes": 6914083,
+      "minimum_ios": "18.0",
+      "device_families": [
+        "iPhone",
+        "iPad"
+      ],
+      "architecture": "arm64",
+      "has_tunnel_extension": false,
+      "archive_file_byte_matches": 20
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.21-build71-unsigned.ipa",
+      "sha256": "11fdce6da3718805a341be47a1140156f172da36a29db492e19af54503b7954f",
+      "bytes": 6973372,
+      "minimum_ios": "18.0",
+      "device_families": [
+        "iPhone",
+        "iPad"
+      ],
+      "architecture": "arm64",
+      "has_tunnel_extension": true,
+      "archive_file_byte_matches": 22
+    }
+  ],
+  "pairing_policy": {
+    "iOS 18–26": "import computer-generated RPPairing",
+    "iOS 27 or later": "on-device PIN pairing"
+  },
+  "verification": {
+    "device_debug_builds": [
+      "Standard: min iOS 18.0",
+      "Tunnel: min iOS 18.0"
+    ],
+    "release_archives": [
+      "Standard",
+      "Tunnel"
+    ],
+    "offline_checks": 11,
+    "native_engine": "unchanged in Build 71; not rebuilt",
+    "ui_checks": {
+      "runtime": "existing iOS 26.3.1 runtime; no new runtime or device installed",
+      "devices": [
+        "iPad mini (A17 Pro)",
+        "iPhone SE (3rd generation), 375 pt width"
+      ],
+      "test_cases_passed": 6,
+      "scope": [
+        "portrait bottom docking",
+        "both landscape orientations on iPad",
+        "sidebar hide/restore",
+        "selection and disclosure preserved across rotation",
+        "fixed/route disclosure",
+        "route Pause/Resume and Stop confirmation entry",
+        "maximum accessibility text and dark mode",
+        "reduced-motion rendering branch"
+      ],
+      "fixture": "temporary project with synthetic active-location/route states; no real pairing or location connection; fixture absent from production",
+      "cleanup": "task-owned fixture/runner apps removed; original appearance, text size and shutdown states restored; existing devices/runtime retained"
+    },
+    "package_checks": [
+      "ZIP integrity and Payload structure",
+      "version/build/timestamp",
+      "arm64 and minimum iOS in plist and Mach-O",
+      "iPhone/iPad families and orientations",
+      "Tunnel extension identity/version/minOS",
+      "Standard has no extension or NetworkExtension linkage",
+      "license resources",
+      "no signing profiles or code signature included",
+      "all packaged app files match Release archive bytes"
+    ],
+    "geoapify_configured": true,
+    "geoapify_unchanged_from_build70": true,
+    "telemetry_configured": false,
+    "signing_profiles_included": false
+  },
+  "physical_feedback": {
+    "date": "2026-11-07",
+    "reported": "user reported location and landscape working on iPad iOS 26 before this UI refinement",
+    "limit": "exact build and edition not separately recorded; not Build 71 acceptance"
+  },
+  "acceptance_limits": [
+    "Build 71 physical-device location, routes, background and restoration pending",
+    "iOS 18 runtime, full iOS 26 range and iOS 27 PIN pairing regression pending",
+    "Actual split-view/window resizing not tested",
+    "At maximum accessibility text, scroll the bounded card to reach controls",
+    "Generic native pair-verification error message remains unchanged"
+  ]
+}

@@ -44,7 +44,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 本分支是 iOS 18+ 适配候选。公开的 1.0.20 Build 66 仍要求 iOS 27；标准版已收到 iOS 26.5 的首轮成功反馈，恢复位置、路线、后台、隧道版及其他系统版本仍待分别验收。iOS 18–26 的首次配对步骤见[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)。
 
-Build 71 优化 iPad 面板交互：横向宽窗口侧栏可收起、恢复，竖向与窄窗口的卡片贴底；iPad 默认显示紧凑卡片，固定定位和路线收起后保留主要操作。尚未生成 Build 71 IPA；用户已反馈 iPad iOS 26 可定位、可横屏，新包仍需真机回归，见 [iPad 布局说明](Documentation/iPadLayout.zh-CN.md)。
+Build 71 优化 iPad 面板交互：横向宽窗口侧栏可收起、恢复，竖向与窄窗口的卡片贴底；iPad 默认显示紧凑卡片，固定定位和路线收起后保留主要操作。已生成 Build 71 两版未签名 IPA，见[构建记录](Releases/PanelLayout-build71/receipt.json)；用户已反馈 iPad iOS 26 可定位、可横屏，新包仍需真机回归，见 [iPad 布局说明](Documentation/iPadLayout.zh-CN.md)。
 
 ## 当前进展
 

@@ -4,7 +4,7 @@ This guide covers WrapPin's development builds and the planned IPA workflow.
 
 ## Current release tracks
 
-- Local compatibility candidate: `1.0.21`, Build `71`, with iOS 18+ and iPad panel refinements; packaging pending; public release remains `1.0.20` Build `66`. The previous Build 70 package remains in its [receipt](../Releases/Compatibility-build70/receipt.json).
+- Local compatibility candidate: `1.0.21`, Build `71`, with iOS 18+ and iPad panel refinements; both unsigned packages are recorded in the [Build 71 receipt](../Releases/PanelLayout-build71/receipt.json); public release remains `1.0.20` Build `66`. The previous Build 70 package remains in its [receipt](../Releases/Compatibility-build70/receipt.json).
 - Standard edition (SideStore): bundle identifier `com.suversal.wrappin`
 - Tunnel edition: bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
 - Minimum deployment target: iOS 18.0; iOS 18–26 requires an imported computer-generated RPPairing record

@@ -1,6 +1,6 @@
 # iPad map controls: Build 71
 
-The minimum OS remains iOS/iPadOS 18.0. Both editions share this layout; pairing and location engines are unchanged. Build 70 packages and records are preserved. Build 71 packaging is pending.
+The minimum OS remains iOS/iPadOS 18.0. Both editions share this layout; pairing and location engines are unchanged. Build 70 packages and records are preserved. Both unsigned Build 71 packages passed archive/package checks; see the [receipt](../Releases/PanelLayout-build71/receipt.json).
 
 ## Interaction
 

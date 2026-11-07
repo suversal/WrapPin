@@ -2,7 +2,16 @@
 
 ## Local Build 71 panel refinement
 
-The working source adds collapsible landscape controls and bottom-docked portrait cards. Packaging is pending; see [layout validation](../Documentation/iPadLayout.md). Build 70 packages below remain unchanged.
+Created 7 November 2026 (Asia/Shanghai), using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all` from source commit `e227b46624120696c82653a5dabd89ca9b864485`. Local unsigned candidate, not publicly released. Both editions target iOS 18.0 and include the collapsible iPad landscape sidebar and bottom-docked portrait cards.
+
+- Standard: `WrapPin-Standard-1.0.21-build71-unsigned.ipa`; SHA-256 `d576b512ee3d38e7aeb8468de9b2577a89b776fef765404ec2d4f88f0e62feea`; 6914083 bytes.
+- Tunnel: `WrapPin-Tunnel-1.0.21-build71-unsigned.ipa`; SHA-256 `11fdce6da3718805a341be47a1140156f172da36a29db492e19af54503b7954f`; 6973372 bytes.
+
+Both device Debug builds, both Release archives, all 11 offline checks and package checks passed. Packaged app files match their archive bytes; versions, minimum OS in plist/Mach-O, arm64, iPhone/iPad families, orientations, extension layout, Standard linkage, licenses and unsigned layout passed. Existing overseas search configuration is preserved and telemetry remains unconfigured. The native engine is unchanged.
+
+Six UI checks across iPad mini and a 375 pt iPhone passed using synthetic active-location/route states in a temporary project on the existing iOS 26.3.1 runtime. They cover bottom docking, both iPad landscape orientations, sidebar hide/restore, fixed/route disclosure, Pause/Resume and Stop confirmation access, maximum accessibility text, dark mode and the reduced-motion rendering branch. They do not validate real pairing/location/restoration. Task-owned test apps were removed and original device settings/shutdown states restored.
+
+The user reported working location and landscape on iPad iOS 26 before these refinements, without separately recording build/edition. Build 71 physical acceptance, actual window resizing, iOS 18 runtime, the wider iOS 26 range and iOS 27 pairing regression remain pending. See the [receipt](PanelLayout-build71/receipt.json), [Chinese test instructions](PanelLayout-build71/测试说明.md) and [layout validation](../Documentation/iPadLayout.md). Build 70 packages below remain unchanged.
 
 ## Local compatibility candidate — 1.0.21 Build 70
 

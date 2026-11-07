@@ -4,7 +4,7 @@
 
 Landscape sidebars can hide and reopen; portrait and narrow-window cards are bottom docked with a 420 pt content width. iPad defaults to a compact place/status/action summary. Fixed-location and route cards share disclosure state and retain session controls when collapsed. Header-only dragging avoids competing with scrolling and sliders. Map messages clear the current dock.
 
-The user reported working location and landscape on iPad iOS 26, while identifying the persistent sidebar and oversized/floating portrait card. The screenshots did not establish the exact build or edition, so this is initial feedback rather than a completed acceptance matrix. Build 71 packaging and physical regression are pending. See [layout notes](iPadLayout.md).
+The user reported working location and landscape on iPad iOS 26, while identifying the persistent sidebar and oversized/floating portrait card. The screenshots did not establish the exact build or edition, so this is initial feedback rather than a completed acceptance matrix. Both Build 71 packages passed Debug, Release Archive, 11 offline checks and package verification from source `e227b46624120696c82653a5dabd89ca9b864485`; the [receipt](../Releases/PanelLayout-build71/receipt.json) records details. UI checks passed on iPad and a 375 pt iPhone using synthetic session states. Physical Build 71 regression is pending. See [layout notes](iPadLayout.md).
 
 ## Build 70 — iOS 18+ and iPad compatibility candidate
 

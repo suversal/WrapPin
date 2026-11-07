@@ -8,7 +8,7 @@ All notable public changes to WrapPin are recorded here.
 - Dock portrait/narrow-window cards at the bottom, cap their width at 420 pt, and use content height rather than centering short cards in a tall fitting container.
 - Share fixed/route disclosure state, default iPad to compact presentation, limit drag gestures to the header, and keep status and primary session controls visible when collapsed.
 - Let map error messages clear the current dock and sidebar instead of using a fixed offset.
-- Packaging and physical-device regression for Build 71 are pending.
+- Both unsigned Build 71 packages passed build, offline, UI and package checks; UI validation used synthetic session states. Physical-device regression remains pending. See the [receipt](Releases/PanelLayout-build71/receipt.json).
 
 ## 1.0.21 Build 70 local candidate
 

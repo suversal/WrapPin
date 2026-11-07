@@ -34,7 +34,7 @@ WrapPin is an unofficial community fork of [Roam Control](https://github.com/sea
 
 This branch is an iOS 18+ compatibility candidate. The user reported initial Standard success on iOS 26.5; restoration, routes, background operation, Tunnel and other OS versions still need acceptance. The public 1.0.20 Build 66 still requires iOS 27. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
 
-Build 71 makes the landscape sidebar hideable and restores bottom-docked cards in portrait/narrow windows. iPad starts compact, with fixed/route session controls retained on collapse. Build 71 packaging is pending. The user reported working location and landscape on iPad iOS 26; the new build still needs physical regression. See [iPad layout](Documentation/iPadLayout.md).
+Build 71 makes the landscape sidebar hideable and restores bottom-docked cards in portrait/narrow windows. iPad starts compact, with fixed/route session controls retained on collapse. Both unsigned Build 71 packages are recorded in the [receipt](Releases/PanelLayout-build71/receipt.json). The user reported working location and landscape on iPad iOS 26; the new build still needs physical regression. See [iPad layout](Documentation/iPadLayout.md).
 
 ## Contents
 

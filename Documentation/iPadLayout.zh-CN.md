@@ -1,6 +1,6 @@
 # iPad 地图面板：Build 71
 
-最低系统仍为 iOS/iPadOS 18.0。标准版与隧道版使用同一套布局，配对和定位引擎未修改。Build 70 的包与记录保留；Build 71 打包待完成。
+最低系统仍为 iOS/iPadOS 18.0。标准版与隧道版使用同一套布局，配对和定位引擎未修改。Build 70 的包与记录保留；Build 71 两版未签名 IPA 已通过归档和包检查，见[构建记录](../Releases/PanelLayout-build71/receipt.json)。
 
 ## 操作方式
 
