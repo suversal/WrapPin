@@ -93,6 +93,7 @@ struct OnboardingView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 28)
+                .frame(maxWidth: 600)
             }
         }
     }
@@ -123,7 +124,7 @@ struct OnboardingView: View {
         if !isLastPage { return String(localized: "Continue") }
         return isReplay
             ? String(localized: "Done")
-            : String(localized: "Set Up This iPhone")
+            : String(localized: "Set Up This Device")
     }
 
     private var finalButtonSymbol: String {
@@ -204,7 +205,8 @@ private struct OnboardingPageView: View {
 
                     Spacer(minLength: 20)
                 }
-                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                .frame(maxWidth: 640, minHeight: geometry.size.height)
+                .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)
             }
         }
@@ -314,9 +316,13 @@ private struct OnboardingPage {
                         : String(localized: "Keep its local tunnel connected while starting a location.")
                 ),
                 OnboardingRequirement(
-                    symbol: "iphone.and.arrow.forward",
-                    title: String(localized: "Pair this iPhone"),
-                    message: String(localized: "The next screen will guide you through the private on-device pairing.")
+                    symbol: DevicePairingSupport.supportsOnDevicePairing ? "iphone.and.arrow.forward" : "doc.badge.plus",
+                    title: DevicePairingSupport.supportsOnDevicePairing
+                        ? String(localized: "Pair this device")
+                        : String(localized: "Import an RPPairing file"),
+                    message: DevicePairingSupport.supportsOnDevicePairing
+                        ? String(localized: "The next screen will guide you through the private on-device pairing.")
+                        : String(localized: "On iOS 18–26, use idevice_pair on a computer once to create a Remote pairing file. The next screen explains how to import it.")
                 )
             ]
         ),

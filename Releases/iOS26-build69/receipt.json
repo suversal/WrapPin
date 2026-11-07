@@ -1,0 +1,49 @@
+{
+  "version": "1.0.21",
+  "build": 69,
+  "minimum_ios": "26.0",
+  "status": "local compatibility candidate; initial Standard success reported on iOS 26.5; remaining regression pending",
+  "base_commit": "c36cba9a92648e53cbb108708bfe7159455b299b",
+  "branch": "codex/ios26-compat",
+  "packages": [
+    {
+      "file": "WrapPin-Standard-1.0.21-build69-unsigned.ipa",
+      "sha256": "01ff43e1674b211ad4654da81d5d742a637d93a0352f8557476484a3f9d77198",
+      "bytes": 4961849,
+      "minimum_ios": "26.0",
+      "has_tunnel_extension": false
+    },
+    {
+      "file": "WrapPin-Tunnel-1.0.21-build69-unsigned.ipa",
+      "sha256": "f06cc8176c645733af7e9cd0ee8d1771f62f58d9ed7c3968d76b8307dfcc2050",
+      "bytes": 5016761,
+      "minimum_ios": "26.0",
+      "has_tunnel_extension": true
+    }
+  ],
+  "verification": {
+    "device_debug_builds": [
+      "Standard",
+      "Tunnel"
+    ],
+    "release_archives": [
+      "Standard",
+      "Tunnel"
+    ],
+    "offline_checks": 11,
+    "native_engine": "unchanged from v1.0.20; not rebuilt",
+    "physical_device_acceptance": "partial: initial Standard success on iOS 26.5; other cases are not separately confirmed",
+    "ios26_simulator_runtime": "26.3.1: app launch, Keychain read after ad-hoc simulator signing, Chinese computer-pairing branch observed; full visual interaction blocked by system permission dialog and unavailable Simulator GUI"
+  },
+  "physical_device_feedback": {
+    "date": "2026-11-05",
+    "edition": "Standard",
+    "ios": "26.5",
+    "build": 69,
+    "initial_failure": "pairVerification; idevice RemotePairing 103",
+    "computer_tool": "idevice_pair v1.1.0",
+    "computer_check": "Remote pairing Validate showed Works",
+    "subsequent_feedback": "User reported success after instructions to save and import that same newly verified record",
+    "limits": "No separate confirmations for restore, routes, background operation, reboot, Tunnel edition or other iOS versions; previous failure cause not proven"
+  }
+}

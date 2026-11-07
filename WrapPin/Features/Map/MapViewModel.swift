@@ -298,7 +298,7 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
                 return
             }
 
-            let coordinate = item.location.coordinate
+            let coordinate = MapKitCompatibility.coordinate(of: item)
             let target = LocationTarget(
                 name: item.name ?? searchQuery,
                 subtitle: placeDescription(for: item),
@@ -459,11 +459,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         )
 
         for attempt in 0..<2 {
-            guard let request = MKReverseGeocodingRequest(location: location) else { return nil }
-            request.preferredLocale = Locale.current
-
             do {
-                if let item = try await request.mapItems.first {
+                if let item = try await MapKitCompatibility.reverseGeocode(location) {
                     return item
                 }
             } catch is CancellationError {
@@ -567,11 +564,7 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         let invisibleCharacters = CharacterSet.whitespacesAndNewlines.union(
             CharacterSet(charactersIn: "\u{200B}\u{200C}\u{200D}\u{FEFF}")
         )
-        let candidates = [
-            item.address?.shortAddress,
-            item.addressRepresentations?.cityWithContext,
-            item.address?.fullAddress
-        ]
+        let candidates = MapKitCompatibility.addressCandidates(for: item)
 
         for candidate in candidates {
             let detail = candidate?.trimmingCharacters(in: invisibleCharacters) ?? ""

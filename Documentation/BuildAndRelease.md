@@ -1,14 +1,14 @@
 # Build and Release Guide
 
-This guide covers WrapPin's development builds and the planned IPA workflow.
+This guide covers WrapPin's development builds and IPA release workflow.
 
 ## Current release tracks
 
-- Marketing version: `1.0.20`, Build `66`, for both editions
+- Current release: `1.0.21`, Build `71`, with iOS 18+ and iPad panel refinements; both unsigned packages are attached to [v1.0.21](https://github.com/suversal/WrapPin/releases/tag/v1.0.21) and recorded in the [Build 71 receipt](../Releases/PanelLayout-build71/receipt.json). Previous Build 70 packages remain in their [receipt](../Releases/Compatibility-build70/receipt.json).
 - Standard edition (SideStore): bundle identifier `com.suversal.wrappin`
 - Tunnel edition: bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
-- Minimum deployment target: iOS 27
-- Supported device family: iPhone
+- Minimum deployment target: iOS 18.0; iOS 18–26 requires an imported computer-generated RPPairing record
+- Supported device families: iPhone and iPad in both apps and the Packet Tunnel extension. iPad layout validation is separate from physical-device pairing/location acceptance; see [iPad layout](iPadLayout.md).
 
 The version and build are shown in **Settings** inside the app. The built date and time come from the timestamp embedded for that packaged build.
 
@@ -117,3 +117,7 @@ For each distributed build, record:
 - Known issues.
 
 This makes a problem report traceable to the exact binary shown in WrapPin's Settings screen.
+
+## iOS 18–26 pairing check
+
+Compile `scripts/test-pairing-import.swift` with `WrapPin/Services/Pairing/PairingService.swift` and `WrapPin/Services/Pairing/DevicePairingSupport.swift` using `xcrun swiftc -parse-as-library`. It checks XML/binary records, pasted XML, invalid keys, missing device identity and the iOS 18–26/27 capability boundary without writing Keychain data. See [iOS 18–26 pairing](iOS26Pairing.md) for acceptance.

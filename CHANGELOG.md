@@ -2,6 +2,31 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.21] - 2026-11-07
+
+- Lower the minimum OS to iOS/iPadOS 18.0. iOS 18–26 imports a computer-generated RPPairing record; iOS 27 keeps on-device PIN pairing. Both editions use the same package across supported systems.
+- Add validated pairing-file import/paste with actionable errors; a rejected replacement preserves the previous record.
+- Add native iPad support, both landscape orientations and window-aware layouts. Older systems use compatible MapKit and foreground Shortcuts APIs.
+
+- Add hide/restore controls for the iPad landscape sidebar, while preserving a compact session card with Stop available.
+- Dock portrait/narrow-window cards at the bottom, cap their width at 420 pt, and use content height rather than centering short cards in a tall fitting container.
+- Share fixed/route disclosure state, default iPad to compact presentation, limit drag gestures to the header, and keep status and primary session controls visible when collapsed.
+- Let map error messages clear the current dock and sidebar instead of using a fixed offset.
+- Both unsigned Build 71 packages passed build, offline, UI and package checks; UI validation used synthetic session states. Physical-device regression remains pending. See the [receipt](Releases/PanelLayout-build71/receipt.json).
+
+## 1.0.21 Build 70 local candidate
+
+- Lower the deployment target to iOS 18.0 with legacy MapKit and foreground Shortcuts compatibility; iOS 18–26 imports RPPairing and iOS 27 keeps PIN pairing. iOS 18 runtime acceptance is pending.
+- Add native iPad device-family and orientation settings for both editions and the tunnel extension.
+- Use separate map and scrollable controls in wide windows, with bounded overlays and setup content in narrower windows. See [iPad layout](Documentation/iPadLayout.md) for validation and remaining acceptance.
+- Both unsigned Build 70 packages were archived and verified from the same source commit; see the [receipt](Releases/Compatibility-build70/receipt.json).
+
+## 1.0.21 Build 69 local candidate
+
+- Target iOS 26.0 in both editions, with computer-generated RPPairing import on iOS 26 and the existing PIN pairing on iOS 27.
+- Add explicit XML paste, actionable import validation and safe replacement behavior.
+- Both Debug builds, Release archives, all 11 offline checks and package checks passed; the user reported initial Standard success on iOS 26.5, while restoration, routes, background operation, Tunnel and other OS versions still need acceptance. See the [candidate notes](Documentation/Release-1.0.21.md).
+
 ## [1.0.20] - 2026-10-28
 
 ### Added

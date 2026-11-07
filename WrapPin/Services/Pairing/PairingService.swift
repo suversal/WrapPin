@@ -11,6 +11,7 @@ struct PairingRecordSummary: Codable, Equatable, Sendable {
 protocol PairingService: Sendable {
     func storedRecord() async throws -> PairingRecordSummary?
     func importRecord(from url: URL) async throws -> PairingRecordSummary
+    func importRecord(data: Data) async throws -> PairingRecordSummary
     func storeGeneratedRecord(_ data: Data, hostAltIRK: Data?) async throws -> PairingRecordSummary
     func pairingRecordData() async throws -> Data?
     func removeRecord() async throws
@@ -34,6 +35,10 @@ actor SecurePairingService: PairingService {
         }
 
         let data = try Data(contentsOf: url, options: .mappedIfSafe)
+        return try importRecord(data: data)
+    }
+
+    func importRecord(data: Data) throws -> PairingRecordSummary {
         let importedAt = Date()
         let summary = try Self.validate(data, importedAt: importedAt)
         try save(StoredPairingRecord(data: data, importedAt: importedAt, hostAltIRK: nil))
@@ -120,7 +125,7 @@ actor SecurePairingService: PairingService {
         }
     }
 
-    private static func validate(_ data: Data, importedAt: Date) throws -> PairingRecordSummary {
+    static func validate(_ data: Data, importedAt: Date) throws -> PairingRecordSummary {
         let propertyList: Any
         do {
             propertyList = try PropertyListSerialization.propertyList(from: data, format: nil)
@@ -130,6 +135,11 @@ actor SecurePairingService: PairingService {
 
         guard let dictionary = propertyList as? [String: Any] else {
             throw PairingServiceError.notRPPairing
+        }
+
+        if dictionary["public_key"] == nil, dictionary["private_key"] == nil,
+           dictionary["HostID"] != nil || dictionary["HostCertificate"] != nil {
+            throw PairingServiceError.lockdownRecord
         }
 
         guard
@@ -143,7 +153,11 @@ actor SecurePairingService: PairingService {
             throw PairingServiceError.notRPPairing
         }
 
-        if let altIRK = dictionary["alt_irk"] as? Data, altIRK.count != 16 {
+        // Discovery and the native session both require this device identity.
+        guard dictionary["alt_irk"] != nil else {
+            throw PairingServiceError.missingDeviceIdentity
+        }
+        guard let altIRK = dictionary["alt_irk"] as? Data, altIRK.count == 16 else {
             throw PairingServiceError.notRPPairing
         }
 
@@ -175,9 +189,11 @@ private struct StoredPairingRecord: Codable {
     let hostAltIRK: Data?
 }
 
-enum PairingServiceError: LocalizedError {
+enum PairingServiceError: LocalizedError, Equatable {
     case notAPropertyList
     case notRPPairing
+    case lockdownRecord
+    case missingDeviceIdentity
     case keyMismatch
     case invalidHostIdentity
     case corruptStoredRecord
@@ -186,17 +202,21 @@ enum PairingServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAPropertyList:
-            "That file is not a valid property list."
+            String(localized: "That file is not a valid property list.")
         case .notRPPairing:
-            "That is not a valid RPPairing file."
+            String(localized: "That is not a valid RPPairing file.")
+        case .lockdownRecord:
+            String(localized: "This is a Lockdown pairing file. In idevice_pair on your computer, choose Remote pairing (RPPairing), create a new file, and import it here.")
+        case .missingDeviceIdentity:
+            String(localized: "This RPPairing file is missing its device identity. Create a new Remote pairing file with idevice_pair and import it again.")
         case .keyMismatch:
-            "The pairing file's public and private keys do not match."
+            String(localized: "The pairing file's public and private keys do not match.")
         case .invalidHostIdentity:
-            "The generated pairing identity was not valid."
+            String(localized: "The generated pairing identity was not valid.")
         case .corruptStoredRecord:
-            "The stored pairing record could not be read."
+            String(localized: "The stored pairing record could not be read.")
         case .keychain(let status):
-            "The pairing record could not be stored securely (Keychain error \(status))."
+            String(format: NSLocalizedString("The pairing record could not be stored securely (Keychain error %d).", comment: ""), status)
         }
     }
 }

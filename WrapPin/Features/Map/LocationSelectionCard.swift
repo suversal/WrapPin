@@ -18,6 +18,7 @@ struct LocationSelectionCard: View {
     let routeError: String?
     let coordinateMode: FixedCoordinateMode
     let recommendedCoordinateMode: FixedCoordinateMode
+    @Binding var isCollapsed: Bool
     let onCoordinateModeChange: (FixedCoordinateMode) -> Void
     let onToggleFavourite: () -> Void
     let onClearSelection: () -> Void
@@ -25,35 +26,22 @@ struct LocationSelectionCard: View {
     let onStart: () -> Void
     let onStop: () -> Void
 
-    @AppStorage("isLocationCardCollapsed") private var isCollapsed = false
-    @GestureState(resetTransaction: Transaction(animation: .spring(response: 0.4, dampingFraction: 0.8)))
-    private var dragOffset: CGFloat = 0
     @State private var didCopyCoordinates = false
     @State private var isConfirmingStop = false
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 0) {
             if location != nil {
-                collapseHandle
+                MapPanelDisclosure(isCollapsed: $isCollapsed)
             }
-
-            if dynamicTypeSize.isAccessibilitySize {
-                ScrollView(.vertical, showsIndicators: false) {
-                    cardContent
-                }
-                .frame(maxHeight: 460)
-            } else {
-                cardContent
-            }
+            cardContent
         }
-        .padding([.horizontal, .bottom], 18)
-        .padding(.top, location == nil ? 18 : 4)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+        .padding(.top, location == nil ? 16 : 0)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 18, y: 8)
-        .offset(y: dragOffset)
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 5)
         .sensoryFeedback(.selection, trigger: isCollapsed)
-        // The accessibility layout scrolls vertically, so it only collapses through the handle.
-        .highPriorityGesture(collapseDrag, isEnabled: location != nil && !dynamicTypeSize.isAccessibilitySize)
         .confirmationDialog(
             "Stop the simulated location and restore your real location?",
             isPresented: $isConfirmingStop,
@@ -121,9 +109,9 @@ struct LocationSelectionCard: View {
                     Button("Stop & Restore", role: .destructive) {
                         isConfirmingStop = true
                     }
-                        .buttonStyle(.bordered)
-                        .controlSize(.regular)
-                        .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .frame(maxWidth: .infinity)
                 }
 
                 if !isCollapsed || !isRoutineStatus {
@@ -138,10 +126,12 @@ struct LocationSelectionCard: View {
                 if shouldOfferTunnelApp {
                     Link(destination: tunnelAppInstallURL) {
                         Label(
-                            String(format: NSLocalizedString("Get %@", comment: ""), tunnelHandoffApp.title),
+                            String(
+                                format: NSLocalizedString("Get %@", comment: ""),
+                                tunnelHandoffApp.title),
                             systemImage: "arrow.up.right.square"
                         )
-                            .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -164,49 +154,12 @@ struct LocationSelectionCard: View {
         }
     }
 
-    private var collapseHandle: some View {
-        Button {
-            setCollapsed(!isCollapsed)
-        } label: {
-            Capsule()
-                .fill(.secondary.opacity(0.45))
-                .frame(width: 36, height: 5)
-                .frame(maxWidth: .infinity, minHeight: 24)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(isCollapsed ? "Expand location details" : "Collapse location details")
-    }
-
-    private var collapseDrag: some Gesture {
-        DragGesture(minimumDistance: 20)
-            .updating($dragOffset) { value, offset, _ in
-                guard !reduceMotion else { return }
-                // Follows the finger with resistance; pulling the "wrong" way barely moves.
-                let vertical = value.translation.height
-                let leadsToChange = isCollapsed ? vertical < 0 : vertical > 0
-                let pull = vertical * (leadsToChange ? 0.35 : 0.12)
-                offset = min(max(pull, -28), 28)
-            }
-            .onEnded { value in
-                let vertical = value.translation.height
-                guard abs(vertical) > abs(value.translation.width), abs(vertical) > 40 else { return }
-                setCollapsed(vertical > 0)
-            }
-    }
-
-    private func setCollapsed(_ collapsed: Bool) {
-        guard collapsed != isCollapsed else { return }
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.42, dampingFraction: 0.82)) {
-            isCollapsed = collapsed
-        }
-    }
-
     // Details fade and settle from slightly below while the card resizes around them.
     private var detailTransition: AnyTransition {
         reduceMotion
             ? .opacity
-            : .opacity.combined(with: .offset(y: 10)).combined(with: .scale(scale: 0.97, anchor: .top))
+            : .opacity.combined(with: .offset(y: 10)).combined(
+                with: .scale(scale: 0.97, anchor: .top))
     }
 
     private var coordinateModeBinding: Binding<FixedCoordinateMode> {
@@ -214,31 +167,6 @@ struct LocationSelectionCard: View {
             get: { coordinateMode },
             set: { onCoordinateModeChange($0) }
         )
-    }
-
-    // Keeps the active mode visible and switchable while the full selector is collapsed.
-    private var coordinateModeChip: some View {
-        Menu {
-            Picker("Simulation coordinate mode", selection: coordinateModeBinding) {
-                Text("GCJ-02 correction").tag(FixedCoordinateMode.gcj02)
-                Text("WGS84 unchanged").tag(FixedCoordinateMode.wgs84)
-            }
-        } label: {
-            HStack(spacing: 3) {
-                Text(verbatim: coordinateMode == .gcj02 ? "GCJ-02" : "WGS84")
-                Image(systemName: "chevron.up.chevron.down")
-                    .imageScale(.small)
-            }
-            .font(.caption.weight(.semibold))
-            .lineLimit(1)
-            .padding(.horizontal, 9)
-            .frame(minHeight: 30)
-            .background(.blue.opacity(0.12), in: Capsule())
-            .fixedSize()
-        }
-        .disabled(isWorking)
-        .accessibilityLabel("Simulation coordinate mode")
-        .accessibilityValue(coordinateMode == .gcj02 ? "GCJ-02" : "WGS84")
     }
 
     private var coordinateModeSelection: some View {
@@ -253,12 +181,20 @@ struct LocationSelectionCard: View {
             .pickerStyle(.segmented)
             .disabled(isWorking)
 
-            Text(recommendedCoordinateMode == .gcj02
-                ? String(localized: "For mainland China, try GCJ-02 first. If the position is off, switch to WGS84.")
-                : String(localized: "Outside mainland China, try WGS84 first. If the position is off, switch to GCJ-02."))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                recommendedCoordinateMode == .gcj02
+                    ? String(
+                        localized:
+                            "For mainland China, try GCJ-02 first. If the position is off, switch to WGS84."
+                    )
+                    : String(
+                        localized:
+                            "Outside mainland China, try WGS84 first. If the position is off, switch to GCJ-02."
+                    )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
 
             if isShowingActiveTarget {
                 Text("Switching modes updates the current simulated location immediately.")
@@ -269,16 +205,21 @@ struct LocationSelectionCard: View {
     }
 
     private func routePreviewButton(for mode: RouteMode) -> some View {
-        Button { onPreviewRoute(mode) } label: {
+        Button {
+            onPreviewRoute(mode)
+        } label: {
             HStack(spacing: 6) {
                 if previewingRouteMode == mode {
                     ProgressView().controlSize(.small)
                 } else {
                     Image(systemName: mode.symbol)
                 }
-                Text(mode == .walking ? String(localized: "Preview Walk") : String(localized: "Preview Drive"))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                Text(
+                    mode == .walking
+                        ? String(localized: "Preview Walk") : String(localized: "Preview Drive")
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }
@@ -288,12 +229,14 @@ struct LocationSelectionCard: View {
 
     @ViewBuilder
     private func locationHeader(for location: LocationTarget) -> some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 10) {
+        if dynamicTypeSize.isAccessibilitySize || isCollapsed {
+            VStack(alignment: .leading, spacing: 6) {
                 locationSummary(for: location)
-                HStack(spacing: 4) {
-                    Spacer()
-                    locationActions
+                if !isCollapsed {
+                    HStack(spacing: 4) {
+                        Spacer()
+                        locationActions
+                    }
                 }
             }
         } else {
@@ -308,7 +251,7 @@ struct LocationSelectionCard: View {
     private func locationSummary(for location: LocationTarget) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "mappin.and.ellipse")
-                .font(.title2)
+                .font(.system(size: 24, weight: .medium))
                 .foregroundStyle(.blue)
                 .frame(width: 32)
                 .accessibilityHidden(true)
@@ -316,45 +259,35 @@ struct LocationSelectionCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(location.name)
                     .font(.headline)
-                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 2)
 
-                HStack(spacing: 7) {
-                    if isResolvingAddress {
-                        ProgressView()
-                            .controlSize(.mini)
-                            .accessibilityHidden(true)
-                    }
+                if isCollapsed {
+                    Text(compactPhaseTitle)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(isActive ? .blue : .secondary)
+                }
 
+                if !isCollapsed {
                     Text(locationDescription(for: location))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 4 : (isCollapsed ? 1 : 2))
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 4 : 2)
 
-                    if isCollapsed {
-                        coordinateModeChip
-                            .transition(.opacity.combined(with: .scale(scale: 0.85)))
-                    } else {
-                        Button {
-                            copyCoordinates(for: location)
-                        } label: {
-                            Label(
-                                didCopyCoordinates ? "Coordinates copied" : "Copy coordinates",
-                                systemImage: didCopyCoordinates ? "checkmark" : "doc.on.doc"
-                            )
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(didCopyCoordinates ? .green : .blue)
-                                .lineLimit(1)
-                                .padding(.horizontal, 8)
-                                .frame(minHeight: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(
-                            didCopyCoordinates ? "Coordinates copied" : "Copy coordinates"
+                    Button {
+                        copyCoordinates(for: location)
+                    } label: {
+                        Label(
+                            didCopyCoordinates ? "Coordinates copied" : "Copy coordinates",
+                            systemImage: didCopyCoordinates ? "checkmark" : "doc.on.doc"
                         )
-                        .transition(.opacity.combined(with: .scale(scale: 0.85)))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(didCopyCoordinates ? .green : .blue)
+                        .frame(minHeight: 44)
                     }
+                    .buttonStyle(.plain)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -440,6 +373,16 @@ struct LocationSelectionCard: View {
         return false
     }
 
+    private var compactPhaseTitle: String {
+        switch sessionPhase {
+        case .active: String(localized: "Location session active")
+        case .stopping: String(localized: "Restoring real location")
+        case .openingLocalDevVPN, .discovering, .connecting: String(localized: "Connecting…")
+        case .failed: String(localized: "Connection failed")
+        case .idle: isPaired ? String(localized: "Ready") : String(localized: "Pair this device")
+        }
+    }
+
     // Status copy that only repeats what the buttons already say; hidden while collapsed.
     private var isRoutineStatus: Bool {
         switch sessionPhase {
@@ -454,7 +397,11 @@ struct LocationSelectionCard: View {
 
     private var shouldOfferTunnelApp: Bool {
         guard case .failed(let message) = sessionPhase else { return false }
-        return message == String(localized: "Could not open the selected tunnel app. Check that it is installed and supports app links.")
+        return message
+            == String(
+                localized:
+                    "Could not open the selected tunnel app. Check that it is installed and supports app links."
+            )
     }
 
     private var primaryTitle: String {
@@ -462,7 +409,8 @@ struct LocationSelectionCard: View {
         case .openingLocalDevVPN:
             usesBuiltInTunnel
                 ? String(localized: "Starting built-in tunnel…")
-                : String(format: NSLocalizedString("Opening %@…", comment: ""), tunnelHandoffApp.title)
+                : String(
+                    format: NSLocalizedString("Opening %@…", comment: ""), tunnelHandoffApp.title)
         case .discovering:
             String(localized: "Finding This iPhone…")
         case .connecting:
@@ -523,8 +471,12 @@ struct LocationSelectionCard: View {
                 return String(localized: "WrapPin is connecting its built-in device tunnel.")
             }
             return tunnelHandoffApp == .localDevVPN
-                ? String(localized: "Wait for LocalDevVPN to connect and return. If it does not, return to WrapPin yourself.")
-                : String(localized: "Turn on the tunnel in the selected app, then return to WrapPin.")
+                ? String(
+                    localized:
+                        "Wait for LocalDevVPN to connect and return. If it does not, return to WrapPin yourself."
+                )
+                : String(
+                    localized: "Turn on the tunnel in the selected app, then return to WrapPin.")
         case .discovering:
             return String(localized: "Finding the paired iPhone through the private local tunnel.")
         case .connecting:
@@ -532,7 +484,8 @@ struct LocationSelectionCard: View {
         case .active(let target):
             if !isShowingActiveTarget, let location {
                 return String(
-                    format: NSLocalizedString("Currently using %@. Update to move to %@.", comment: ""),
+                    format: NSLocalizedString(
+                        "Currently using %@. Update to move to %@.", comment: ""),
                     target.name,
                     location.name
                 )
@@ -545,7 +498,9 @@ struct LocationSelectionCard: View {
                 target.name
             )
         case .stopping:
-            return String(localized: "Restoring this iPhone's real location. Keep WrapPin open until this finishes.")
+            return String(
+                localized:
+                    "Restoring this iPhone's real location. Keep WrapPin open until this finishes.")
         case .failed(let message):
             return message
         }

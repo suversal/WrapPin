@@ -24,6 +24,7 @@ final class AppModel {
     private(set) var shouldPresentDeviceSetup = false
     private(set) var connectionState: ConnectionState = .notConfigured
     private(set) var pairingStatus: PairingStatus = .checking
+    var pairingImportError: String?
     private(set) var selectedTarget: LocationTarget?
     private(set) var favouriteLocations: [LocationTarget]
     private(set) var hasSeenFavouriteReorderHint: Bool
@@ -387,18 +388,47 @@ final class AppModel {
     }
 
     func importPairingRecord(from url: URL) async {
+        await importPairingRecord { try await self.pairingService.importRecord(from: url) }
+    }
+
+    func importPairingRecord(data: Data) async {
+        await importPairingRecord { try await self.pairingService.importRecord(data: data) }
+    }
+
+    private func importPairingRecord(using operation: () async throws -> PairingRecordSummary) async {
+        guard !isChangingPairingUnavailable else {
+            pairingImportError = String(localized: "Stop the current session before changing its pairing file.")
+            return
+        }
+        let previousStatus = pairingStatus
+        let previousConnection = connectionState
+        pairingImportError = nil
         pairingStatus = .importing
 
         do {
-            let summary = try await pairingService.importRecord(from: url)
+            let summary = try await operation()
+            onDevicePairing.reset()
             pairingStatus = .paired(summary)
             connectionState = .ready
         } catch {
-            pairingStatus = .failed(message: error.localizedDescription)
-            connectionState = .failed(message: error.localizedDescription)
+            let message = error.localizedDescription
+            pairingImportError = message
+            if case .paired = previousStatus {
+                pairingStatus = previousStatus
+                connectionState = previousConnection
+            } else {
+                pairingStatus = .failed(message: message)
+                connectionState = .failed(message: message)
+            }
             usageAnalytics.record(.pairingFailed, enabled: sharesAnonymousUsageStatistics)
             usageAnalytics.recordFailure(.pairingImport, context: .pairing, enabled: sharesAnonymousUsageStatistics)
         }
+    }
+
+    var isChangingPairingUnavailable: Bool {
+        pairingStatus == .checking || pairingStatus == .importing
+            || onDevicePairing.isRunning || deviceSession.isBusy
+            || connectionState == .active || isStartingLocationSession || isRestoringInterruptedSession
     }
 
     func startOnDevicePairing() {
