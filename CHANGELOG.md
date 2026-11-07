@@ -2,7 +2,11 @@
 
 All notable public changes to WrapPin are recorded here.
 
-## [Unreleased] — 1.0.21 Build 71 candidate
+## [1.0.21] - 2026-11-07
+
+- Lower the minimum OS to iOS/iPadOS 18.0. iOS 18–26 imports a computer-generated RPPairing record; iOS 27 keeps on-device PIN pairing. Both editions use the same package across supported systems.
+- Add validated pairing-file import/paste with actionable errors; a rejected replacement preserves the previous record.
+- Add native iPad support, both landscape orientations and window-aware layouts. Older systems use compatible MapKit and foreground Shortcuts APIs.
 
 - Add hide/restore controls for the iPad landscape sidebar, while preserving a compact session card with Stop available.
 - Dock portrait/narrow-window cards at the bottom, cap their width at 420 pt, and use content height rather than centering short cards in a tall fitting container.

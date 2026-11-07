@@ -1,8 +1,8 @@
 # WrapPin releases
 
-## Local Build 71 panel refinement
+## 1.0.21 (Build 71)
 
-Created 7 November 2026 (Asia/Shanghai), using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all` from source commit `e227b46624120696c82653a5dabd89ca9b864485`. Local unsigned candidate, not publicly released. Both editions target iOS 18.0 and include the collapsible iPad landscape sidebar and bottom-docked portrait cards.
+Created 7 November 2026 (Asia/Shanghai), using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all` from source commit `e227b46624120696c82653a5dabd89ca9b864485`. Unsigned release packages for [v1.0.21](https://github.com/suversal/WrapPin/releases/tag/v1.0.21). Subsequent release-documentation changes do not alter the packaged source. Both editions target iOS 18.0 and include the collapsible iPad landscape sidebar and bottom-docked portrait cards.
 
 - Standard: `WrapPin-Standard-1.0.21-build71-unsigned.ipa`; SHA-256 `d576b512ee3d38e7aeb8468de9b2577a89b776fef765404ec2d4f88f0e62feea`; 6914083 bytes.
 - Tunnel: `WrapPin-Tunnel-1.0.21-build71-unsigned.ipa`; SHA-256 `11fdce6da3718805a341be47a1140156f172da36a29db492e19af54503b7954f`; 6973372 bytes.
@@ -28,13 +28,13 @@ See the [receipt](Compatibility-build70/receipt.json), [Chinese test instruction
 
 ## Local iOS 26 compatibility candidate — 1.0.21 Build 69
 
-Not published. Both unsigned packages and their SHA-256 hashes are recorded in [the receipt](iOS26-build69/receipt.json). See [Chinese test instructions](iOS26-build69/测试说明.md) and [candidate notes](../Documentation/Release-1.0.21.md). Minimum OS: iOS 26.0. Both Debug builds and Release archives, all 11 offline checks and package checks passed; the user reported initial Standard success on iOS 26.5 after saving and importing a verified Remote pairing record. The remaining physical-device regression is pending. The public distribution below remains unchanged.
+Not published. Both unsigned packages and their SHA-256 hashes are recorded in [the receipt](iOS26-build69/receipt.json). See [Chinese test instructions](iOS26-build69/测试说明.md) and [candidate notes](../Documentation/Release-1.0.21.md). Minimum OS: iOS 26.0. Both Debug builds and Release archives, all 11 offline checks and package checks passed; the user reported initial Standard success on iOS 26.5 after saving and importing a verified Remote pairing record. The remaining physical-device regression is pending. These Build 69 packages remain unpublished; the current public distribution is Build 71 above.
 
 ## Active distribution tracks
 
-- Public release: `v1.0.20` Build 66, with both editions attached to the same GitHub Release.
-- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.20-build66-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
-- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.20-build66-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
+- Public release: `v1.0.21` Build 71, with both editions attached to the same GitHub Release.
+- Standard edition (SideStore and other self-signing): `WrapPin-Standard-1.0.21-build71-unsigned.ipa`, bundle ID `com.suversal.wrappin`.
+- Tunnel edition (signing profiles with Packet Tunnel permission): `WrapPin-Tunnel-1.0.21-build71-unsigned.ipa`, bundle ID `com.suversal.wrappin.selfsigned`, extension `com.suversal.wrappin.selfsigned.tunnel`.
 
 ## 1.0.20 (Build 66)
 

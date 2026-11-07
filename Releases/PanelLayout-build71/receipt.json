@@ -4,7 +4,7 @@
   "created_date_local": "2026-11-07",
   "timezone": "Asia/Shanghai",
   "build_timestamp_utc": "2026-11-07T07:14:43Z",
-  "status": "local unsigned UI refinement candidate; not publicly released",
+  "status": "unsigned release build for v1.0.21",
   "source_commit": "e227b46624120696c82653a5dabd89ca9b864485",
   "branch": "codex/ios26-compat",
   "minimum_ios": "18.0",
@@ -101,5 +101,7 @@
     "Actual split-view/window resizing not tested",
     "At maximum accessibility text, scroll the bounded card to reach controls",
     "Generic native pair-verification error message remains unchanged"
-  ]
+  ],
+  "release_tag": "v1.0.21",
+  "release_url": "https://github.com/suversal/WrapPin/releases/tag/v1.0.21"
 }

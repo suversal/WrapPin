@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Local candidate:</strong>1.0.21 (Build 71) · <strong>Minimum:</strong>iOS 18.0 (full regression pending)
+  <strong>Current release:</strong>1.0.21 (Build 71) · <strong>Minimum:</strong>iOS/iPadOS 18.0
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@ WrapPin is an unofficial community fork of [Roam Control](https://github.com/sea
 
 > Use WrapPin only on devices you own and control. Do not use it to deceive other people, fabricate evidence, bypass security restrictions, or break the rules of third-party services.
 
-This branch is an iOS 18+ compatibility candidate. The user reported initial Standard success on iOS 26.5; restoration, routes, background operation, Tunnel and other OS versions still need acceptance. The public 1.0.20 Build 66 still requires iOS 27. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
+Version 1.0.21 lowers the minimum to iOS/iPadOS 18.0. Initial success was reported on Standard with iOS 26.5 and on iPad with iOS 26. Full Build 71 device regression, iOS 18, Tunnel and other OS versions still need acceptance. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
 
 Build 71 makes the landscape sidebar hideable and restores bottom-docked cards in portrait/narrow windows. iPad starts compact, with fixed/route session controls retained on collapse. Both unsigned Build 71 packages are recorded in the [receipt](Releases/PanelLayout-build71/receipt.json). The user reported working location and landscape on iPad iOS 26; the new build still needs physical regression. See [iPad layout](Documentation/iPadLayout.md).
 
@@ -269,7 +269,7 @@ Wherever this guide tells you to connect LocalDevVPN before using WrapPin, the b
 
 ## Limits you should know
 
-- This branch targets physical iPhones running iOS 18 or newer; the remaining iOS 18–26 regression is pending. The simulator can show the interface but cannot pair or simulate a location.
+- This release targets physical iPhones and iPads running iOS/iPadOS 18 or newer; the remaining iOS 18–26 regression is pending. The simulator can show the interface but cannot pair or simulate a location.
 - WrapPin changes the developer-simulated location. It does not change your public IP address, carrier, Apple account region or App Store region.
 - Not every third-party app accepts a simulated location.
 - LocalDevVPN usually cannot run at the same time as another app that controls the system VPN.
