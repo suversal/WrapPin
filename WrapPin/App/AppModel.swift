@@ -500,6 +500,9 @@ final class AppModel {
             return
         }
 
+        // Establish the background request before even the async Keychain read;
+        // the user can switch away while that read or the tunnel setup is pending.
+        deviceSession.backgroundKeepAlive.start()
         self.selectedTarget = selectedTarget
         interruptedSessionError = nil
         pendingSessionRecovery = recovery
@@ -538,6 +541,7 @@ final class AppModel {
             let pairingRecord = try await pairingService.pairingRecordData()
             guard pendingLocationStartIdentifier == startIdentifier else { return }
             guard let pairingRecord else {
+                deviceSession.backgroundKeepAlive.stop()
                 preserveRecoveryAfterFailure(stage: .locationPreparation, isStoppingOrRestoring: false)
                 isStartingLocationSession = false
                 pendingSessionAnalyticsEvent = nil
@@ -565,6 +569,7 @@ final class AppModel {
             )
         } catch {
             guard pendingLocationStartIdentifier == startIdentifier else { return }
+            deviceSession.backgroundKeepAlive.stop()
             preserveRecoveryAfterFailure(stage: .locationPreparation, isStoppingOrRestoring: false)
             isStartingLocationSession = false
             if interruptedSession != nil { interruptedSessionError = error.localizedDescription }
@@ -611,7 +616,8 @@ final class AppModel {
                     for: recovery.lastReportedLocation,
                     mode: recovery.fixedCoordinateMode
                         ?? FixedCoordinateMode.recommended(for: recovery.lastReportedLocation)
-                )
+                ),
+                allowsAutomaticReconnect: false
             )
         } catch {
             guard pendingLocationStartIdentifier == startIdentifier else { return }
@@ -657,6 +663,7 @@ final class AppModel {
         switch deviceSession.phase {
         case .idle, .failed:
             // Cancel the suspended pairing read without deleting the old record.
+            deviceSession.backgroundKeepAlive.stop()
             pendingLocationStartIdentifier = nil
             pendingSessionRecovery = nil
             isStartingLocationSession = false

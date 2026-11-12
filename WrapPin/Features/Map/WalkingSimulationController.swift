@@ -270,6 +270,9 @@ final class WalkingSimulationController {
                 if self.phase == .paused {
                     continue
                 }
+                // Preserve the route point while the device channel is rebuilt;
+                // elapsed reconnect time must not jump the route forward.
+                if deviceSession.isReconnecting { continue }
                 guard self.phase == .walking, let destination = self.destination else { return }
 
                 self.distanceTravelled = min(

@@ -30,6 +30,10 @@ PR 要求 Debug 与 Release 都能编译；改动共享代码时两个 scheme �
 python3 scripts/check-localization.py      # 所有字面量 UI 文案都有 zh-Hans 翻译且无重复 key
 python3 scripts/test-failure-stages.py     # Rust 阶段码 ↔ 头文件 ↔ FailureStage 一致，配对错误文案分类覆盖
 python3 scripts/test-background-session.py # 后台保活生命周期（用假平台类型编译生产代码）
+python3 scripts/test-location-continuity.py # 生产协调器重连取消、耗尽和路线连续性
+xcrun swiftc -parse-as-library scripts/test-location-reconnect-policy.swift \
+  WrapPin/Services/LocationSessionReconnectPolicy.swift WrapPin/Services/FailureStage.swift \
+  -o /tmp/reconnect-check && /tmp/reconnect-check
 
 # 八个 Swift 检查需要与对应的生产源文件一起编译：
 xcrun swiftc -parse-as-library scripts/check-fixed-coordinate-mode.swift \

@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Current release:</strong>1.0.21 (Build 71) · <strong>Minimum:</strong>iOS/iPadOS 18.0
+  <strong>Current release:</strong>1.0.22 (Build 74) · <strong>Minimum:</strong>iOS/iPadOS 18.0
 </p>
 
 <p align="center">
@@ -31,6 +31,8 @@ WrapPin sets a fixed location or moves along a walking or driving route on an iP
 WrapPin is an unofficial community fork of [Roam Control](https://github.com/seanhowarthdev/Roam-Control) by Sean Howarth, maintained by suversal. Upstream provides the core pairing, fixed-location, walking and restore features. WrapPin adds Simplified Chinese localisation, setup and connection guidance, coordinate-mode selection, driving routes, connection diagnostics and an optional built-in tunnel. It keeps the original author's attribution and is not an official upstream release.
 
 > Use WrapPin only on devices you own and control. Do not use it to deceive other people, fabricate evidence, bypass security restrictions, or break the rules of third-party services.
+
+Version 1.0.22 (Build 74) improves keep-alive startup and bounded reconnect, preserving route progress and stop cancellation. Build/package checks and offline regressions passed; long locked-screen device acceptance remains pending. See [release notes](Documentation/Release-1.0.22.md).
 
 Version 1.0.21 lowers the minimum to iOS/iPadOS 18.0. Initial success was reported on Standard with iOS 26.5 and on iPad with iOS 26. Full Build 71 device regression, iOS 18, Tunnel and other OS versions still need acceptance. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
 

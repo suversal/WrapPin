@@ -1,6 +1,7 @@
 import CoreLocation
 import Foundation
 import Observation
+import UIKit
 
 enum BackgroundKeepAliveStatus: String, Sendable {
     case idle
@@ -42,6 +43,7 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
     private(set) var reducesBackgroundLocationIndicator = false
     private(set) var authorizationStatus: CLAuthorizationStatus = .notDetermined
     private(set) var showsBackgroundLocationIndicator = true
+    private(set) var lastUpdateAt: Date?
 
     var isBackgroundIndicatorHidden: Bool { !showsBackgroundLocationIndicator }
 
@@ -59,6 +61,9 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
     private let manager: CLLocationManager
     private var requested = false
     private let hasBackgroundMode: Bool
+    private let isAppActive: @MainActor () -> Bool
+    private let now: @MainActor () -> Date
+    private var updatesRequestedAt: Date?
     // In-memory intent for the When In Use -> Always flow started by the toggle.
     // It is never restored from preferences or created by session startup.
     private var pendingAlwaysAuthorizationUpgrade = false
@@ -68,11 +73,15 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
         hasBackgroundMode: Bool = (Bundle.main.object(
             forInfoDictionaryKey: "UIBackgroundModes"
         ) as? [String])?.contains("location") == true,
-        reducesBackgroundLocationIndicator: Bool = false
+        reducesBackgroundLocationIndicator: Bool = false,
+        isAppActive: @escaping @MainActor () -> Bool = { UIApplication.shared.applicationState == .active },
+        now: @escaping @MainActor () -> Date = { Date() }
     ) {
         self.manager = manager
         self.hasBackgroundMode = hasBackgroundMode
         self.reducesBackgroundLocationIndicator = reducesBackgroundLocationIndicator
+        self.isAppActive = isAppActive
+        self.now = now
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
@@ -118,6 +127,7 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
     func start() {
         guard !requested else { return }
         requested = true
+        lastUpdateAt = nil
         reconcileAuthorization()
     }
 
@@ -128,11 +138,21 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
         manager.allowsBackgroundLocationUpdates = false
         status = .stopped
         started = false
+        updatesRequestedAt = nil
     }
 
     /// Recheck an already requested keep-alive on foreground activation.
     /// This never starts or reconnects a developer location session.
     func reconcile() {
+        // A submitted request is not proof of continued delivery. Retry a stale
+        // request only in the foreground, where When In Use can start reliably.
+        if requested, started, isAppActive(),
+           let lastDelivery = lastUpdateAt ?? updatesRequestedAt,
+           now().timeIntervalSince(lastDelivery) >= 60 {
+            manager.stopUpdatingLocation()
+            started = false
+            lastUpdateAt = nil
+        }
         reconcileAuthorization()
     }
 
@@ -141,6 +161,7 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
         manager.allowsBackgroundLocationUpdates = false
         self.status = status
         started = false
+        updatesRequestedAt = nil
     }
 
     private func reconcileAuthorization() {
@@ -154,15 +175,22 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
         case .notDetermined:
             status = .awaitingAuthorization
             started = false
-            manager.requestWhenInUseAuthorization()
+            if isAppActive() { manager.requestWhenInUseAuthorization() }
         case .denied:
             unavailable(CLLocationManager.locationServicesEnabled() ? .denied : .servicesDisabled)
         case .restricted:
             unavailable(.restricted)
         case .authorizedAlways, .authorizedWhenInUse:
             guard !started else { return }
+            // A late native callback must not claim that a background-only
+            // When In Use request succeeded. Foreground reconciliation retries it.
+            guard isAppActive() || manager.authorizationStatus == .authorizedAlways else {
+                status = .starting
+                return
+            }
             manager.allowsBackgroundLocationUpdates = true
             manager.startUpdatingLocation()
+            updatesRequestedAt = now()
             status = .starting
             started = true
         @unknown default:
@@ -187,6 +215,7 @@ final class BackgroundLocationKeepAlive: NSObject, @preconcurrency CLLocationMan
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard requested, started, !locations.isEmpty else { return }
+        lastUpdateAt = now()
         status = .receivingUpdates
     }
 

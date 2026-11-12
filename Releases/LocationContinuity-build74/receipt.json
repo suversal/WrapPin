@@ -1,0 +1,35 @@
+{
+  "version": "1.0.22",
+  "build": 74,
+  "base_commit": "fd015aeb0a3c2cdd0a454f4ed8f70a335b9c5d1c",
+  "xcode": "27.0 (27A266a)",
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.22-build74-unsigned.ipa",
+      "sha256": "868eead7328847473c7e2b7ff3f11c9bdeb84132ebef0e417c83db5c6c35e735",
+      "bytes": 6923608,
+      "bundle_id": "com.suversal.wrappin",
+      "archive_files_verified": 20
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.22-build74-unsigned.ipa",
+      "sha256": "e2c47e3886dd197c9b91eb32924081844f61d4a6d042226ec5d3a34ef00c8551",
+      "bytes": 6979578,
+      "bundle_id": "com.suversal.wrappin.selfsigned",
+      "archive_files_verified": 22
+    }
+  ],
+  "checks": [
+    "Both device Debug builds passed",
+    "Both Release archives passed",
+    "13 offline checks passed",
+    "ZIP integrity; arm64; minimum iOS 18; iPhone/iPad; matching extension versions; unsigned layout; legal resources; overseas search configuration; Standard has no extension or NetworkExtension linkage",
+    "All packaged files match Release archives"
+  ],
+  "limits": [
+    "Build 74 physical-device installation and long locked-screen/background acceptance pending; fault injection does not establish device behavior"
+  ],
+  "native_engine_changed": false
+}
