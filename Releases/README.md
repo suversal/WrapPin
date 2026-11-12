@@ -1,5 +1,14 @@
 # WrapPin releases
 
+## 1.0.22 (Build 74)
+
+Created 12 November 2026 using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all`. Both unsigned packages target iOS/iPadOS 18.0+; see [release notes](../Documentation/Release-1.0.22.md) and the [receipt](LocationContinuity-build74/receipt.json).
+
+- Standard: `WrapPin-Standard-1.0.22-build74-unsigned.ipa`; SHA-256 `868eead7328847473c7e2b7ff3f11c9bdeb84132ebef0e417c83db5c6c35e735`; 6923608 bytes.
+- Tunnel: `WrapPin-Tunnel-1.0.22-build74-unsigned.ipa`; SHA-256 `e2c47e3886dd197c9b91eb32924081844f61d4a6d042226ec5d3a34ef00c8551`; 6979578 bytes.
+
+Both device Debug builds, Release archives, all 13 offline checks and IPA checks passed. All packaged files match their archives. The native engine is unchanged; overseas-search configuration is retained and telemetry remains unconfigured. Physical installation and long locked-screen/background regression are pending.
+
 ## 1.0.21 (Build 71)
 
 Created 7 November 2026 (Asia/Shanghai), using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all` from source commit `e227b46624120696c82653a5dabd89ca9b864485`. Unsigned release packages for [v1.0.21](https://github.com/suversal/WrapPin/releases/tag/v1.0.21). Subsequent release-documentation changes do not alter the packaged source. Both editions target iOS 18.0 and include the collapsible iPad landscape sidebar and bottom-docked portrait cards.

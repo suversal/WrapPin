@@ -191,6 +191,13 @@ final class LocalDeviceSessionCoordinator: NSObject {
     private var cancellationRequested = false
     private var pendingFailureMessage: String?
     private var restorationDisplayStartDate: Date?
+    private(set) var isReconnecting = false
+    private var reconnectPolicy = LocationSessionReconnectPolicy()
+    private var automaticReconnectEnabled = true
+    private var reconnectTask: Task<Void, Never>?
+    private var reconnectIdentifier: UUID?
+
+    var automaticReconnectAttempt: Int { reconnectPolicy.attemptCount }
 
     override init() {
         super.init()
@@ -218,9 +225,13 @@ final class LocalDeviceSessionCoordinator: NSObject {
     func start(
         pairingRecord: Data,
         target: LocationTarget,
-        simulationCoordinates: SimulationCoordinates? = nil
+        simulationCoordinates: SimulationCoordinates? = nil,
+        allowsAutomaticReconnect: Bool = true
     ) {
         guard !workerIsRunning, !isBusy else { return }
+        cancelAutomaticReconnect()
+        reconnectPolicy = LocationSessionReconnectPolicy()
+        automaticReconnectEnabled = allowsAutomaticReconnect
         terminalFailureReported = false
         retryTelemetry.reset()
         schedulerFailureReason = nil
@@ -257,6 +268,9 @@ final class LocalDeviceSessionCoordinator: NSObject {
             simulationCoordinates: simulationCoordinates ?? SimulationCoordinates(target)
         )
         resolvedService = nil
+        // Start while the user is still in WrapPin, before tunnel handoff and
+        // the asynchronous native handshake can put the first request in back.
+        backgroundKeepAlive.start()
         phase = .discovering
         if usesBuiltInTunnel {
             startBuiltInTunnelForPendingSession()
@@ -354,6 +368,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
 
     func retryConnection() {
         guard mobileDataGuidance == .connectionHelp, pendingSession != nil else { return }
+        backgroundKeepAlive.start()
         onConnectionEvent?(retryTelemetry.selected())
         if TunnelHandoffPolicy.recommendsWiFiWhenUnavailable(for: tunnelHandoffApp) {
             isMobileDataStartupMode = wifiPathStatusIsKnown && !isWiFiPathSatisfied
@@ -391,6 +406,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
     }
 
     func stop() {
+        cancelAutomaticReconnect()
         backgroundKeepAlive.stop()
         mobileDataGuidance = nil
         switch phase {
@@ -687,6 +703,8 @@ final class LocalDeviceSessionCoordinator: NSObject {
         mobileDataDiscoveryLoopTask?.cancel()
         mobileDataDiscoveryLoopTask = nil
         backgroundKeepAlive.start()
+        isReconnecting = false
+        reconnectPolicy.becameActive()
         phase = .active(target)
         connectionStage = .active
         if let event = retryTelemetry.becameActive() {
@@ -706,6 +724,12 @@ final class LocalDeviceSessionCoordinator: NSObject {
         activeRunIdentifier = nil
         activeSession = nil
         workerIsRunning = false
+        if case .failure(let failure) = outcome,
+           pendingFailureMessage == nil, !cancellationRequested,
+           !failure.wasCancelled, phase != .stopping,
+           scheduleAutomaticReconnect(after: failure) {
+            return
+        }
         backgroundKeepAlive.stop()
         if case .success = outcome {
             didConfirmLocationClear = true
@@ -759,7 +783,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
             connectionStage = .idle
         case .failure(let failure):
             lastFailureDetail = failure.detail
-            if failure.isRecoverable {
+            if failure.isRecoverable, !reconnectPolicy.hasBeenActive {
                 let stage = failure.stage ?? .locationUnknown
                 lastFailureStage = stage
                 lastFailureDisposition = .recoverable
@@ -786,6 +810,42 @@ final class LocalDeviceSessionCoordinator: NSObject {
         }
     }
 
+    private func scheduleAutomaticReconnect(after failure: NativeLocationFailure) -> Bool {
+        guard automaticReconnectEnabled, pendingSession != nil, resolvedService != nil,
+              let delay = reconnectPolicy.nextDelay(after: failure.stage) else { return false }
+
+        lastFailureStage = failure.stage
+        lastFailureDisposition = .recoverable
+        lastFailureDetail = failure.detail
+        if let stage = failure.stage { onRecoveryNeeded?(stage) }
+        isReconnecting = true
+        phase = .connecting
+        connectionStage = .openingSecureSession
+        let identifier = UUID()
+        reconnectIdentifier = identifier
+        reconnectTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .seconds(delay)) }
+            catch { return }
+            guard let self, !Task.isCancelled,
+                  self.reconnectIdentifier == identifier,
+                  self.isReconnecting, !self.cancellationRequested,
+                  self.pendingSession != nil, !self.workerIsRunning else { return }
+            self.reconnectTask = nil
+            self.reconnectIdentifier = nil
+            // Rebuild TCP, authentication, the encrypted tunnel and DVT. Never
+            // reuse a timed-out channel that may still hold an unread response.
+            self.submitLocationTask()
+        }
+        return true
+    }
+
+    private func cancelAutomaticReconnect() {
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        reconnectIdentifier = nil
+        isReconnecting = false
+    }
+
     // The stage travels with the failure so analytics and diagnostics never
     // depend on the wording or language of the message.
     private func enterFailedPhase(_ localizedMessage: String, stage: FailureStage) {
@@ -794,6 +854,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
     }
 
     private func fail(_ message: String, stage: FailureStage) {
+        cancelAutomaticReconnect()
         backgroundKeepAlive.stop()
         let localizedMessage = NSLocalizedString(message, comment: "")
         lastFailureMessage = localizedMessage
@@ -975,6 +1036,7 @@ final class LocalDeviceSessionCoordinator: NSObject {
     }
 
     private func clearPendingSession() {
+        cancelAutomaticReconnect()
         builtInTunnelStartupTask?.cancel()
         builtInTunnelStartupTask = nil
         builtInTunnelStartupID = nil

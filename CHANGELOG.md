@@ -2,6 +2,19 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.22] - 2026-11-12
+
+### Changed
+
+- Start background keep-alive before asynchronous location setup and recheck stale requests when returning to the foreground.
+- Rebuild interrupted active-session connections with bounded 1/2/4-second backoff, preserving the latest coordinates and route pause/progress. Stop, reset and restoration cancel retries; pairing/authentication failures remain manual.
+- Include background delivery time and reconnect status in copied diagnostics.
+
+### Tested
+
+- All 13 offline checks, both device Debug builds, both Release archives and IPA identity/content checks passed. Native code is unchanged.
+- Build 74 physical installation and long locked-screen/background acceptance remain pending.
+
 ## [1.0.21] - 2026-11-07
 
 - Lower the minimum OS to iOS/iPadOS 18.0. iOS 18–26 imports a computer-generated RPPairing record; iOS 27 keeps on-device PIN pairing. Both editions use the same package across supported systems.

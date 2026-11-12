@@ -17,14 +17,14 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.21（Build 71） · <strong>最低系统：</strong>iOS/iPadOS 18.0
+  <strong>当前版本：</strong>1.0.22（Build 74） · <strong>最低系统：</strong>iOS/iPadOS 18.0
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/iOS-18%2B-blue" alt="iOS 18+">
   <img src="https://img.shields.io/badge/UI-SwiftUI-orange" alt="SwiftUI">
   <img src="https://img.shields.io/badge/%E7%BB%B4%E6%8A%A4%E8%80%85-suversal-purple" alt="由 suversal 维护">
-  <img src="https://img.shields.io/badge/Release-1.0.21-blue" alt="Release 1.0.21">
+  <img src="https://img.shields.io/badge/Release-1.0.22-blue" alt="Release 1.0.22">
   <img src="https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0">
 </p>
 
@@ -42,13 +42,15 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 > 请只在你拥有并控制的设备上使用。不要用于欺骗他人、伪造证据、规避安全限制，或违反第三方服务规则。
 
+1.0.22（Build 74）优化后台保活和定位断线重连，重连期间保留路线进度；主动停止后不会自动重启。两版编译、离线回归和包校验通过，长时间锁屏效果待真机回测。见[更新说明](Documentation/Release-1.0.22.zh-CN.md)。
+
 1.0.21 将最低系统扩展到 iOS/iPadOS 18.0。标准版 iOS 26.5 和 iPad iOS 26 已收到首轮成功反馈；Build 71 的完整真机回归，以及 iOS 18、隧道版和其他系统版本仍待分别验收。iOS 18–26 的首次配对步骤见[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)。
 
 Build 71 优化 iPad 面板交互：横向宽窗口侧栏可收起、恢复，竖向与窄窗口的卡片贴底；iPad 默认显示紧凑卡片，固定定位和路线收起后保留主要操作。已生成 Build 71 两版未签名 IPA，见[构建记录](Releases/PanelLayout-build71/receipt.json)；用户已反馈 iPad iOS 26 可定位、可横屏，新包仍需真机回归，见 [iPad 布局说明](Documentation/iPadLayout.zh-CN.md)。
 
 ## 当前进展
 
-- 当前公开版本为 **1.0.21（Build 71）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.21) 为准。
+- 当前公开版本为 **1.0.22（Build 74）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.22) 为准。
 - 标准版（`WrapPin-Standard-…`）供 SideStore 等自签方式安装，使用 LocalDevVPN 等外部隧道。隧道版（`WrapPin-Tunnel-…`）内置设备隧道，主 App 和扩展都需要带 Packet Tunnel 权限的签名配置，免费账号无法签名；它使用独立 App ID，不替换标准版。
 - 已完成完整简体中文界面、地图标签本地化、配对与连接引导、中文安装文档和使用手册。
 - 已完善地址与坐标复制、连接检测、诊断信息复制、异常会话恢复和真实位置恢复流程。

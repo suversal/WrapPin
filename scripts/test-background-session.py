@@ -30,12 +30,18 @@ keep_alive = (
     keep_alive
     .replace("import CoreLocation\n", "")
     .replace("import Observation\n", "")
+    .replace("import UIKit\n", "")
     .replace("@Observable\n", "")
     .replace("@preconcurrency ", "")
 )
 
 fakes = r'''
 import Foundation
+@MainActor final class UIApplication {
+    enum State { case active, background }
+    static let shared = UIApplication()
+    var applicationState = State.active
+}
 let kCLLocationAccuracyKilometer = 1000.0
 let kCLDistanceFilterNone = -1.0
 enum CLAuthorizationStatus {
@@ -295,6 +301,72 @@ checks = r'''
             precondition(blockedManager.requests == 0 && blockedManager.alwaysRequests == 0)
             precondition(blockedManager.showsBackgroundLocationIndicator)
         }
+        // A native connection may finish after the app went into the background.
+        var inForeground = false
+        let lateManager = CLLocationManager()
+        lateManager.authorizationStatus = .authorizedWhenInUse
+        let late = BackgroundLocationKeepAlive(
+            manager: lateManager, hasBackgroundMode: true,
+            isAppActive: { inForeground }
+        )
+        late.start()
+        precondition(!late.started && lateManager.starts == 0)
+        inForeground = true
+        late.reconcile()
+        precondition(late.started && lateManager.starts == 1)
+        inForeground = false
+        late.reconcile()
+        precondition(late.started && lateManager.starts == 1) // Keep an existing request.
+        late.stop()
+        inForeground = true
+        late.reconcile()
+        precondition(!late.started && lateManager.starts == 1) // Never revive a stopped session.
+
+        let pendingManager = CLLocationManager()
+        inForeground = false
+        let pending = BackgroundLocationKeepAlive(
+            manager: pendingManager, hasBackgroundMode: true,
+            isAppActive: { inForeground }
+        )
+        pending.start()
+        precondition(pendingManager.requests == 0)
+        inForeground = true
+        pending.reconcile()
+        precondition(pendingManager.requests == 1)
+        pending.stop()
+
+        var clock = Date(timeIntervalSinceReferenceDate: 1000)
+        let staleManager = CLLocationManager()
+        staleManager.authorizationStatus = .authorizedWhenInUse
+        let stale = BackgroundLocationKeepAlive(
+            manager: staleManager, hasBackgroundMode: true,
+            isAppActive: { inForeground }, now: { clock }
+        )
+        stale.start()
+        clock += 61
+        inForeground = false
+        stale.reconcile()
+        precondition(staleManager.starts == 1) // No repeated background restarts.
+        inForeground = true
+        stale.reconcile()
+        precondition(staleManager.starts == 2)
+        stale.reconcile()
+        precondition(staleManager.starts == 2) // No restart loop while waiting for an update.
+        stale.locationManager(staleManager, didUpdateLocations: [CLLocation()])
+        precondition(stale.lastUpdateAt == clock && stale.status == .receivingUpdates)
+        clock += 59
+        stale.reconcile()
+        precondition(staleManager.starts == 2)
+        clock += 2
+        stale.reconcile()
+        precondition(staleManager.starts == 3)
+        stale.reconcile()
+        precondition(staleManager.starts == 3)
+        stale.stop()
+        clock += 120
+        stale.reconcile()
+        precondition(staleManager.starts == 3)
+        print("Late background startup, foreground reconciliation and stopped-session checks passed")
         print("Background keep-alive lifecycle checks passed")
         print("Indicator preference and explicit authorization upgrade checks passed")
     }
@@ -327,6 +399,8 @@ assert "submitTaskRequest" not in session
 assert "BGTaskScheduler.shared" not in session
 assert "runNativeLocationSession()" in method_block(session, "    private func submitLocationTask()")
 assert "backgroundKeepAlive.start()" in method_block(session, "    fileprivate func nativeLocationStarted()")
+startup = method_block(session, "    func start(")
+assert startup.index("backgroundKeepAlive.start()") < startup.index("startBuiltInTunnelForPendingSession()")
 for marker in [
     "    func stop()",
     "    private func nativeLocationFinished(",

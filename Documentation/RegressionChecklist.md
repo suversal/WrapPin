@@ -69,10 +69,10 @@ Use this checklist before packaging an IPA or declaring a development build stab
 - [ ] With LocalDevVPN disconnected, WrapPin opens it quickly and resumes automatically.
 - [ ] Selecting another place and tapping Update Location changes the active location without restarting the flow.
 - [ ] The active location persists while using another app.
-- [ ] The first active session requests Location access and Connection Health reports the background-session state accurately.
+- [ ] Starting a session requests Location access before the async pairing read and tunnel handoff. Connection Health reports the background-session state accurately; failed or cancelled preparation releases the request.
 - [ ] With Location access denied, foreground simulation still starts and Connection Health explains that background continuity is unavailable.
 - [ ] Stop & Restore requires confirmation, then restores the real location.
-- [ ] With Reduce Background Location Indicator off, the blue background-location indicator appears only while a simulation is active and disappears after Stop & Restore.
+- [ ] With Reduce Background Location Indicator off, the blue background-location indicator may appear during session preparation, active simulation and reconnection, and disappears after Stop & Restore.
 
 ### Reduce Background Location Indicator (optional; physical device required)
 
@@ -83,7 +83,7 @@ Use this checklist before packaging an IPA or declaring a development build stab
 - [ ] Grant Always in system settings and return; Connection Health shows the new authorization and Hide While Active. Downgrade to While Using the App and return; it shows Show While Active without requesting another upgrade.
 - [ ] On iOS 27 with the option on and Always granted, check whether the blue Dynamic Island indicator actually disappears during simulation. The diagnostic value reports requested behavior, not proof of system UI appearance.
 - [ ] Switch the option on/off during a session: indicator behavior updates without restarting simulation. Turning it off does not revoke Always; changing permission in system settings works.
-- [ ] Compare locked-screen and extended background sessions with the option on/off for fixed, walking and driving simulation. Hiding the indicator must not worsen continuity; no auto-reconnection is promised.
+- [ ] Compare locked-screen and extended background sessions with the option on/off for fixed, walking and driving simulation. Hiding the indicator must not worsen continuity; verify bounded reconnection in both states.
 - [ ] Stop & Restore ends location updates and the indicator disappears with both preference states. Verify real-location restoration in Apple Maps and another app.
 - [ ] The explanation mentions periodic iOS reminders and that background keep-alive coordinates are not saved or uploaded. No new statistics event or location field is sent.
 
@@ -130,7 +130,11 @@ Use this checklist before packaging an IPA or declaring a development build stab
 
 ## Recovery
 
-- [ ] Disconnect the device tunnel during fixed, walking and driving sessions: a failed write offers recovery in the current run and preserves the latest route point, mode and speed after relaunch.
+- [ ] Briefly interrupt a fixed, walking or driving session: retry at most three times with 1/2/4-second delays, keeping background location requested. Restore the latest transformed coordinate and retain a user's route pause; route progress excludes disconnected time.
+- [ ] Keep the connection unavailable, or fail pairing authentication: retry exhaustion or a nonretryable error offers manual recovery, preserving the latest route point, mode and speed after relaunch. Never reuse the timed-out protocol channel.
+- [ ] Stop or reset during both reconnect backoff and connection setup. After the old delay expires no session restarts; unconfirmed clearing still offers recovery. Restore Real Location must not automatically resume simulation.
+- [ ] Switch away or lock immediately after tapping Start. Establish the location request in the foreground; defer a late When In Use startup until activation instead of claiming success.
+- [ ] On both editions test foreground, background, 5/30/60-minute lock, and network changes. Copied diagnostics show last background update, reconnect state and retry count. Build and fake-device checks do not replace these device tests.
 - [ ] Retry recovery with the tunnel unavailable, and separately select a different place and fail to connect: the previous unconfirmed record remains available.
 - [ ] With an unresponsive device, pending coordinate writes and clearing each expire after 15 seconds while WrapPin can execute. Stop never waits indefinitely; a write that finishes near its deadline followed by a clear timeout may take about 30 seconds in total.
 - [ ] A stop without clear acknowledgement offers recovery; test Resume and Restore Real Location separately after reconnecting the device tunnel, and verify the result in Apple Maps and another app.
