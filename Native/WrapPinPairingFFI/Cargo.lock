@@ -1790,7 +1790,9 @@ name = "wrappin_pairing_ffi"
 version = "0.1.0"
 dependencies = [
  "idevice",
+ "socket2",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

@@ -23,6 +23,14 @@ Use this checklist before packaging an IPA or declaring a development build stab
 - [ ] An invalid record produces a readable error.
 - [ ] Removing pairing requires confirmation and returns the app to Not paired.
 
+- [ ] Re-pairing creates a new host identity; restarting a successful pairing preserves its stored identity.
+- [ ] Pairing can accept both IPv4 and IPv6 connections on the advertised port (native loopback regression covers socket behavior).
+- [ ] Reset during pairing/storage waits for old work to finish; late callbacks cannot restore the old PIN or pairing state.
+- [ ] Reset during imported-record storage drains the write before deleting; a late status read cannot resurrect the paired UI.
+- [ ] A delayed Bonjour publication callback does not hide a generated PIN.
+- [ ] Copy Diagnostics includes pairing stage timings and address family, with no PIN, identifiers or pairing material.
+- [ ] On the affected iOS beta device, re-pair without restoring the phone and verify the generated PIN, persisted connection and repeat setup.
+
 ## Map and search
 
 - [ ] Live suggestions appear after two or more characters.

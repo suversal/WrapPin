@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Current release:</strong>1.0.22 (Build 74) · <strong>Minimum:</strong>iOS/iPadOS 18.0
+  <strong>Current release:</strong>1.0.23 (Build 75) · <strong>Minimum:</strong>iOS/iPadOS 18.0
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@ WrapPin is an unofficial community fork of [Roam Control](https://github.com/sea
 
 > Use WrapPin only on devices you own and control. Do not use it to deceive other people, fabricate evidence, bypass security restrictions, or break the rules of third-party services.
 
-Version 1.0.22 (Build 74) improves keep-alive startup and bounded reconnect, preserving route progress and stop cancellation. Build/package checks and offline regressions passed; long locked-screen device acceptance remains pending. See [release notes](Documentation/Release-1.0.22.md).
+Version 1.0.23 (Build 75) gives new pairing attempts fresh identities, adds dual-stack listening and drains old work before reset completes. Copied diagnostics distinguish connection and PIN-generation stages. Affected-device pairing acceptance remains pending. See [release notes](Documentation/Release-1.0.23.md).
 
 Version 1.0.21 lowers the minimum to iOS/iPadOS 18.0. Initial success was reported on Standard with iOS 26.5 and on iPad with iOS 26. Full Build 71 device regression, iOS 18, Tunnel and other OS versions still need acceptance. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
 
@@ -165,7 +165,7 @@ To update WrapPin later, install the new IPA over the existing app. Do not delet
 On iOS 18–26, first create and import an RPPairing file using the [computer pairing guide](Documentation/iOS26Pairing.md). The six-digit-code steps below apply to iOS 27 or later; tunnel and location use after importing stay the same.
 
 1. Open WrapPin and read the introduction. Allow Local Network access when iOS asks; without it, WrapPin cannot find the device.
-2. On **Device Setup**, tap **Pair This Device**. WrapPin shows a six-digit code. The code also appears in a notification.
+2. On **Device Setup**, tap **Pair This Device**. After starting pairing in iOS Settings, return to WrapPin to read the generated six-digit code, then enter it in Settings.
 3. Open **Settings → Privacy & Security → Developer Mode → Pair with WrapPin**.
 4. Enter your iPhone passcode if asked, then enter the six-digit code from WrapPin. These are two different codes.
 5. Return to WrapPin and check that the status shows **Ready**.

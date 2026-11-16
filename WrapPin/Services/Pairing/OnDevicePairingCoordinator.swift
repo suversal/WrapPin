@@ -39,6 +39,14 @@ final class OnDevicePairingCoordinator {
                 lastFailureStage = stage
                 onFailure?(stage)
             }
+            switch phase {
+            case .showingPIN: recordProgress("pin-generated")
+            case .storing: recordProgress("storage-started")
+            case .success: recordProgress("storage-completed")
+            case .failed: recordProgress("failed")
+            case .cancelling: recordProgress("cancellation-requested")
+            default: break
+            }
             onPhaseChange?(phase)
         }
     }
@@ -62,9 +70,23 @@ final class OnDevicePairingCoordinator {
     private var backgroundTaskFinished = true
     private var workerIsRunning = false
     private var storageIsRunning = false
+    private var isResetting = false
+    private var resetWaiters: [CheckedContinuation<Void, Never>] = []
+    private var attemptStartedAt: Date?
+    private(set) var progressEvents: [String] = []
+
+    var diagnosticsText: String {
+        progressEvents.isEmpty ? "Pairing attempt: none" : progressEvents.joined(separator: "\n")
+    }
+
+    private func recordProgress(_ event: String) {
+        let elapsed = max(0, Date().timeIntervalSince(attemptStartedAt ?? .now))
+        progressEvents.append(String(format: "+%.3fs ", elapsed) + event)
+        progressEvents = Array(progressEvents.suffix(32))
+    }
 
     var isRunning: Bool {
-        workerIsRunning || storageIsRunning || phase == .preparing
+        isResetting || workerIsRunning || storageIsRunning || phase == .preparing
     }
 
     var isAvailableOnThisDevice: Bool {
@@ -102,6 +124,9 @@ final class OnDevicePairingCoordinator {
         cancellationRequested = false
         pendingFailureMessage = nil
         recordStore = storeRecord
+        attemptStartedAt = .now
+        progressEvents = []
+        recordProgress("attempt-started")
         phase = .preparing
 
         // Pairing must keep running while Settings is in front, but must not depend
@@ -132,11 +157,28 @@ final class OnDevicePairingCoordinator {
         }
     }
 
-    func reset() {
+    func reset() async {
+        isResetting = true
         cancel()
-        if !isRunning {
-            phase = .idle
+        if workerIsRunning || storageIsRunning {
+            await withCheckedContinuation { resetWaiters.append($0) }
         }
+        publisher.stop()
+        recordStore = nil
+        pendingFailureMessage = nil
+        pendingFailureStage = nil
+        cancellationRequested = false
+        phase = .idle
+        finishBackgroundTask(success: false)
+        recordProgress("reset-completed")
+        isResetting = false
+    }
+
+    private func resumeResetWaitersIfStopped() {
+        guard !workerIsRunning, !storageIsRunning else { return }
+        let waiters = resetWaiters
+        resetWaiters = []
+        for waiter in waiters { waiter.resume() }
     }
 
     private func beginBackgroundAssertion() {
@@ -160,7 +202,7 @@ final class OnDevicePairingCoordinator {
         workerIsRunning = true
 
         let sessionBits = UInt(bitPattern: session)
-        let contextBits = UInt(bitPattern: Unmanaged.passRetained(self).toOpaque())
+        let contextBits = UInt(bitPattern: Unmanaged.passRetained(PairingCallbackContext(self, runIdentifier)).toOpaque())
 
         DispatchQueue.global(qos: .userInitiated).async {
             guard
@@ -177,6 +219,7 @@ final class OnDevicePairingCoordinator {
                         hostModel,
                         remotePairingReadyCallback,
                         remotePairingPINCallback,
+                        remotePairingProgressCallback,
                         context,
                         &result
                     )
@@ -190,31 +233,47 @@ final class OnDevicePairingCoordinator {
                 if let session = OpaquePointer(bitPattern: sessionBits) {
                     wp_remote_pairing_session_destroy(session)
                 }
-                let coordinator = Unmanaged<OnDevicePairingCoordinator>
-                    .fromOpaque(context)
-                    .takeRetainedValue()
-                coordinator.nativePairingFinished(outcome, runIdentifier: runIdentifier)
+                let callbackContext = Unmanaged<PairingCallbackContext>
+                    .fromOpaque(context).takeRetainedValue()
+                callbackContext.coordinator.nativePairingFinished(outcome, runIdentifier: runIdentifier)
             }
         }
     }
 
-    fileprivate func publish(_ advertisement: PairingAdvertisement) {
-        guard workerIsRunning, !cancellationRequested else { return }
+    fileprivate func publish(_ advertisement: PairingAdvertisement, runIdentifier: UUID) {
+        guard activeRunIdentifier == runIdentifier, workerIsRunning, !cancellationRequested, !isResetting, pendingFailureMessage == nil else { return }
         publisher.publish(advertisement)
     }
 
-    fileprivate func presentPIN(_ pin: String) {
-        guard workerIsRunning, !cancellationRequested else { return }
+    fileprivate func presentPIN(_ pin: String, runIdentifier: UUID) {
+        guard activeRunIdentifier == runIdentifier, workerIsRunning, !cancellationRequested, !isResetting, pendingFailureMessage == nil else { return }
         phase = .showingPIN(pin)
     }
 
+    fileprivate func nativeProgress(_ stage: Int32, runIdentifier: UUID) {
+        guard activeRunIdentifier == runIdentifier, workerIsRunning, !cancellationRequested, !isResetting, pendingFailureMessage == nil else { return }
+        let event: String
+        switch stage {
+        case 1: event = "listener-ready-ipv4-ipv6"
+        case 2: event = "tcp-connected-ipv4"
+        case 3: event = "tcp-connected-ipv6"
+        case 4: event = "handshake-started"
+        case 5: event = "existing-pair-verification-requested"
+        case 6: event = "handshake-rejected"
+        default: return
+        }
+        recordProgress(event)
+    }
+
     private func advertisementDidPublish() {
-        guard workerIsRunning, !cancellationRequested else { return }
-        phase = .waitingForSettings
+        guard workerIsRunning, !cancellationRequested, !isResetting, pendingFailureMessage == nil else { return }
+        recordProgress("bonjour-published")
+        // A delayed publication callback must never hide an already generated PIN.
+        if phase == .preparing { phase = .waitingForSettings }
     }
 
     private func advertisementDidFail() {
-        guard workerIsRunning, !cancellationRequested else { return }
+        guard workerIsRunning, !cancellationRequested, !isResetting, pendingFailureMessage == nil else { return }
         fail(
             "Local Network access is required. Enable it in Settings › Apps › WrapPin, then try again."
         )
@@ -226,9 +285,11 @@ final class OnDevicePairingCoordinator {
     ) {
         guard activeRunIdentifier == runIdentifier else { return }
 
+        defer { resumeResetWaitersIfStopped() }
         activeRunIdentifier = nil
         activeSession = nil
         workerIsRunning = false
+        recordProgress("worker-ended")
         publisher.stop()
 
         if let pendingFailureMessage {
@@ -258,7 +319,10 @@ final class OnDevicePairingCoordinator {
             }
 
             Task {
-                defer { self.storageIsRunning = false }
+                defer {
+                    self.storageIsRunning = false
+                    self.resumeResetWaitersIfStopped()
+                }
                 do {
                     _ = try await recordStore(record, hostAltIRK)
                     guard self.phase == .storing else { return }
@@ -403,12 +467,14 @@ private final class PairingBonjourPublisher: NSObject, NetServiceDelegate {
 
     nonisolated func netServiceDidPublish(_ sender: NetService) {
         MainActor.assumeIsolated {
+            guard service === sender else { return }
             onPublished?()
         }
     }
 
     nonisolated func netService(_ sender: NetService, didNotPublish errorDict: [String: NSNumber]) {
         MainActor.assumeIsolated {
+            guard service === sender else { return }
             onFailure?()
         }
     }
@@ -439,14 +505,9 @@ private let remotePairingReadyCallback: WPRemotePairingReadyCallback = {
         port: Int32(port),
         textRecords: textRecords
     )
-    let contextBits = UInt(bitPattern: context)
-
+    let callbackContext = Unmanaged<PairingCallbackContext>.fromOpaque(context).takeUnretainedValue()
     DispatchQueue.main.async {
-        guard let context = UnsafeMutableRawPointer(bitPattern: contextBits) else { return }
-        let coordinator = Unmanaged<OnDevicePairingCoordinator>
-            .fromOpaque(context)
-            .takeUnretainedValue()
-        coordinator.publish(advertisement)
+        callbackContext.coordinator.publish(advertisement, runIdentifier: callbackContext.runIdentifier)
     }
 }
 
@@ -454,12 +515,26 @@ private let remotePairingPINCallback: WPRemotePairingPINCallback = { context, pi
     guard let context, let pin else { return }
 
     let value = String(cString: pin)
-    let contextBits = UInt(bitPattern: context)
+    let callbackContext = Unmanaged<PairingCallbackContext>.fromOpaque(context).takeUnretainedValue()
     DispatchQueue.main.async {
-        guard let context = UnsafeMutableRawPointer(bitPattern: contextBits) else { return }
-        let coordinator = Unmanaged<OnDevicePairingCoordinator>
-            .fromOpaque(context)
-            .takeUnretainedValue()
-        coordinator.presentPIN(value)
+        callbackContext.coordinator.presentPIN(value, runIdentifier: callbackContext.runIdentifier)
+    }
+}
+
+private final class PairingCallbackContext: @unchecked Sendable {
+    let coordinator: OnDevicePairingCoordinator
+    let runIdentifier: UUID
+
+    init(_ coordinator: OnDevicePairingCoordinator, _ runIdentifier: UUID) {
+        self.coordinator = coordinator
+        self.runIdentifier = runIdentifier
+    }
+}
+
+private let remotePairingProgressCallback: WPRemotePairingProgressCallback = { context, stage in
+    guard let context else { return }
+    let callbackContext = Unmanaged<PairingCallbackContext>.fromOpaque(context).takeUnretainedValue()
+    DispatchQueue.main.async {
+        callbackContext.coordinator.nativeProgress(stage, runIdentifier: callbackContext.runIdentifier)
     }
 }

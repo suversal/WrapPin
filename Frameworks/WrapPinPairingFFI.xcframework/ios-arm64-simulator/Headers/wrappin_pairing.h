@@ -25,6 +25,10 @@ typedef void (*WPRemotePairingPINCallback)(
     const char *pin
 );
 
+// Fixed diagnostic stages; no addresses, identifiers or peer text are exposed.
+// 1 listener ready; 2 TCP IPv4; 3 TCP IPv6; 4 handshake; 5 old pair-verify; 6 rejected.
+typedef void (*WPRemotePairingProgressCallback)(void *context, int32_t stage);
+
 typedef struct {
     char *error_message;
     char *device_name;
@@ -78,6 +82,7 @@ int32_t wp_remote_pairing_session_run(
     const char *host_model,
     WPRemotePairingReadyCallback ready_callback,
     WPRemotePairingPINCallback pin_callback,
+    WPRemotePairingProgressCallback progress_callback,
     void *context,
     WPRemotePairingResult *result
 );

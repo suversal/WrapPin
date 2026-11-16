@@ -1,5 +1,5 @@
 use std::ffi::{CStr, CString, c_char, c_void};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::ptr;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -34,6 +34,8 @@ pub type ReadyCallback = Option<
         txt_count: usize,
     ),
 >;
+
+pub type ProgressCallback = Option<extern "C" fn(context: *mut c_void, stage: i32)>;
 
 pub type PinCallback = Option<extern "C" fn(context: *mut c_void, pin: *const c_char)>;
 
@@ -213,6 +215,7 @@ impl RemotePairingResult {
 struct CallbackSet {
     ready: ReadyCallback,
     pin: PinCallback,
+    progress: ProgressCallback,
     context: *mut c_void,
 }
 
@@ -247,6 +250,7 @@ pub unsafe extern "C" fn wp_remote_pairing_session_run(
     host_model: *const c_char,
     ready_callback: ReadyCallback,
     pin_callback: PinCallback,
+    progress_callback: ProgressCallback,
     context: *mut c_void,
     result: *mut RemotePairingResult,
 ) -> i32 {
@@ -257,13 +261,13 @@ pub unsafe extern "C" fn wp_remote_pairing_session_run(
     unsafe { *result = RemotePairingResult::empty() };
 
     let session = unsafe { &*session };
-    session.cancelled.store(false, Ordering::Release);
 
     let host_name = unsafe { optional_c_string(host_name, DEFAULT_HOST_NAME) };
     let host_model = unsafe { optional_c_string(host_model, DEFAULT_HOST_MODEL) };
     let callbacks = CallbackSet {
         ready: ready_callback,
         pin: pin_callback,
+        progress: progress_callback,
         context,
     };
     let cancellation = Arc::clone(&session.cancelled);
@@ -275,7 +279,14 @@ pub unsafe extern "C" fn wp_remote_pairing_session_run(
             .build()
             .map_err(|_| "WrapPin could not start its pairing engine.".to_string())?;
 
-        runtime.block_on(run_pairing(host_name, host_model, callbacks, cancellation))
+        runtime.block_on(async {
+            timeout(
+                Duration::from_secs(120),
+                run_pairing(host_name, host_model, callbacks, cancellation),
+            )
+            .await
+            .map_err(|_| "Pairing took too long. Return to WrapPin and try again.".to_string())?
+        })
     }));
 
     match execution {
@@ -437,7 +448,6 @@ pub unsafe extern "C" fn wp_location_session_run(
     }
 
     let session = unsafe { &*session };
-    session.cancelled.store(false, Ordering::Release);
     let pairing_record =
         unsafe { std::slice::from_raw_parts(pairing_record, pairing_record_length).to_vec() };
     let peer_address = unsafe { optional_c_string(peer_address, "10.7.0.1") };
@@ -530,6 +540,29 @@ pub unsafe extern "C" fn wp_location_session_destroy(session: *mut LocationSessi
     }
 }
 
+// A new setup must not advertise the old identifier with newly generated keys.
+// Successful records keep this identity for subsequent location connections.
+fn fresh_pairing_record(host_name: &str) -> RpPairingFile {
+    let mut record = RpPairingFile::generate(host_name);
+    record.identifier = uuid::Uuid::new_v4().to_string();
+    record
+}
+
+fn pairing_listener() -> std::io::Result<TcpListener> {
+    let socket = socket2::Socket::new(socket2::Domain::IPV6, socket2::Type::STREAM, None)?;
+    socket.set_only_v6(false)?;
+    socket.set_nonblocking(true)?;
+    socket.bind(&SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 0).into())?;
+    socket.listen(8)?;
+    TcpListener::from_std(socket.into())
+}
+
+fn report_pairing_progress(callbacks: &CallbackSet, stage: i32) {
+    if let Some(callback) = callbacks.progress {
+        callback(callbacks.context, stage);
+    }
+}
+
 async fn run_pairing(
     host_name: String,
     host_model: String,
@@ -540,22 +573,22 @@ async fn run_pairing(
         return Err(CANCELLED_ERROR.to_string());
     }
 
-    let listener = TcpListener::bind(SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 0))
-        .await
+    let listener = pairing_listener()
         .map_err(|_| "WrapPin could not open a local pairing connection.".to_string())?;
     let port = listener
         .local_addr()
         .map_err(|_| "WrapPin could not determine its pairing port.".to_string())?
         .port();
 
-    let mut pairing_record = RpPairingFile::generate(&host_name);
+    let mut pairing_record = fresh_pairing_record(&host_name);
     let host_info = PairableHostInfo::generate(&host_name, &host_model);
     let host_alt_irk = host_info.alt_irk.to_vec();
     let service_identifier = pairing_record.identifier.clone();
 
+    report_pairing_progress(&callbacks, 1); // dual-stack listener ready
     publish_ready_callback(&callbacks, &service_identifier, port, &host_info);
 
-    let (stream, _) = tokio::select! {
+    let (stream, peer_address) = tokio::select! {
         accepted = listener.accept() => {
             accepted.map_err(|_| "The iPhone could not connect to WrapPin.".to_string())?
         }
@@ -564,6 +597,10 @@ async fn run_pairing(
         }
     };
 
+    let is_ipv4 = peer_address.is_ipv4()
+        || matches!(peer_address.ip(), IpAddr::V6(address) if address.to_ipv4_mapped().is_some());
+    report_pairing_progress(&callbacks, if is_ipv4 { 2 } else { 3 });
+    report_pairing_progress(&callbacks, 4); // waiting for handshake and pair-setup M1
     let pin_callback = callbacks.pin;
     let callback_context = callbacks.context as usize;
     let socket = RpPairingSocket::new_device(stream);
@@ -577,7 +614,13 @@ async fn run_pairing(
                 callback(callback_context as *mut c_void, pin.as_ptr());
             }
         }) => {
-            outcome.map_err(|error| friendly_pairing_error(&error.to_string()))?
+            outcome.map_err(|error| {
+                // Only fixed stage codes cross the diagnostic boundary, never peer text.
+                let message = error.to_string();
+                let stage = if message.contains("device requested pair-verify") { 5 } else { 6 };
+                report_pairing_progress(&callbacks, stage);
+                friendly_pairing_error(&message)
+            })?
         }
         _ = wait_for_cancellation(Arc::clone(&cancellation)) => {
             return Err(CANCELLED_ERROR.to_string());
@@ -1245,5 +1288,63 @@ mod connection_step_tests {
         let detail = error.failure_detail().unwrap();
         assert!(detail.starts_with("idevice Socket "));
         assert!(detail.ends_with("io ConnectionReset"));
+    }
+}
+
+#[cfg(test)]
+mod pairing_reset_tests {
+    use super::*;
+
+    #[test]
+    fn new_setup_rotates_identity_and_keys_but_record_roundtrip_keeps_them() {
+        let a = fresh_pairing_record("WrapPin");
+        let b = fresh_pairing_record("WrapPin");
+        assert_ne!(a.identifier, b.identifier);
+        assert_ne!(a.public_key_bytes(), b.public_key_bytes());
+        let restored = RpPairingFile::from_bytes(&a.to_bytes()).unwrap();
+        assert_eq!(restored.identifier, a.identifier);
+        assert_eq!(restored.public_key_bytes(), a.public_key_bytes());
+    }
+
+    #[tokio::test]
+    async fn advertised_port_accepts_both_address_families() {
+        let listener = pairing_listener().unwrap();
+        let port = listener.local_addr().unwrap().port();
+        for host in ["127.0.0.1", "::1"] {
+            let _client = timeout(Duration::from_secs(2), TcpStream::connect((host, port)))
+                .await
+                .unwrap()
+                .unwrap();
+            let _accepted = timeout(Duration::from_secs(2), listener.accept())
+                .await
+                .unwrap()
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn cancellation_before_worker_starts_is_not_lost() {
+        let session = wp_remote_pairing_session_create();
+        unsafe {
+            wp_remote_pairing_session_cancel(session);
+            let mut result = RemotePairingResult::empty();
+            let code = wp_remote_pairing_session_run(
+                session,
+                ptr::null(),
+                ptr::null(),
+                None,
+                None,
+                None,
+                ptr::null_mut(),
+                &mut result,
+            );
+            assert_eq!(code, 1);
+            assert_eq!(
+                CStr::from_ptr(result.error_message).to_str().unwrap(),
+                CANCELLED_ERROR
+            );
+            wp_remote_pairing_result_destroy(&mut result);
+            wp_remote_pairing_session_destroy(session);
+        }
     }
 }

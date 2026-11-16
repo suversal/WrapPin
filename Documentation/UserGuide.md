@@ -14,11 +14,13 @@ You need your physical iPhone and Developer Mode. Standard also needs LocalDevVP
 2. On **Device Setup**, tap **Pair This Device**.
 3. Allow Local Network access when iOS asks.
 4. Open **Settings → Privacy & Security → Developer Mode → Pair with WrapPin**.
-5. Enter the six-digit code shown by WrapPin.
+5. Return to WrapPin to read the generated six-digit code, then enter it in Settings.
 6. Standard: install LocalDevVPN from Device Setup if it is not already installed. Tunnel: allow its built-in VPN configuration when starting a location.
 7. Standard: open LocalDevVPN and connect its local tunnel. Tunnel starts its own tunnel when needed.
 
 Pairing is normally required only once. WrapPin stores the pairing record in this iPhone's Keychain and does not upload it.
+
+To pair again, confirm Remove Pairing in Device Setup and wait for cleanup before starting a new attempt. This does not reset the phone or clear another app's data. If no PIN appears, use Connection Health → Copy Diagnostics during the same launch to distinguish connection progress from PIN generation.
 
 ## Choose a location
 

@@ -453,6 +453,17 @@ final class LocalDeviceSessionCoordinator: NSObject {
         }
     }
 
+    /// Preserve the normal stop/real-location acknowledgement path before replacing credentials.
+    func resetAndWait() async {
+        reset()
+        while workerIsRunning || phase == .stopping {
+            // Reset must finish cleanup even if its initiating UI task is cancelled.
+            await withCheckedContinuation { continuation in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { continuation.resume() }
+            }
+        }
+    }
+
     // A cold VPN start can briefly expose services before the return to the app settles.
     // Retry once per start; never turn this into an unbounded recovery loop.
     private func showConnectionHelp() {
