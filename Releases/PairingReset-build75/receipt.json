@@ -1,0 +1,87 @@
+{
+  "version": "1.0.23",
+  "build": 75,
+  "date": "2026-11-16",
+  "source_commit": "f4ad0d4667616c277ea2d51442b24236562cf33e",
+  "xcode": "27.0 (27A266a)",
+  "minimum_os": "18.0",
+  "unsigned": true,
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.23-build75-unsigned.ipa",
+      "bytes": 6936160,
+      "sha256": "2101fc1168c538562af9f0147c66073c2715b32d57fd182951b01764784d1e5a",
+      "bundle_id": "com.suversal.wrappin",
+      "archive_files_match": true
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.23-build75-unsigned.ipa",
+      "bytes": 6993495,
+      "sha256": "6bd85c31daa5fba44c4b697915960f593bd08fcc56d650c29eb56c75d24ac9d5",
+      "bundle_id": "com.suversal.wrappin.selfsigned",
+      "archive_files_match": true
+    }
+  ],
+  "checks": {
+    "native_rust_tests": {
+      "passed": 15,
+      "coverage": [
+        "fresh identity and key rotation",
+        "saved identity roundtrip",
+        "IPv4 and IPv6 loopback acceptance",
+        "cancel before native worker startup"
+      ]
+    },
+    "offline_checks_passed": [
+      "localization",
+      "failure stages",
+      "background session",
+      "location continuity",
+      "fixed coordinate mode",
+      "route recovery",
+      "session recovery policy",
+      "tunnel handoff",
+      "route selection",
+      "coordinate input",
+      "overseas search",
+      "pairing import",
+      "location reconnect policy",
+      "production pairing reset",
+      "production AppModel pairing reset"
+    ],
+    "builds": [
+      "Standard Debug iOS device",
+      "Tunnel Debug iOS device",
+      "Standard Debug simulator",
+      "Tunnel Debug simulator",
+      "Standard Release archive",
+      "Tunnel Release archive",
+      "Rust Release aarch64-apple-ios",
+      "Rust Release aarch64-apple-ios-sim"
+    ],
+    "package_checks": [
+      "ZIP integrity and no duplicate paths",
+      "version and bundle identity",
+      "arm64 and minimum OS",
+      "iPhone and iPad families",
+      "extension version and identity",
+      "Standard has no extension or NetworkExtension linkage",
+      "unsigned state",
+      "legal resources",
+      "all IPA files equal archive bytes"
+    ]
+  },
+  "acceptance_pending": [
+    "affected iPhone missing-PIN reproduction",
+    "iOS beta real pairing and repeated setup",
+    "signed physical installation",
+    "long background/locked-screen location acceptance"
+  ],
+  "notes": [
+    "No actual device pairing records were accessed by test fixtures.",
+    "Loopback tests run on macOS; native engines were cross-compiled for both iOS slices.",
+    "Packages were archived from one clean source commit; later documentation receipts do not change their source."
+  ]
+}

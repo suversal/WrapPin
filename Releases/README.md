@@ -1,5 +1,14 @@
 # WrapPin releases
 
+## 1.0.23 (Build 75)
+
+Created 16 November 2026 using Xcode 27.0 (27A266a), from source commit `f4ad0d4667616c277ea2d51442b24236562cf33e` with `scripts/package-ipa.sh all`. Both unsigned packages target iOS/iPadOS 18.0+; see [release notes](../Documentation/Release-1.0.23.md) and the [receipt](PairingReset-build75/receipt.json).
+
+- Standard: `WrapPin-Standard-1.0.23-build75-unsigned.ipa`; SHA-256 `2101fc1168c538562af9f0147c66073c2715b32d57fd182951b01764784d1e5a`; 6936160 bytes.
+- Tunnel: `WrapPin-Tunnel-1.0.23-build75-unsigned.ipa`; SHA-256 `6bd85c31daa5fba44c4b697915960f593bd08fcc56d650c29eb56c75d24ac9d5`; 6993495 bytes.
+
+All 15 offline checks and 15 native Rust tests passed. Both editions' Debug device/simulator builds and Release archives passed; package checks cover versions, architecture, minimum OS, iPhone/iPad families, extension layout, Standard linkage, unsigned state, legal resources and byte-for-byte archive agreement. The native xcframework was rebuilt for both iOS arm64 slices. Affected-device PIN pairing, beta-system behavior, signed installation and long locked-screen/background acceptance remain pending.
+
 ## 1.0.22 (Build 74)
 
 Created 12 November 2026 using Xcode 27.0 (27A266a) and `scripts/package-ipa.sh all`. Both unsigned packages target iOS/iPadOS 18.0+; see [release notes](../Documentation/Release-1.0.22.md) and the [receipt](LocationContinuity-build74/receipt.json).
