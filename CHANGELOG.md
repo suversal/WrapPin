@@ -2,6 +2,15 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.23] - 2026-11-16
+
+- Give new pairing attempts fresh host identifiers consistent with their new keys; preserve existing saved pairings on ordinary launches.
+- Explicitly accept both IPv4 and IPv6 on the pairing port.
+- Drain old pairing workers, record writes/imports and location shutdown before deleting/checking the local pairing record. Ignore stale reads and callbacks after reset.
+- Preserve pre-start cancellation, bound native pairing to 120 seconds, and prevent delayed Bonjour callbacks from hiding PINs.
+- Add bounded, status-only pairing progress to copied diagnostics and correct the PIN-notification instructions.
+- Native and production Swift regression coverage added; affected-device pairing and signed-install acceptance remain pending. See [release notes](Documentation/Release-1.0.23.md).
+
 ## [1.0.22] - 2026-11-12
 
 ### Changed

@@ -542,6 +542,8 @@ struct ConnectionHealthView: View {
         iOS: \(UIDevice.current.systemVersion)
         Pairing: \(pairingValue)
         Last pairing failure stage (this launch): \(appModel.onDevicePairing.lastFailureStage?.rawValue ?? "None")
+        Pairing progress (this launch):
+        \(appModel.onDevicePairing.diagnosticsText)
         Device tunnel: \(localDevVPNValue)
         Tunnel source: \(appModel.usesBuiltInTunnel ? "Built-in" : appModel.tunnelHandoffApp.title)
         Built-in VPN: \(builtInTunnelStatus)

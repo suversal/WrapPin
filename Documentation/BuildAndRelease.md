@@ -4,7 +4,7 @@ This guide covers WrapPin's development builds and IPA release workflow.
 
 ## Current release tracks
 
-- Current release: `1.0.22`, Build `74`, with background keep-alive and bounded location reconnect improvements; both unsigned packages are attached to [v1.0.22](https://github.com/suversal/WrapPin/releases/tag/v1.0.22). See the [Build 74 receipt](../Releases/LocationContinuity-build74/receipt.json).
+- Current release: `1.0.23`, Build `75`, with fresh pairing identities, dual-stack listening and serialized reset; both unsigned packages are attached to [v1.0.23](https://github.com/suversal/WrapPin/releases/tag/v1.0.23). See the [Build 75 receipt](../Releases/PairingReset-build75/receipt.json).
 - Standard edition (SideStore): bundle identifier `com.suversal.wrappin`
 - Tunnel edition: bundle identifier `com.suversal.wrappin.selfsigned`; extension: `com.suversal.wrappin.selfsigned.tunnel`
 - Minimum deployment target: iOS 18.0; iOS 18–26 requires an imported computer-generated RPPairing record

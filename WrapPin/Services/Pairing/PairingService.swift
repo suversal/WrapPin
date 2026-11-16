@@ -69,6 +69,9 @@ actor SecurePairingService: PairingService {
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw PairingServiceError.keychain(status)
         }
+        guard try readStoredRecord() == nil else {
+            throw PairingServiceError.corruptStoredRecord
+        }
     }
 
     private var baseQuery: [String: Any] {

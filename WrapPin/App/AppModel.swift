@@ -325,9 +325,34 @@ final class AppModel {
         shouldPresentDeviceSetup = false
     }
 
+    private(set) var isResettingPairing = false
+    private var pairingRevision = 0
+    private var pairingImportsInFlight = 0
+    private var pairingImportWaiters: [CheckedContinuation<Void, Never>] = []
+
+    private func waitForPairingImports() async {
+        if pairingImportsInFlight > 0 {
+            await withCheckedContinuation { pairingImportWaiters.append($0) }
+        }
+    }
+
+    private func pairingImportFinished() {
+        pairingImportsInFlight -= 1
+        guard pairingImportsInFlight == 0 else { return }
+        let waiters = pairingImportWaiters
+        pairingImportWaiters = []
+        for waiter in waiters { waiter.resume() }
+    }
+
     func resetApp() async throws {
-        onDevicePairing.reset()
-        deviceSession.reset()
+        guard !isResettingPairing else { return }
+        isResettingPairing = true
+        pairingRevision += 1
+        defer { isResettingPairing = false }
+        _ = cancelPendingLocationPreparation()
+        await onDevicePairing.reset()
+        await waitForPairingImports()
+        await deviceSession.resetAndWait()
         try await pairingService.removeRecord()
 
         if let bundleIdentifier = Bundle.main.bundleIdentifier {
@@ -367,10 +392,14 @@ final class AppModel {
     }
 
     func restorePairingStatus() async {
+        guard !isResettingPairing else { return }
+        let revision = pairingRevision
         pairingStatus = .checking
 
         do {
-            if let summary = try await pairingService.storedRecord() {
+            let summary = try await pairingService.storedRecord()
+            guard revision == pairingRevision else { return }
+            if let summary {
                 pairingStatus = .paired(summary)
                 if deviceSession.phase == .idle {
                     connectionState = .ready
@@ -380,6 +409,7 @@ final class AppModel {
                 connectionState = .notConfigured
             }
         } catch {
+            guard revision == pairingRevision else { return }
             pairingStatus = .failed(message: error.localizedDescription)
             connectionState = .failed(message: error.localizedDescription)
             usageAnalytics.record(.pairingFailed, enabled: sharesAnonymousUsageStatistics)
@@ -400,6 +430,8 @@ final class AppModel {
             pairingImportError = String(localized: "Stop the current session before changing its pairing file.")
             return
         }
+        pairingImportsInFlight += 1
+        defer { pairingImportFinished() }
         let previousStatus = pairingStatus
         let previousConnection = connectionState
         pairingImportError = nil
@@ -407,10 +439,13 @@ final class AppModel {
 
         do {
             let summary = try await operation()
-            onDevicePairing.reset()
+            guard !isResettingPairing else { return }
+            await onDevicePairing.reset()
+            guard !isResettingPairing else { return }
             pairingStatus = .paired(summary)
             connectionState = .ready
         } catch {
+            guard !isResettingPairing else { return }
             let message = error.localizedDescription
             pairingImportError = message
             if case .paired = previousStatus {
@@ -426,12 +461,13 @@ final class AppModel {
     }
 
     var isChangingPairingUnavailable: Bool {
-        pairingStatus == .checking || pairingStatus == .importing
+        isResettingPairing || pairingStatus == .checking || pairingStatus == .importing
             || onDevicePairing.isRunning || deviceSession.isBusy
             || connectionState == .active || isStartingLocationSession || isRestoringInterruptedSession
     }
 
     func startOnDevicePairing() {
+        guard !isChangingPairingUnavailable else { return }
         onDevicePairing.start { [weak self] record, hostAltIRK in
             guard let self else {
                 throw PairingServiceError.corruptStoredRecord
@@ -441,6 +477,7 @@ final class AppModel {
                 record,
                 hostAltIRK: hostAltIRK
             )
+            guard !self.isResettingPairing else { return summary }
             self.pairingStatus = .paired(summary)
             self.connectionState = .ready
             self.usageAnalytics.record(
@@ -495,6 +532,7 @@ final class AppModel {
         recovery: SessionRecoveryRecord
     ) async {
         guard !isStartingLocationSession, !isRestoringInterruptedSession, !deviceSession.isBusy else { return }
+        guard !isResettingPairing else { return }
         guard case .paired = pairingStatus else {
             connectionState = .notConfigured
             return
@@ -586,6 +624,7 @@ final class AppModel {
     func restoreRealLocationFromInterruptedSession() async {
         guard !isStartingLocationSession, !isRestoringInterruptedSession, !deviceSession.isBusy else { return }
         guard let recovery = interruptedSession else { return }
+        guard !isResettingPairing else { return }
         guard case .paired = pairingStatus else {
             interruptedSessionError = String(localized: "Pair this iPhone before restoring its real location.")
             return
@@ -686,8 +725,14 @@ final class AppModel {
     }
 
     func removePairingRecord() async {
-        onDevicePairing.reset()
-        deviceSession.reset()
+        guard !isResettingPairing else { return }
+        isResettingPairing = true
+        pairingRevision += 1
+        defer { isResettingPairing = false }
+        _ = cancelPendingLocationPreparation()
+        await onDevicePairing.reset()
+        await waitForPairingImports()
+        await deviceSession.resetAndWait()
         do {
             try await pairingService.removeRecord()
             pairingStatus = .notPaired
