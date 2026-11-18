@@ -3,6 +3,7 @@ import SwiftUI
 import UIKit
 
 struct LocationSelectionCard: View {
+    @Environment(\.isEmbeddedMapPanel) private var isEmbeddedMapPanel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -26,21 +27,28 @@ struct LocationSelectionCard: View {
     let onStart: () -> Void
     let onStop: () -> Void
 
+    @State private var panelDrag: CGFloat = 0
+    private var expansion: CGFloat { min(1, max(0, (isCollapsed ? 0 : 1) - panelDrag / 220)) }
+
     @State private var didCopyCoordinates = false
     @State private var isConfirmingStop = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if location != nil {
-                MapPanelDisclosure(isCollapsed: $isCollapsed)
+            if location != nil && !isEmbeddedMapPanel {
+                MapPanelDisclosure(isCollapsed: $isCollapsed) { panelDrag = $0 }
             }
             cardContent
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
         .padding(.top, location == nil ? 16 : 0)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 16, y: 5)
+        .background {
+            if !isEmbeddedMapPanel {
+                RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.regularMaterial)
+            }
+        }
+        .shadow(color: .black.opacity(isEmbeddedMapPanel ? 0 : 0.12), radius: 16, y: 5)
         .sensoryFeedback(.selection, trigger: isCollapsed)
         .confirmationDialog(
             "Stop the simulated location and restore your real location?",
@@ -60,29 +68,29 @@ struct LocationSelectionCard: View {
             if let location {
                 locationHeader(for: location)
 
-                if !isCollapsed {
-                    coordinateModeSelection
-                        .transition(detailTransition)
-                }
+                MapPanelDetails(progress: expansion) { coordinateModeSelection }
 
                 Button(action: primaryAction) {
                     HStack(spacing: 8) {
                         if isWorking {
-                            ProgressView()
-                                .tint(.white)
+                            ProgressView().controlSize(.small).frame(width: 18, height: 18)
                         } else {
-                            Image(systemName: primarySymbol)
+                            Image(systemName: primarySymbol).font(.system(size: 17, weight: .semibold))
                         }
-                        Text(primaryTitle)
+                        Text(primaryTitle).font(.body.weight(.semibold))
+                            .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                     }
-                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .foregroundStyle(isPrimaryDisabled ? Color.secondary : .white)
+                    .background(isPrimaryDisabled ? Color(uiColor: .secondarySystemFill) : (isShowingActiveTarget ? Color.red : Color.blue), in: Capsule())
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(isShowingActiveTarget ? .red : .blue)
+                .buttonStyle(.plain)
                 .disabled(isPrimaryDisabled)
+                .accessibilityIdentifier("map.primaryLocationAction")
 
-                if canPreviewRoute && !isCollapsed {
+                if canPreviewRoute {
+                    MapPanelDetails(progress: expansion) {
                     if dynamicTypeSize.isAccessibilitySize {
                         VStack(spacing: 8) {
                             routePreviewButton(for: .walking)
@@ -95,6 +103,7 @@ struct LocationSelectionCard: View {
                         }
                         .transition(detailTransition)
                     }
+                }
                 }
 
                 if let routeError {
@@ -114,7 +123,7 @@ struct LocationSelectionCard: View {
                     .frame(maxWidth: .infinity)
                 }
 
-                if !isCollapsed || !isRoutineStatus {
+                MapPanelDetails(progress: isRoutineStatus ? expansion : 1) {
                     Text(statusMessage)
                         .font(.caption)
                         .foregroundStyle(isFailure ? .red : .secondary)
@@ -144,7 +153,7 @@ struct LocationSelectionCard: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Choose a location")
                             .font(.headline)
-                        Text("Search above or tap anywhere on the map.")
+                        Text("Search for a place, or tap the map to choose one.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

@@ -38,15 +38,17 @@ struct ConnectionRetryTelemetry {
 }
 enum FailureDisposition { case terminal, recoverable }
 enum SchedulerFailureReason { case unknown }
-enum RouteMode { case walking, driving }
+enum RouteMode: String, Codable { case walking, driving }
 @MainActor final class AppModel {
     enum PairingStatus { case paired }
     let pairingStatus = PairingStatus.paired
     let deviceSession = LocalDeviceSessionCoordinator()
     func startRouteLocationSession(at: LocationTarget, destination: LocationTarget,
-        mode: RouteMode, coordinateMode: FixedCoordinateMode, speedMetresPerSecond: Double) async {
+        mode: RouteMode, coordinateMode: FixedCoordinateMode, speedMetresPerSecond: Double,
+        customRoutePoints: [SavedRoutePoint]? = nil) async {
         preconditionFailure("Route startup is outside this device-boundary fixture")
     }
+    func recordCustomRouteProgress(nextPointIndex: Int, at target: LocationTarget) {}
 }
 
 typealias WPLocationStartedCallback = @convention(c) (UnsafeMutableRawPointer?) -> Void
@@ -148,14 +150,14 @@ extension LocalDeviceSessionCoordinator {
 }
 
 extension WalkingSimulationController {
-    fileprivate func configureFixture(using session: LocalDeviceSessionCoordinator) {
+    fileprivate func configureFixture(using session: LocalDeviceSessionCoordinator, appModel: AppModel) {
         routePoints = [MKMapPoint(CLLocationCoordinate2D(latitude: 0, longitude: 0)),
                        MKMapPoint(CLLocationCoordinate2D(latitude: 0, longitude: 0.01))]
         cumulativeDistances = cumulativeDistanceValues(for: routePoints)
         totalDistance = cumulativeDistances.last!
         destination = LocationTarget(name: "Destination", subtitle: "", latitude: 0, longitude: 0.01)
         phase = .walking
-        beginMovement(using: session)
+        beginMovement(using: session, appModel: appModel)
     }
 }
 
@@ -228,7 +230,8 @@ extension LocalDeviceSessionCoordinator {
         let routeSession = LocalDeviceSessionCoordinator.fixture()
         routeSession.isReconnecting = true
         let route = WalkingSimulationController()
-        route.configureFixture(using: routeSession)
+        let routeApp = AppModel()
+        route.configureFixture(using: routeSession, appModel: routeApp)
         try! await Task.sleep(for: .milliseconds(1200))
         precondition(route.distanceTravelled == 0 && route.phase == .walking)
         routeSession.isReconnecting = false
@@ -261,6 +264,9 @@ paths = [
     'WrapPin/Services/Tunnel/NetServiceEndpointResolver.swift',
     'WrapPin/Services/Tunnel/LocalDeviceSessionCoordinator.swift',
     'WrapPin/Features/Map/RouteHitTesting.swift',
+    'WrapPin/Features/Map/SimulationRoute.swift',
+    'WrapPin/Features/Map/GPXRouteParser.swift',
+    'WrapPin/Models/SessionRecoveryRecord.swift',
     'WrapPin/Features/Map/WalkingSimulationController.swift',
 ]
 sources = '\n'.join((root / path).read_text() for path in paths)

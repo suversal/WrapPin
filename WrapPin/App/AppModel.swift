@@ -509,20 +509,26 @@ final class AppModel {
         destination: LocationTarget,
         mode: RouteMode,
         coordinateMode: FixedCoordinateMode,
-        speedMetresPerSecond: Double
+        speedMetresPerSecond: Double,
+        customRoutePoints: [SavedRoutePoint]? = nil
     ) async {
+        var record = SessionRecoveryRecord.route(
+            from: initialTarget, to: destination, mode: mode,
+            coordinateMode: coordinateMode, speedMetresPerSecond: speedMetresPerSecond)
+        record.customRoutePoints = customRoutePoints
+        record.nextCustomRoutePointIndex = customRoutePoints == nil ? nil : 1
         await startLocationSession(
             at: initialTarget,
             selectedTarget: destination,
             historyTarget: destination,
-            recovery: .route(
-                from: initialTarget,
-                to: destination,
-                mode: mode,
-                coordinateMode: coordinateMode,
-                speedMetresPerSecond: speedMetresPerSecond
-            )
+            recovery: record
         )
+    }
+
+    func recordCustomRouteProgress(nextPointIndex: Int, at target: LocationTarget) {
+        guard activeSessionRecovery?.customRoutePoints != nil else { return }
+        activeSessionRecovery?.nextCustomRoutePointIndex = nextPointIndex
+        persistActiveSessionRecovery(at: target)
     }
 
     private func startLocationSession(
@@ -914,7 +920,9 @@ final class AppModel {
         if
             recovery.isRoute,
             let destination = recovery.destination,
-            destination.id == target.id
+            destination.id == target.id,
+            recovery.customRoutePoints == nil
+                || (recovery.nextCustomRoutePointIndex ?? 0) >= (recovery.customRoutePoints?.count ?? 0)
         {
             recovery = .fixed(
                 at: destination,

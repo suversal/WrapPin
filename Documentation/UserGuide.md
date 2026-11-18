@@ -109,6 +109,23 @@ At the destination:
 
 For UK regional settings, short distances are shown in yards and longer distances in miles.
 
+## Custom routes and GPX import
+
+When Apple Maps walking directions are unavailable, tap the route icon beside the connection status to open **Custom route**. An already selected location becomes the initial start point. Use one general route simulation with an adjustable speed.
+
+1. Tap **Choose route start** and **Choose destination**, search for a place name or address, and choose a candidate. Then use **Add waypoint** to insert a searched place before the destination. To add from the map, tap **Pick on map**, tap a candidate position, then the role-specific **Set as start**, **Set as destination** or **Add waypoint**. The current role is shown before selection. Panning preserves that candidate; cancelling does not edit the route. Pasting coordinates into search is also supported.
+2. Stops show place names and addresses. Tap one to search for a replacement; hold the right handle to reorder, or use the × beside a stop to remove only that stop. **Clear all route points** is a separate action at the top of the expanded panel and requires confirmation. **Undo route edit** restores deletion or clearing.
+3. Tap **Preview Route**, set the simulation speed (default 5 km/h; the slider supports 0.1–240 km/h in 0.1 km/h steps), then start. **Edit Route** returns to the editor before starting.
+4. Pause and resume during movement. **Stop & Restore** clears the simulated location. Arrival holds the destination until stopped; walking the route back is also available.
+
+**Import GPX** accepts track segments (`trk/trkseg/trkpt`) and routes (`rte/rtept`). Select one segment when a file contains several; disconnected tracks are never joined automatically. Standalone `wpt` elements are not routes. GPX defaults to WGS84 and ignores elevation and timestamps, using the chosen constant speed. Files are limited to 5 MB and 10,000 points.
+
+Place lookup reuses the main map's domestic/overseas search and prefers the visible map region. The user chooses the candidate; the first result is never added automatically. Place search needs internet access and sends the query to the relevant map provider, without uploading the complete custom route.
+
+Points are joined directly without following roads. Route calculation, GPX processing and interrupted-route recovery run locally without Apple directions or uploading tracks. Map tiles may still require internet access. Resuming an interrupted custom walk follows its saved remaining geometry from the most recently saved position (progress is saved approximately every five seconds). Existing pairing, Developer Mode and device-tunnel requirements still apply.
+
+Drag the panel between compact, half and full height. Import, undo and coordinate options live in the expanded panel; the clearly labelled **Clear all route points** action is separate from individual stop deletion. The empty home screen has a compact, non-expandable hint that opens search when tapped.
+
 ## Driving routes
 
 Choose a destination and tap **Preview Drive**. Check the road route, then set a constant simulated speed between 5 and 240 km/h in 1 km/h steps before tapping **Start Driving**. The displayed travel time uses that simulated speed, not live traffic. You can pause or resume during the route. At the destination, the simulated position stays active until you tap **Stop & Restore** and confirm that your real location has returned. The app does not reverse driving routes because one-way roads may make the reverse path invalid.

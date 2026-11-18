@@ -65,3 +65,6 @@ If the release has no TelemetryDeck App ID and namespace configured, the statist
 ## Changes
 
 Any future change to the information collected must be reflected in this document and in the in-app **What Is Shared** screen before release.
+
+Custom route points and the next waypoint index are stored locally with interrupted-session recovery. Imported GPX files are parsed locally; their contents and custom routes are never included in analytics or uploaded for route planning. The map provider may still receive map tile requests.
+Route-point place searches use the same providers as the main map. Search terms are sent to the selected provider; the assembled custom route is not uploaded. Pasting coordinates into the route picker resolves them locally without reverse geocoding.

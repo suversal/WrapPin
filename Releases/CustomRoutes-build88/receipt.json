@@ -1,0 +1,41 @@
+{
+  "version": "1.0.24",
+  "build": 88,
+  "date": "2026-11-18",
+  "source_base_commit": "549e961e516485fef35d6806702e74cd02efaf5a",
+  "source_has_local_changes": true,
+  "purpose": "Smooth panel transitions, unified route speed and current-location camera",
+  "xcode": "27.0 (27A266a)",
+  "unsigned": true,
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.24-build88-unsigned.ipa",
+      "bytes": 7114190,
+      "sha256": "82f5c48cac14769ebf92ebd0faff120ae2796e933a93e681a239ca1f1fdcf62a",
+      "bundle_id": "com.suversal.wrappin",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.24-build88-unsigned.ipa",
+      "bytes": 7171353,
+      "sha256": "651251b173569f199e7f141d58f6c2f49b4d6ca6ab8ffb001c397a67718f87a9",
+      "bundle_id": "com.suversal.wrappin.selfsigned",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    }
+  ],
+  "verification": [
+    "Release archives for both editions",
+    "IPA integrity and Payload layout",
+    "App/extension version and build identity",
+    "iOS 18 minimum and iPhone/iPad support",
+    "Unsigned state and extension layout",
+    "arm64 executable architecture",
+    "Required legal resources",
+    "Package bytes match archive files"
+  ],
+  "physical_device_testing": "Pending; install with user-side signing"
+}

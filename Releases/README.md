@@ -1,5 +1,11 @@
 # WrapPin releases
 
+## WrapPin 1.0.24 — Build 88
+
+Custom routes and local GPX import without Apple walking directions, a unified 0.1–240 km/h speed slider, and improved draggable map panels. See [release notes](../Documentation/Release-1.0.24.zh-CN.md), [verification](CustomRoutes-build88/测试说明.md) and [package receipt](CustomRoutes-build88/receipt.json).
+
+Downloads are attached to [WrapPin 1.0.24](https://github.com/suversal/WrapPin/releases/tag/v1.0.24).
+
 ## 1.0.23 (Build 75)
 
 Created 16 November 2026 using Xcode 27.0 (27A266a), from source commit `f4ad0d4667616c277ea2d51442b24236562cf33e` with `scripts/package-ipa.sh all`. Both unsigned packages target iOS/iPadOS 18.0+; see [release notes](../Documentation/Release-1.0.23.md) and the [receipt](PairingReset-build75/receipt.json).

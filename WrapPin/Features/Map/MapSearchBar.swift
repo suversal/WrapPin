@@ -11,6 +11,7 @@ struct MapSearchBar: View {
     var onToggleOverseasSearch: () -> Void = {}
     let onSubmit: () -> Void
     let onClear: () -> Void
+    var fieldIdentifier: String = "map.searchField"
 
     var body: some View {
         Group {
@@ -63,6 +64,7 @@ struct MapSearchBar: View {
             )
                 .font(.body)
                 .focused($isFocused)
+                .accessibilityIdentifier(fieldIdentifier)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
                 .submitLabel(.search)

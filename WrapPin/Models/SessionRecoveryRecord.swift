@@ -15,6 +15,9 @@ struct SessionRecoveryRecord: Codable, Equatable {
     var fixedCoordinateMode: FixedCoordinateMode?
     var walkingPaceMetresPerSecond: Double?
     var routeSpeedMetresPerSecond: Double?
+    // Optional so records written before custom routes remain decodable.
+    var customRoutePoints: [SavedRoutePoint]?
+    var nextCustomRoutePointIndex: Int?
     let startedAt: Date
     var updatedAt: Date
 
@@ -64,4 +67,9 @@ struct SessionRecoveryRecord: Codable, Equatable {
             updatedAt: .now
         )
     }
+}
+
+struct SavedRoutePoint: Codable, Equatable, Sendable {
+    let latitude: Double
+    let longitude: Double
 }

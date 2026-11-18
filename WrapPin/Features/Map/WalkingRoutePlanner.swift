@@ -20,7 +20,7 @@ enum RouteMode: String, Codable, CaseIterable, Identifiable {
 @Observable
 final class WalkingRoutePlanner {
     /// The suggested route first, then up to two alternatives.
-    private(set) var routes: [MKRoute] = []
+    private(set) var routes: [SimulationRoute] = []
     private(set) var selectedRouteIndex = 0
     private(set) var destination: LocationTarget?
     private(set) var mode: RouteMode = .walking
@@ -32,7 +32,7 @@ final class WalkingRoutePlanner {
 
     private static let maximumRouteCount = 3
 
-    var route: MKRoute? {
+    var route: SimulationRoute? {
         routes.indices.contains(selectedRouteIndex) ? routes[selectedRouteIndex] : nil
     }
 
@@ -41,7 +41,7 @@ final class WalkingRoutePlanner {
         from source: LocationTarget? = nil,
         mode: RouteMode = .walking,
         includingAlternatives: Bool = true
-    ) async -> MKRoute? {
+    ) async -> SimulationRoute? {
         directions?.cancel()
         routes = []
         selectedRouteIndex = 0
@@ -80,8 +80,8 @@ final class WalkingRoutePlanner {
                 return nil
             }
 
-            routes = Array(response.routes.prefix(Self.maximumRouteCount))
-            return preferredRoute
+            routes = response.routes.prefix(Self.maximumRouteCount).map(SimulationRoute.init)
+            return SimulationRoute(preferredRoute)
         } catch is CancellationError {
             return nil
         } catch {
@@ -91,6 +91,18 @@ final class WalkingRoutePlanner {
                 : String(localized: "Driving directions are unavailable. Check Location access and your internet connection, then try again.")
             return nil
         }
+    }
+
+    @discardableResult
+    func previewCustomRoute(coordinates: [CLLocationCoordinate2D], name: String, mode: RouteMode = .walking) throws -> SimulationRoute {
+        let route = try SimulationRoute(coordinates: coordinates, name: name)
+        let end = coordinates.last!
+        clear()
+        routes = [route]
+        self.mode = mode
+        destination = LocationTarget(name: name, subtitle: String(localized: "Custom route destination"),
+                                     latitude: end.latitude, longitude: end.longitude)
+        return route
     }
 
     func clear() {
@@ -105,7 +117,7 @@ final class WalkingRoutePlanner {
     }
 
     @discardableResult
-    func selectRoute(at index: Int) -> MKRoute? {
+    func selectRoute(at index: Int) -> SimulationRoute? {
         guard routes.indices.contains(index) else { return nil }
         selectedRouteIndex = index
         return routes[index]
