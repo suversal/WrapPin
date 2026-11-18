@@ -1,4 +1,4 @@
-# WrapPin 1.0.25 (Build 92)
+# WrapPin 1.0.25 (Build 93)
 
 [简体中文](Release-1.0.25.zh-CN.md)
 

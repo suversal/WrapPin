@@ -1,8 +1,8 @@
 # WrapPin releases
 
-## WrapPin 1.0.25 — Build 92
+## WrapPin 1.0.25 — Build 93
 
-Unifies domestic route-search suggestions before and after submit, adds tapped places directly, and shows consistent add icons. [Release notes](../Documentation/Release-1.0.25.zh-CN.md) · [Verification](UnifiedSuggestions-build92/测试说明.md) · [Receipt](UnifiedSuggestions-build92/receipt.json).
+Unifies domestic route-search suggestions before and after submit, adds tapped places directly, and shows consistent add icons. [Release notes](../Documentation/Release-1.0.25.zh-CN.md) · [Verification](UnifiedSuggestions-build93/测试说明.md) · [Receipt](UnifiedSuggestions-build93/receipt.json).
 
 Downloads: [WrapPin 1.0.25](https://github.com/suversal/WrapPin/releases/tag/v1.0.25).
 

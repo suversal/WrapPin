@@ -1,8 +1,8 @@
 {
   "version": "1.0.25",
-  "build": 92,
+  "build": 93,
   "date": "2026-11-19",
-  "source_base_commit": "2cb97dd7097c7b04305b79c23d26c9623b893e28",
+  "source_base_commit": "c51f66a4b1e867a4c29e51c4a7effcef8373daba",
   "source_has_local_changes": true,
   "purpose": "Unified route suggestions on submit and one-tap waypoint selection",
   "xcode": "27.0 (27A266a)",
@@ -10,18 +10,18 @@
   "packages": [
     {
       "edition": "Standard",
-      "file": "WrapPin-Standard-1.0.25-build92-unsigned.ipa",
-      "bytes": 7117203,
-      "sha256": "f2aae9ea2f798132c432a945364fb93b02bf42d1b8588df9e64934acfc607bf0",
+      "file": "WrapPin-Standard-1.0.25-build93-unsigned.ipa",
+      "bytes": 7117623,
+      "sha256": "b86567e92cad582a4cfca54e3d90079dbefcdb1dbab587c4b5d917f2b86526d5",
       "bundle_id": "com.suversal.wrappin",
       "archive_files_match": true,
       "architecture": "arm64"
     },
     {
       "edition": "Tunnel",
-      "file": "WrapPin-Tunnel-1.0.25-build92-unsigned.ipa",
-      "bytes": 7175297,
-      "sha256": "adb1f7a35f1fd3417178e68a0bc5d2912e16860584d4fe13b1d53a96d72cf211",
+      "file": "WrapPin-Tunnel-1.0.25-build93-unsigned.ipa",
+      "bytes": 7175234,
+      "sha256": "ee2e38a66dfdbd6c225035aa1c0c9c848c6d59ce58c566374f6f80e66e76e2ad",
       "bundle_id": "com.suversal.wrappin.selfsigned",
       "archive_files_match": true,
       "architecture": "arm64"

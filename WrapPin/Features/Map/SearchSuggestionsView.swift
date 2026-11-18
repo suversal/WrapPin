@@ -38,6 +38,7 @@ struct SearchSuggestionsView: View {
                     }
                     .padding(.horizontal, 14)
                     .frame(minHeight: 58)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(accessibilityLabel(for: suggestion))
