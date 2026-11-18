@@ -47,6 +47,8 @@ final class WalkingSimulationController {
     @ObservationIgnored
     private var routePoints: [MKMapPoint] = []
     @ObservationIgnored
+    private var isCustomRoute = false
+    @ObservationIgnored
     private var cumulativeDistances: [CLLocationDistance] = []
     @ObservationIgnored
     private(set) var destination: LocationTarget?
@@ -68,7 +70,16 @@ final class WalkingSimulationController {
         remainingDistance / speedMetresPerSecond
     }
 
+    var customRouteSpeedKilometresPerHour: Double {
+        get { customWalkingSpeedKilometresPerHour ?? 5 }
+        set { customWalkingSpeedKilometresPerHour = newValue.isFinite ? min(max(newValue, 0.1), 240) : 5 }
+    }
+
     var speedMetresPerSecond: Double {
+        if isCustomRoute {
+            let speed = customRouteSpeedKilometresPerHour
+            return (speed.isFinite ? min(max(speed, 0.1), 240) : 5) / 3.6
+        }
         if mode == .walking {
             guard let customWalkingSpeedKilometresPerHour,
                   customWalkingSpeedKilometresPerHour.isFinite else { return pace.metresPerSecond }
@@ -87,16 +98,19 @@ final class WalkingSimulationController {
     }
 
     func prepare(
-        route: MKRoute,
+        route: SimulationRoute,
         destination: LocationTarget,
         mode: RouteMode = .walking,
-        coordinateMode: FixedCoordinateMode
+        coordinateMode: FixedCoordinateMode,
+        startName: String? = nil
     ) {
         movementTask?.cancel()
         movementTask = nil
         self.mode = mode
         self.coordinateMode = coordinateMode
 
+        if isCustomRoute && !route.isCustom { customWalkingSpeedKilometresPerHour = nil }
+        isCustomRoute = route.isCustom
         routePoints = route.mapPoints
         cumulativeDistances = cumulativeDistanceValues(for: routePoints)
         totalDistance = cumulativeDistances.last ?? route.distance
@@ -105,7 +119,7 @@ final class WalkingSimulationController {
         self.destination = destination
         if let startCoordinate = routePoints.first?.coordinate {
             routeStart = LocationTarget(
-                name: String(localized: "Route Start"),
+                name: startName ?? String(localized: "Route Start"),
                 subtitle: String(
                     format: NSLocalizedString("Starting point for %@", comment: ""),
                     destination.name
@@ -123,7 +137,7 @@ final class WalkingSimulationController {
 
     func prepareReturnTrip() -> LocationTarget? {
         guard
-            mode == .walking,
+            (mode == .walking || isCustomRoute),
             phase == .arrived,
             let returnDestination = routeStart,
             let previousDestination = destination,
@@ -164,7 +178,10 @@ final class WalkingSimulationController {
             destination: destination,
             mode: mode,
             coordinateMode: coordinateMode,
-            speedMetresPerSecond: speedMetresPerSecond
+            speedMetresPerSecond: speedMetresPerSecond,
+            customRoutePoints: isCustomRoute ? routePoints.map {
+                SavedRoutePoint(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
+            } : nil
         )
 
         if case .idle = appModel.deviceSession.phase, phase == .preparing {
@@ -201,13 +218,14 @@ final class WalkingSimulationController {
 
     func handleDeviceSessionPhase(
         _ devicePhase: DeviceSessionPhase,
-        deviceSession: LocalDeviceSessionCoordinator
+        deviceSession: LocalDeviceSessionCoordinator,
+        appModel: AppModel
     ) {
         switch devicePhase {
         case .active:
             guard phase == .preparing else { return }
             phase = .walking
-            beginMovement(using: deviceSession)
+            beginMovement(using: deviceSession, appModel: appModel)
 
         case .stopping:
             if locksDestination || isFailed {
@@ -254,14 +272,14 @@ final class WalkingSimulationController {
         return false
     }
 
-    private func beginMovement(using deviceSession: LocalDeviceSessionCoordinator) {
+    private func beginMovement(using deviceSession: LocalDeviceSessionCoordinator, appModel: AppModel) {
         movementTask?.cancel()
-        movementTask = Task { @MainActor [weak self, weak deviceSession] in
+        movementTask = Task { @MainActor [weak self, weak deviceSession, weak appModel] in
             var lastTick = Date.now
 
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
-                guard !Task.isCancelled, let self, let deviceSession else { return }
+                guard !Task.isCancelled, let self, let deviceSession, let appModel else { return }
 
                 let now = Date.now
                 let elapsed = now.timeIntervalSince(lastTick)
@@ -303,6 +321,12 @@ final class WalkingSimulationController {
                 ) == .updated else {
                     self.phase = .failed(String(localized: "The active location session ended before the route finished."))
                     return
+                }
+
+                if self.isCustomRoute {
+                    let nextIndex = self.cumulativeDistances.firstIndex(where: { $0 > self.distanceTravelled })
+                        ?? self.routePoints.count
+                    appModel.recordCustomRouteProgress(nextPointIndex: nextIndex, at: target)
                 }
 
                 if reachedDestination {

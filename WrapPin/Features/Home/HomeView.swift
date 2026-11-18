@@ -14,6 +14,8 @@ struct HomeView: View {
     @State private var isShowingDeviceSetup: Bool
     @State private var isShowingSettings: Bool
     @State private var isShowingSavedPlaces = false
+    @State private var customRouteDraft: CustomRouteDraft?
+    @State private var customRouteWaypoints: [RouteWaypoint]?
     @State private var shouldRefreshRealLocationWhenActive = false
     @State private var shouldClearLocationAfterRestoration = false
     @State private var isLocatingRealLocationAfterRestoration = false
@@ -24,6 +26,12 @@ struct HomeView: View {
     @State private var followsSimulatedLocation = false
     @State private var fixedCoordinateMode: FixedCoordinateMode = .wgs84
     @State private var compactHeaderHeight: CGFloat = 0
+    private enum DockPosition: Int { case collapsed, medium, expanded }
+    @State private var dockPosition: DockPosition = .medium
+    @State private var dockDrag: CGFloat = 0
+    @GestureState private var isDockDragging = false
+    @State private var expandedDockContentHeight: CGFloat = 280
+    @State private var compactDockContentHeight: CGFloat = 176
     @State private var bottomDockHeight: CGFloat = 0
     @FocusState private var isSearchFocused: Bool
     @AppStorage("isMapPanelDetailsCollapsed") private var areDetailsCollapsed =
@@ -105,7 +113,8 @@ struct HomeView: View {
         .onChange(of: appModel.deviceSession.phase) { oldPhase, newPhase in
             walkingSimulation.handleDeviceSessionPhase(
                 newPhase,
-                deviceSession: appModel.deviceSession
+                deviceSession: appModel.deviceSession,
+                appModel: appModel
             )
 
             switch newPhase {
@@ -144,7 +153,16 @@ struct HomeView: View {
             else { return }
             mapModel.center(on: coordinate)
         }
+        .onChange(of: hasSelectedSessionContent, initial: true) { _, hasContent in
+            if !hasContent { setDockPosition(.collapsed) }
+            else if dockPosition == .collapsed { setDockPosition(.medium) }
+        }
         .onChange(of: mapModel.selectedLocation?.id) { _, selectedLocationID in
+            if walkingRoutePlanner.route?.isCustom == true,
+               walkingRoutePlanner.destination?.id == selectedLocationID {
+                fixedCoordinateMode = walkingSimulation.coordinateMode
+                return
+            }
             if let selectedLocation = mapModel.selectedLocation {
                 if case .active(let activeTarget) = appModel.deviceSession.phase,
                     activeTarget.id == selectedLocation.id,
@@ -174,6 +192,20 @@ struct HomeView: View {
             shouldRefreshRealLocationWhenActive = false
             guard case .idle = appModel.deviceSession.phase else { return }
             mapModel.showRealLocationAfterSession()
+        }
+        .fullScreenCover(item: $customRouteDraft) { draft in
+            CustomRouteEditor(draft: draft, locationModel: mapModel) { waypoints, coordinateMode, speed in
+                let route = try walkingRoutePlanner.previewCustomRoute(
+                    coordinates: waypoints.map(\.coordinate), name: waypoints.last?.name ?? String(localized: "Custom route"))
+                customRouteWaypoints = waypoints
+                guard let destination = walkingRoutePlanner.destination else { return }
+                mapModel.show(destination)
+                fixedCoordinateMode = coordinateMode
+                walkingSimulation.prepare(route: route, destination: destination,
+                                          coordinateMode: coordinateMode, startName: waypoints.first?.name)
+                walkingSimulation.customRouteSpeedKilometresPerHour = speed
+                mapModel.show(route)
+            }
         }
         .sheet(isPresented: $isShowingDeviceSetup) {
             PairingSetupView()
@@ -223,13 +255,13 @@ struct HomeView: View {
                     id: \.offset
                 ) { index, alternative in
                     if index != walkingRoutePlanner.selectedRouteIndex {
-                        MapPolyline(alternative)
+                        MapPolyline(alternative.polyline)
                             .stroke(.blue.opacity(0.35), lineWidth: 5)
                     }
                 }
 
                 if let route = walkingRoutePlanner.route {
-                    MapPolyline(route)
+                    MapPolyline(route.polyline)
                         .stroke(.blue, lineWidth: 6)
                 }
 
@@ -243,9 +275,9 @@ struct HomeView: View {
                 }
 
                 if let coordinate = walkingSimulation.currentCoordinate {
-                    Annotation("Simulated route location", coordinate: coordinate) {
+                    Annotation(String(localized: "Simulated route location"), coordinate: coordinate) {
                         Image(
-                            systemName: walkingSimulation.mode == .walking
+                            systemName: walkingRoutePlanner.route?.isCustom == true ? "location.circle.fill" : walkingSimulation.mode == .walking
                                 ? "figure.walk.circle.fill" : "car.circle.fill"
                         )
                         .font(.title.weight(.semibold))
@@ -393,28 +425,85 @@ struct HomeView: View {
         detailsCollapsed: Binding<Bool>,
         topClearance: CGFloat = 60
     ) -> some View {
-        VStack(spacing: 10) {
-            mapControls
-            MapPanelViewport(
-                maximumHeight: min(
-                    440, max(80, min(availableHeight * 0.6, availableHeight - topClearance - 80)))
-            ) {
-                VStack(spacing: 10) {
-                    backgroundWarning
-                    selectionCard(detailsCollapsed: detailsCollapsed)
-                }
+        let maximum = max(200, availableHeight - 8)
+        let compact = min(maximum, max(180, compactDockContentHeight + 44))
+        let medium = min(maximum, max(compact, min(availableHeight * 0.48, expandedDockContentHeight + 44)))
+        let full = min(maximum, max(medium + 32, expandedDockContentHeight + 44))
+        let heights: [CGFloat] = [compact, medium, full]
+        let height = min(maximum, max(heights[0], heights[dockPosition.rawValue] - dockDrag))
+        let collapsed = Binding(
+            get: { dockPosition == .collapsed },
+            set: { value in setDockPosition(value ? .collapsed : .medium) })
+        return VStack(spacing: 10) {
+            if !hasSelectedSessionContent || dockPosition != .expanded {
+                mapControls.padding(.horizontal, 16)
             }
-            .accessibilityIdentifier("map.bottomCard")
+            if hasSelectedSessionContent {
+                VStack(spacing: 0) {
+                    Capsule().fill(.secondary.opacity(0.4)).frame(width: 36, height: 5)
+                        .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+                        .gesture(DragGesture(minimumDistance: 8, coordinateSpace: .global)
+                            .updating($isDockDragging) { _, state, _ in state = true }
+                            .onChanged { value in
+                                if abs(value.translation.height) > abs(value.translation.width) { dockDrag = value.translation.height }
+                            }
+                            .onEnded { value in
+                                guard abs(value.translation.height) > 36,
+                                      abs(value.translation.height) > abs(value.translation.width) else { dockDrag = 0; return }
+                                let next = min(2, max(0, dockPosition.rawValue + (value.translation.height < 0 ? 1 : -1)))
+                                setDockPosition(DockPosition(rawValue: next) ?? .medium)
+                            })
+                        .accessibilityElement()
+                        .accessibilityLabel("Route panel handle")
+                        .accessibilityValue(dockPosition == .expanded ? String(localized: "Full panel") : dockPosition == .medium ? String(localized: "Half panel") : String(localized: "Compact panel"))
+                        .accessibilityIdentifier("map.panelHandle")
+                        .accessibilityAction(named: Text("Expand route panel")) { setDockPosition(.expanded) }
+                        .accessibilityAction(named: Text("Collapse route panel")) { setDockPosition(.collapsed) }
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            backgroundWarning
+                            selectionCard(detailsCollapsed: collapsed)
+                        }
+                        .environment(\.isEmbeddedMapPanel, true)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight in
+                            if dockPosition == .collapsed { compactDockContentHeight = contentHeight }
+                            else { expandedDockContentHeight = contentHeight }
+                        }
+                        .transaction { $0.animation = nil }
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .accessibilityIdentifier("map.bottomCard")
+                }
+                .frame(height: height, alignment: .top)
+                .animation(reduceMotion || isDockDragging ? nil : .easeInOut(duration: 0.22), value: height)
+                .onChange(of: isDockDragging) { _, dragging in if !dragging { dockDrag = 0 } }
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 32, bottomLeadingRadius: dockPosition == .expanded ? 0 : 32,
+                    bottomTrailingRadius: dockPosition == .expanded ? 0 : 32, topTrailingRadius: 32))
+                .background { MapFloatingPanelBackground(isExpanded: dockPosition == .expanded) }
+            } else {
+                Button { isSearchFocused = true } label: {
+                    selectionCard(detailsCollapsed: .constant(true))
+                        .environment(\.isEmbeddedMapPanel, true)
+                }
+                .buttonStyle(.plain)
+                .background { MapFloatingPanelBackground(isExpanded: false) }
+                .accessibilityIdentifier("map.emptyPrompt")
+                .accessibilityHint("Opens place search")
+            }
+
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-        .frame(maxWidth: 452)
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.size.height
-        } action: { height in
-            bottomDockHeight = height
-        }
+        .padding(.horizontal, hasSelectedSessionContent && dockPosition == .expanded ? 0 : 12)
+        .padding(.bottom, hasSelectedSessionContent && dockPosition == .expanded ? 0 : 8)
+        .frame(maxWidth: 600)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomDockHeight = $0 }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+    }
+
+    private func setDockPosition(_ position: DockPosition) {
+        dockDrag = 0
+        dockPosition = position
+        areDetailsCollapsed = position == .collapsed
     }
 
     private var searchPanel: some View {
@@ -475,6 +564,22 @@ struct HomeView: View {
                 Spacer()
 
                 HStack(spacing: 10) {
+                    Button {
+                        isSearchFocused = false
+                        customRouteDraft = CustomRouteDraft(start: mapModel.selectedLocation,
+                                                            camera: visibleMapCamera.map { .camera($0) } ?? mapModel.cameraPosition,
+                                                            coordinateMode: fixedCoordinateMode)
+                    } label: {
+                        Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+                            .font(.body.weight(.semibold))
+                            .frame(width: 44, height: 44)
+                            .background(.regularMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canRequestRealLocation || walkingSimulation.locksDestination)
+                    .accessibilityLabel("Custom route")
+                    .accessibilityIdentifier("map.customRoute")
+
                     Button {
                         isShowingSavedPlaces = true
                     } label: {
@@ -706,6 +811,7 @@ struct HomeView: View {
                 onWalkBack: {
                     guard let returnTarget = walkingSimulation.prepareReturnTrip() else { return }
                     walkingRoutePlanner.retargetExistingRoute(to: returnTarget)
+                    customRouteWaypoints?.reverse()
                     mapModel.show(returnTarget)
                 },
                 onChooseNewLocation: {
@@ -721,6 +827,14 @@ struct HomeView: View {
                     walkingSimulation.reset()
                     walkingRoutePlanner.clear()
                     mapModel.show(destination)
+                },
+                onEditCustomRoute: {
+                    customRouteDraft = CustomRouteDraft(
+                        start: nil, camera: mapModel.cameraPosition,
+                        coordinates: route.mapPoints.map(\.coordinate),
+                        coordinateMode: walkingSimulation.coordinateMode,
+                        waypoints: customRouteWaypoints,
+                        speed: walkingSimulation.customRouteSpeedKilometresPerHour)
                 }
             )
         } else {
@@ -1076,6 +1190,7 @@ struct HomeView: View {
 
     private func resumeInterruptedSession(_ recovery: SessionRecoveryRecord) {
         recoveredWalkError = nil
+        customRouteWaypoints = nil
 
         guard recovery.isRoute, let destination = recovery.destination else {
             mapModel.show(recovery.lastReportedLocation)
@@ -1101,12 +1216,23 @@ struct HomeView: View {
         recoveredWalkPreparationIdentifier = preparationIdentifier
         Task { @MainActor in
             // A resumed route starts straight away, so there is nothing to choose between.
-            let route = await walkingRoutePlanner.preview(
-                to: destination,
-                from: recovery.lastReportedLocation,
-                mode: recovery.routeMode,
-                includingAlternatives: false
-            )
+            let route: SimulationRoute?
+            if let savedPoints = recovery.customRoutePoints {
+                let next = recovery.nextCustomRoutePointIndex ?? 1
+                if next >= 1, next < savedPoints.count, savedPoints.count <= GPXRouteParser.maximumPointCount {
+                    let remaining = [recovery.lastReportedLocation.coordinate] + savedPoints.dropFirst(next).map {
+                        CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+                    }
+                    route = try? walkingRoutePlanner.previewCustomRoute(
+                        coordinates: remaining, name: destination.name, mode: recovery.routeMode)
+                } else {
+                    route = nil
+                }
+            } else {
+                route = await walkingRoutePlanner.preview(
+                    to: destination, from: recovery.lastReportedLocation,
+                    mode: recovery.routeMode, includingAlternatives: false)
+            }
             guard recoveredWalkPreparationIdentifier == preparationIdentifier else { return }
             recoveredWalkPreparationIdentifier = nil
             guard let route else {
@@ -1124,7 +1250,9 @@ struct HomeView: View {
                 coordinateMode: routeCoordinateMode
             )
             if let savedSpeed = recovery.savedRouteSpeed, savedSpeed.isFinite {
-                if recovery.routeMode == .walking {
+                if route.isCustom {
+                    walkingSimulation.customRouteSpeedKilometresPerHour = savedSpeed * 3.6
+                } else if recovery.routeMode == .walking {
                     if let recoveredPace = WalkingPace.allCases.first(where: {
                         abs($0.metresPerSecond - savedSpeed) < 0.0001
                     }) {

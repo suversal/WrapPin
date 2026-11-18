@@ -11,11 +11,27 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     var isSearching = false
     var isResolvingAddress = false
     var isFindingRealLocation = false
+    private(set) var realLocationRevision = 0
+    var currentRealCoordinate: CLLocationCoordinate2D? {
+        guard isRealLocationCacheTrusted else { return nil }
+        // A fresh approximate fix is still useful for centering the map, just as on Home.
+        return [lastRealLocation, locationManager.location].compactMap { $0 }
+            .filter { !Self.isSimulated($0) && $0.horizontalAccuracy >= 0 && Date().timeIntervalSince($0.timestamp) <= 300 }
+            .max(by: { $0.timestamp < $1.timestamp })?.coordinate
+    }
     var errorMessage: String? {
         didSet { scheduleErrorDismissal() }
     }
     var cameraPosition: MapCameraPosition
     var overseasResults: [OverseasPlace] = []
+    // Route-point selection presents candidates rather than choosing the first match.
+    private(set) var searchResults: [LocationTarget] = []
+    var searchRegion: MKCoordinateRegion?
+    private let selectsFirstSearchResult: Bool
+    private let enablesSearchSuggestions: Bool
+    @ObservationIgnored private var searchRequestID: UUID?
+    @ObservationIgnored private var placeSearch: MKLocalSearch?
+    @ObservationIgnored private let searchProvider: (@MainActor (MKLocalSearch.Request) async throws -> [MKMapItem])?
     private(set) var isOverseasSearch = UserDefaults.standard.bool(forKey: MapViewModel.overseasSearchKey)
 
     @ObservationIgnored
@@ -48,7 +64,18 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     private static let overseasSearchKey = "overseasSearchEnabled"
     private static let overseasQuotaKey = "overseasSearchQuota"
 
-    override init() {
+    override convenience init() {
+        self.init(selectsFirstSearchResult: true)
+    }
+
+    init(
+        selectsFirstSearchResult: Bool,
+        enablesSearchSuggestions: Bool = true,
+        searchProvider: (@MainActor (MKLocalSearch.Request) async throws -> [MKMapItem])? = nil
+    ) {
+        self.selectsFirstSearchResult = selectsFirstSearchResult
+        self.enablesSearchSuggestions = enablesSearchSuggestions
+        self.searchProvider = searchProvider
         cameraPosition = .automatic
         super.init()
         searchCompleter.delegate = self
@@ -84,9 +111,12 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     }
 
     func updateSearchQuery(_ query: String) {
+        invalidateSearchRequest()
         searchQuery = query
         errorMessage = nil
         overseasResults = []
+        searchResults = []
+        searchSuggestions = []
 
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         switch coordinateInput(from: trimmedQuery) {
@@ -100,12 +130,13 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
 
         // Overseas results are fetched only on submit, never while typing,
         // so each search spends at most one request of the shared quota.
-        guard !usesOverseasSearch, trimmedQuery.count >= 2 else {
+        guard enablesSearchSuggestions, !usesOverseasSearch, trimmedQuery.count >= 2 else {
             searchSuggestions = []
             searchCompleter.queryFragment = ""
             return
         }
 
+        if let searchRegion { searchCompleter.region = searchRegion }
         searchCompleter.queryFragment = trimmedQuery
     }
 
@@ -123,6 +154,15 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
 
         switch coordinateInput(from: trimmedQuery) {
         case .coordinate(let coordinate):
+            if !selectsFirstSearchResult {
+                searchSuggestions = []
+                overseasResults = []
+                errorMessage = nil
+                searchResults = [LocationTarget(name: String(localized: "Entered Location"),
+                    subtitle: String(localized: "Entered using coordinates"),
+                    latitude: coordinate.latitude, longitude: coordinate.longitude)]
+                return
+            }
             isSearching = true
             errorMessage = nil
             resetSearchField()
@@ -218,11 +258,11 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         )
     }
 
-    func show(_ route: MKRoute) {
+    func show(_ route: SimulationRoute) {
         show([route])
     }
 
-    func show(_ routes: [MKRoute]) {
+    func show(_ routes: [SimulationRoute]) {
         let routeRect = routes.reduce(MKMapRect.null) { $0.union($1.polyline.boundingMapRect) }
         guard !routeRect.isNull, !routeRect.isEmpty else { return }
 
@@ -279,54 +319,75 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     func invalidateRealLocationCache() {
         lastRealLocation = nil
         isRealLocationCacheTrusted = false
+        realLocationRevision &+= 1
     }
 
     private func performSearch(for query: String) async {
-
+        invalidateSearchRequest()
+        let requestID = UUID()
+        searchRequestID = requestID
         isSearching = true
         errorMessage = nil
         searchSuggestions = []
-        defer { isSearching = false }
+        searchResults = []
+        defer {
+            if searchRequestID == requestID {
+                searchRequestID = nil
+                placeSearch = nil
+                isSearching = false
+            }
+        }
 
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
-
+        if let searchRegion { request.region = searchRegion }
+        let search = MKLocalSearch(request: request)
+        placeSearch = search
         do {
-            let response = try await MKLocalSearch(request: request).start()
-            guard let item = response.mapItems.first else {
+            let items: [MKMapItem]
+            if let searchProvider { items = try await searchProvider(request) }
+            else { items = try await search.start().mapItems }
+            guard !Task.isCancelled, searchRequestID == requestID else { return }
+            let targets = items.compactMap { item -> LocationTarget? in
+                let coordinate = MapKitCompatibility.coordinate(of: item)
+                guard CLLocationCoordinate2DIsValid(coordinate) else { return nil }
+                return LocationTarget(name: item.name ?? query,
+                    subtitle: placeDescription(for: item),
+                    latitude: coordinate.latitude, longitude: coordinate.longitude)
+            }
+            guard let first = targets.first else {
                 errorMessage = String(localized: "No matching place found. You can also paste coordinates, such as 35.6586, 139.7454.")
                 return
             }
-
-            let coordinate = MapKitCompatibility.coordinate(of: item)
-            let target = LocationTarget(
-                name: item.name ?? searchQuery,
-                subtitle: placeDescription(for: item),
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
-            )
-
-            selectedLocation = target
-            cameraPosition = .region(
-                MKCoordinateRegion(
-                    center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
-                )
-            )
-            resetSearchField()
+            if selectsFirstSearchResult {
+                selectedLocation = first
+                center(on: first)
+                resetSearchField()
+            } else {
+                // Collapse duplicate map items while preserving the provider's order.
+                var seen: Set<String> = []
+                searchResults = Array(targets.filter { seen.insert($0.id).inserted }.prefix(20))
+            }
         } catch is CancellationError {
             return
         } catch {
+            guard !Task.isCancelled, searchRequestID == requestID else { return }
             errorMessage = String(localized: "Search is unavailable right now.")
         }
     }
 
     private func performOverseasSearch(for query: String) async {
+        invalidateSearchRequest()
+        let requestID = UUID()
+        searchRequestID = requestID
         isSearching = true
         errorMessage = nil
         overseasResults = []
-        defer { isSearching = false }
+        defer { if searchRequestID == requestID { searchRequestID = nil; isSearching = false } }
 
+        // Route pickers and the main map share the same persisted daily allowance.
+        overseasQuota = Self.loadOverseasQuota()
+        overseasCache = Self.loadOverseasCache()
         let now = Date()
         let places: [OverseasPlace]
         if let cached = overseasCache.places(for: query, at: now) {
@@ -346,18 +407,22 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             } catch is CancellationError {
                 return
             } catch OverseasSearchError.network {
+                guard !Task.isCancelled, searchRequestID == requestID else { return }
                 errorMessage = String(localized: "Overseas search could not be reached. In mainland China it may need a proxy; you can also paste coordinates instead.")
                 return
             } catch {
+                guard !Task.isCancelled, searchRequestID == requestID else { return }
                 errorMessage = String(localized: "Overseas search is unavailable right now. You can paste coordinates instead.")
                 return
             }
+            overseasCache = Self.loadOverseasCache()
             overseasCache.store(places, for: query, at: now)
             Self.saveOverseasCache(overseasCache)
         }
 
         // The user may have edited or cleared the query while waiting.
-        guard searchQuery.trimmingCharacters(in: .whitespacesAndNewlines) == query else { return }
+        guard !Task.isCancelled, searchRequestID == requestID,
+              searchQuery.trimmingCharacters(in: .whitespacesAndNewlines) == query else { return }
         guard !places.isEmpty else {
             errorMessage = String(localized: "No overseas place found. Try the local or English name, or paste coordinates.")
             return
@@ -515,7 +580,7 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     // read, so a failed search does not leave a banner over the map.
     private func scheduleErrorDismissal() {
         errorDismissalTask?.cancel()
-        guard let message = errorMessage else { return }
+        guard selectsFirstSearchResult, let message = errorMessage else { return }
         let seconds = min(8, max(4, Double(message.count) * 0.12))
         errorDismissalTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(seconds))
@@ -534,7 +599,16 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         errorMessage = nil
     }
 
+    private func invalidateSearchRequest() {
+        searchRequestID = nil
+        placeSearch?.cancel()
+        placeSearch = nil
+        isSearching = false
+    }
+
     private func resetSearchField() {
+        invalidateSearchRequest()
+        searchResults = []
         searchQuery = ""
         searchSuggestions = []
         overseasResults = []
@@ -547,7 +621,9 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         }
 
         Task { @MainActor [weak self] in
-            self?.searchSuggestions = suggestions
+            guard let self, !self.searchQuery.isEmpty, !self.usesOverseasSearch,
+                  !self.isSearching, self.searchResults.isEmpty else { return }
+            self.searchSuggestions = suggestions
         }
     }
 
@@ -644,6 +720,7 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
 
         lastRealLocation = location
         isRealLocationCacheTrusted = true
+        realLocationRevision &+= 1
         requiresFreshRealLocation = false
         locationManager.stopUpdatingLocation()
         locationTimeout?.cancel()

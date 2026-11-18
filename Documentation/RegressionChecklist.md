@@ -198,3 +198,13 @@ Use this checklist before packaging an IPA or declaring a development build stab
 - [ ] Build succeeded in Release configuration.
 - [ ] Version/build values match the planned package.
 - [ ] Any known issue is recorded before distribution.
+
+## Custom walking routes
+
+- Create a route with at least three points without Apple walking directions; undo, reorder, delete and clear points. Cancel editing without changing the previous preview.
+- Import GPX tracks and routes; select one of multiple segments. Check invalid coordinates, malformed XML, standalone waypoints, file/point limits and cancellation. Import defaults to WGS84.
+- Preview, edit again, choose 5 km/h, start, pause/resume, stop and restore. Arrival holds the destination; walking back uses the reversed geometry.
+- Interrupt a custom walk, reopen, explicitly resume its saved remaining geometry without requesting directions. Test closed loops so passing the endpoint early does not discard recovery.
+- Check iOS 18 and 26, compact portrait/landscape, iPad, large Dynamic Type, VoiceOver and light/dark appearance on devices or simulators. Verify the coordinate-entry alternative to map taps.
+- Offline automated check: compile `scripts/test-custom-routes.swift` with `GPXRouteParser.swift`, `SimulationRoute.swift`, `WalkingRoutePlanner.swift`, `WalkingSimulationController.swift`, `MapKitCompatibility.swift`, `SessionRecoveryRecord.swift`, `LocationTarget.swift` and `FixedCoordinateMode.swift` using `xcrun swiftc -parse-as-library`.
+- Route-point search: choose named start/end, add several waypoints before the destination, replace each role, preserve names when reopening the preview editor, undo edits, cancel without mutation, and handle no results/network errors. Verify stale/cancelled search replies do not replace newer results; main-map first-result behavior and overseas quota remain compatible.

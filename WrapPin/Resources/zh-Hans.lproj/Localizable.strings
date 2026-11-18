@@ -840,3 +840,135 @@
 "Map Controls" = "地图控制";
 "Hide Controls" = "收起控制面板";
 "Show Controls" = "显示控制面板";
+
+// Custom walking routes
+"A route needs at least two different points with valid latitude and longitude." = "路线至少需要两个不同的点，且经纬度必须有效。";
+"Add" = "添加";
+"Add route point" = "添加路线点";
+"Choose GPX segment" = "选择 GPX 轨迹段";
+"Choose a valid GPX file containing a track segment or route with at least two points." = "请选择有效的 GPX 文件，包含至少两个点的轨迹段或路线。";
+"Custom route destination" = "自定义路线终点";
+"Custom route start to destination" = "自定义起点至终点";
+"Custom walking route" = "自定义步行路线";
+"Delete route point" = "删除路线点";
+"Import GPX" = "导入 GPX";
+"Importing GPX…" = "正在导入 GPX…";
+"Move point earlier" = "将路线点前移";
+"Move point later" = "将路线点后移";
+"Preview Route" = "预览路线";
+"Route calculation and GPX processing stay on this device. Map tiles may still need an internet connection." = "路线计算和 GPX 处理均在本机完成。地图显示仍可能需要网络连接。";
+"Segment %lld · %lld points" = "轨迹段 %lld · %lld 个点";
+"Tap the map in order: start, waypoints, then destination. Points are joined directly without following roads." = "在地图上依次点选起点、途经点和终点。各点直接连线，不会自动沿道路规划。";
+"Undo last point" = "撤销最后一点";
+"Use Add route point to enter coordinates without tapping the map." = "可使用“添加路线点”输入坐标，无需点选地图。";
+"Use a GPX file smaller than 5 MB with at most 10,000 points." = "请使用不超过 5 MB、最多包含 10,000 个点的 GPX 文件。";
+"Waypoint %lld" = "途经点 %lld";
+"GPX coordinates use WGS84 by default." = "GPX 坐标默认使用 WGS84。";
+"Edit Route" = "编辑路线";
+"Coordinate mode" = "坐标模式";
+"Clear all route points?" = "清空全部路线点？";
+"Clear Route" = "清空路线";
+
+// Search-based route point editing
+"Add waypoint" = "添加途经点";
+"Adds this place to the route" = "将此地点加入路线";
+"Choose a place to add to the route" = "选择要加入路线的地点";
+"Choose destination" = "选择终点";
+"Choose route start" = "选择起点";
+"Enter a place name or address, then choose a result. You can also paste coordinates. Place search requires an internet connection." = "输入地点名称或地址，再从结果中选择。也可以粘贴坐标。地点搜索需要网络连接。";
+"Map point" = "地图选点";
+"Replace route point" = "更换路线点";
+"Search for a place or address" = "搜索地点或地址";
+"Search to set the start, destination and waypoints, or tap the map in order. Points are joined directly without following roads." = "搜索设置起点、终点和途经点，也可依次点选地图。各点直接连线，不自动沿道路规划。";
+"Searches for a replacement route point" = "搜索并更换此路线点";
+"Use the route list to search for a start, destination or waypoint without tapping the map." = "可在路线列表中搜索起点、终点或途经点，无需点选地图。";
+"Undo route edit" = "撤销上次修改";
+
+// Route editor usability review
+"Choose at least two different route points to preview." = "请先选择至少两个不同的路线点。";
+"Discard Changes" = "放弃修改";
+"Discard route changes?" = "放弃本次路线修改？";
+"Ending at %@" = "终点：%@";
+"Keep Editing" = "继续编辑";
+"Route point actions" = "路线点操作";
+"Route points" = "路线点";
+"Show route point" = "在地图上查看此点";
+"Route options" = "路线选项";
+"Search or tap the map. Points connect directly." = "搜索或点选地图，各点直接连线。";
+"Route needs attention" = "无法使用这条路线";
+
+"Add this point" = "添加这个点";
+
+"Edit route" = "编辑路线";
+
+"Move the map to position the crosshair" = "移动地图，将十字中心对准所需位置";
+
+"Pick on map" = "地图选点";
+
+"Expand route panel" = "展开路线面板";
+
+"Collapse route panel" = "收起路线面板";
+
+"Route panel handle" = "面板拖动条";
+
+"Reorder route point" = "长按拖动排序";
+
+"Move the map to position the pin" = "移动地图，将图钉尖端对准所需位置";
+
+"Full panel" = "大屏展开";
+
+"Half panel" = "半展开";
+
+"Compact panel" = "已收起";
+
+"Opens place search" = "打开地点搜索";
+
+"Search for a place, or tap the map to choose one." = "搜索地点，或轻点地图选取位置。";
+
+"Clear all route points" = "清空全部路线点";
+
+"This removes every route point. Use Undo last change to restore them." = "这会移除整条路线的所有地点。清空后可通过“撤销上次修改”恢复。";
+
+"Tap the map to select a point" = "轻点地图选择位置";
+
+"Tap elsewhere to change the selected point" = "已选中，轻点其他位置可更换";
+
+"Selected point" = "已选位置";
+
+"Removes only this point" = "仅移除这个地点";
+
+"Points connect with straight lines in order. Hold the right handle to reorder." = "地点按顺序直线连接，长按右侧手柄可调整顺序。";
+
+"Custom route" = "自定义路线";
+
+"Movement type" = "移动方式";
+
+"On foot" = "步行";
+
+"By car" = "驾车";
+
+"Simulation speed" = "模拟速度";
+
+"First, choose the start" = "第一步：选择起点";
+
+"Next, choose the destination" = "第二步：选择终点";
+
+"Add a waypoint before the destination" = "添加途经点（插入终点前）";
+
+"Set as start" = "设为起点";
+
+"Set as destination" = "设为终点";
+
+"Start route simulation" = "开始路线模拟";
+
+"Simulating route" = "路线模拟中";
+
+"Route paused" = "路线已暂停";
+
+"Starting route simulation…" = "正在启动路线模拟…";
+
+"Preparing route" = "正在准备路线";
+
+"Follow route back" = "沿原路线返回";
+
+"Your location follows these points at the selected speed." = "位置将按所选速度沿路线点移动。";

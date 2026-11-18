@@ -55,6 +55,14 @@ struct RouteRecoveryCheck {
         precondition(savedProgress.destination == driving.destination)
         precondition(savedProgress.startedAt == driving.startedAt)
         precondition(savedProgress.lastReportedLocation.name == "Mid-route")
+        var custom = customWalk
+        custom.customRoutePoints = [SavedRoutePoint(latitude: 24.7, longitude: 46.7),
+                                    SavedRoutePoint(latitude: 24.8, longitude: 46.8)]
+        custom.nextCustomRoutePointIndex = 1
+        let restoredGeometry = try decoder.decode(SessionRecoveryRecord.self, from: JSONEncoder().encode(custom))
+        precondition(restoredGeometry.customRoutePoints == custom.customRoutePoints)
+        precondition(restoredGeometry.nextCustomRoutePointIndex == 1)
+        precondition(oldWalk.customRoutePoints == nil && oldWalk.nextCustomRoutePointIndex == nil)
         print("Route recovery: legacy walking, custom walking, driving and latest route progress passed")
     }
 }
