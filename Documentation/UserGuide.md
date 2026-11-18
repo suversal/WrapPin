@@ -228,3 +228,5 @@ Reopen WrapPin and use the interrupted-session screen. Resume from the last save
 ### I need a readable support report
 
 Open **Settings → Connection Health**, run the connection check, then use **Share Diagnostics**. The report contains app, iOS and connection state information but no pairing keys or PINs.
+
+Domestic place searches in the custom route picker use autocomplete candidates. Search dismisses the keyboard and retains the list; tapping a specific candidate adds it directly. The provider determines the count, up to six.

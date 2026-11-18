@@ -3,6 +3,7 @@ import SwiftUI
 struct SearchSuggestionsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let suggestions: [MapSearchSuggestion]
+    var showsAddAction = false
     let onSelect: (MapSearchSuggestion) -> Void
 
     var body: some View {
@@ -29,13 +30,18 @@ struct SearchSuggestionsView: View {
                         }
 
                         Spacer()
+                        if showsAddAction {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.blue)
+                                .accessibilityHidden(true)
+                        }
                     }
                     .padding(.horizontal, 14)
                     .frame(minHeight: 58)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(accessibilityLabel(for: suggestion))
-                .accessibilityHint("Selects this location")
+                .accessibilityHint(showsAddAction ? Text("Adds this place to the route") : Text("Selects this location"))
 
                 if index < suggestions.count - 1 {
                     Divider()
