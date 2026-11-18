@@ -1,5 +1,11 @@
 # WrapPin releases
 
+## WrapPin 1.0.25 — Build 93
+
+Unifies domestic route-search suggestions before and after submit, adds tapped places directly, and shows consistent add icons. [Release notes](../Documentation/Release-1.0.25.zh-CN.md) · [Verification](UnifiedSuggestions-build93/测试说明.md) · [Receipt](UnifiedSuggestions-build93/receipt.json).
+
+Downloads: [WrapPin 1.0.25](https://github.com/suversal/WrapPin/releases/tag/v1.0.25).
+
 ## WrapPin 1.0.24 — Build 88
 
 Custom routes and local GPX import without Apple walking directions, a unified 0.1–240 km/h speed slider, and improved draggable map panels. See [release notes](../Documentation/Release-1.0.24.zh-CN.md), [verification](CustomRoutes-build88/测试说明.md) and [package receipt](CustomRoutes-build88/receipt.json).

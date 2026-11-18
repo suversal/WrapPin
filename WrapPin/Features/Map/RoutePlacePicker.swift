@@ -7,6 +7,7 @@ struct RoutePlacePicker: View {
     @State private var searchModel = MapViewModel(selectsFirstSearchResult: false)
     @State private var searchTask: Task<Void, Never>?
     @FocusState private var isFocused: Bool
+    @State private var hasChosenPlace = false
     let request: RoutePlacePickerRequest
     let onSelect: (LocationTarget) -> Void
 
@@ -19,7 +20,7 @@ struct RoutePlacePicker: View {
                     isSearching: searchModel.isSearching,
                     isOverseasSearch: searchModel.isOverseasSearchAvailable ? searchModel.isOverseasSearch : nil,
                     onToggleOverseasSearch: { searchModel.setOverseasSearch(!searchModel.isOverseasSearch) },
-                    onSubmit: { performSearch() },
+                    onSubmit: { isFocused = false; performSearch() },
                     onClear: searchModel.clearSearch,
                     fieldIdentifier: "routePlace.query"
                 )
@@ -32,7 +33,7 @@ struct RoutePlacePicker: View {
                                 .accessibilityIdentifier("routePlace.error")
                         }
                         if searchModel.isShowingSuggestions {
-                            SearchSuggestionsView(suggestions: searchModel.searchSuggestions) { suggestion in
+                            SearchSuggestionsView(suggestions: searchModel.searchSuggestions, showsAddAction: true) { suggestion in
                                 isFocused = false
                                 performSearch(suggestion: suggestion)
                             }
@@ -107,12 +108,18 @@ struct RoutePlacePicker: View {
     private func performSearch(suggestion: MapSearchSuggestion? = nil) {
         searchTask?.cancel()
         searchTask = Task { @MainActor in
-            if let suggestion { await searchModel.selectSuggestion(suggestion) }
-            else { await searchModel.search() }
+            if let suggestion {
+                if let target = await searchModel.selectSuggestion(suggestion, directlySelect: true),
+                   !Task.isCancelled {
+                    choose(target)
+                }
+            } else { await searchModel.submitRouteSearch() }
         }
     }
 
     private func choose(_ target: LocationTarget) {
+        guard !hasChosenPlace else { return }
+        hasChosenPlace = true
         onSelect(target)
         dismiss()
     }

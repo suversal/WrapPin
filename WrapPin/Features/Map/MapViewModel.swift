@@ -79,7 +79,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         cameraPosition = .automatic
         super.init()
         searchCompleter.delegate = self
-        searchCompleter.resultTypes = [.address, .pointOfInterest, .query]
+        searchCompleter.resultTypes = selectsFirstSearchResult
+            ? [.address, .pointOfInterest, .query] : [.address, .pointOfInterest]
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
@@ -148,6 +149,25 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         )
     }
 
+    /// The route picker keeps its completion list on submit instead of replacing it
+    /// with a separate keyword search. Coordinates and the overseas provider retain
+    /// their existing explicit-submit behavior.
+    func submitRouteSearch() async {
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return }
+        if case .notCoordinates = coordinateInput(from: query), !usesOverseasSearch {
+            errorMessage = nil
+            guard enablesSearchSuggestions else { return }
+            if let searchRegion { searchCompleter.region = searchRegion }
+            if searchCompleter.queryFragment != query || searchSuggestions.isEmpty {
+                if searchCompleter.queryFragment == query { searchCompleter.queryFragment = "" }
+                searchCompleter.queryFragment = query
+            }
+            return
+        }
+        await search()
+    }
+
     func search() async {
         let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else { return }
@@ -203,14 +223,23 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         resetSearchField()
     }
 
-    func selectSuggestion(_ suggestion: MapSearchSuggestion) async {
+    @discardableResult
+    func selectSuggestion(_ suggestion: MapSearchSuggestion, directlySelect: Bool = false) async -> LocationTarget? {
+        // Preserve the selected place instead of broadening it into a new keyword search.
+        let completion = searchCompleter.results.first {
+            $0.title == suggestion.title && $0.subtitle == suggestion.subtitle
+        }
+        guard !directlySelect || completion != nil || searchProvider != nil else {
+            errorMessage = String(localized: "Search is unavailable right now.")
+            return nil
+        }
         searchQuery = suggestion.title
         searchSuggestions = []
 
         let query = [suggestion.title, suggestion.subtitle]
             .filter { !$0.isEmpty }
             .joined(separator: ", ")
-        await performSearch(for: query)
+        return await performSearch(for: query, completion: completion, directlySelect: directlySelect)
     }
 
     func show(_ target: LocationTarget) {
@@ -322,7 +351,9 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         realLocationRevision &+= 1
     }
 
-    private func performSearch(for query: String) async {
+    @discardableResult
+    private func performSearch(for query: String, completion: MKLocalSearchCompletion? = nil,
+                               directlySelect: Bool = false) async -> LocationTarget? {
         invalidateSearchRequest()
         let requestID = UUID()
         searchRequestID = requestID
@@ -338,8 +369,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             }
         }
 
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
+        let request = completion.map { MKLocalSearch.Request(completion: $0) } ?? MKLocalSearch.Request()
+        if completion == nil { request.naturalLanguageQuery = query }
         if let searchRegion { request.region = searchRegion }
         let search = MKLocalSearch(request: request)
         placeSearch = search
@@ -347,7 +378,7 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             let items: [MKMapItem]
             if let searchProvider { items = try await searchProvider(request) }
             else { items = try await search.start().mapItems }
-            guard !Task.isCancelled, searchRequestID == requestID else { return }
+            guard !Task.isCancelled, searchRequestID == requestID else { return nil }
             let targets = items.compactMap { item -> LocationTarget? in
                 let coordinate = MapKitCompatibility.coordinate(of: item)
                 guard CLLocationCoordinate2DIsValid(coordinate) else { return nil }
@@ -357,8 +388,9 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             }
             guard let first = targets.first else {
                 errorMessage = String(localized: "No matching place found. You can also paste coordinates, such as 35.6586, 139.7454.")
-                return
+                return nil
             }
+            if directlySelect { return first }
             if selectsFirstSearchResult {
                 selectedLocation = first
                 center(on: first)
@@ -369,11 +401,12 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
                 searchResults = Array(targets.filter { seen.insert($0.id).inserted }.prefix(20))
             }
         } catch is CancellationError {
-            return
+            return nil
         } catch {
-            guard !Task.isCancelled, searchRequestID == requestID else { return }
+            guard !Task.isCancelled, searchRequestID == requestID else { return nil }
             errorMessage = String(localized: "Search is unavailable right now.")
         }
+        return nil
     }
 
     private func performOverseasSearch(for query: String) async {

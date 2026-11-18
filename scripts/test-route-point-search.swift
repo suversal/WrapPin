@@ -55,6 +55,38 @@ struct RoutePointSearchChecks {
         candidates.clearSearch()
         precondition(candidates.searchResults.isEmpty)
 
+        // Tapping a specific suggestion returns one resolved place without publishing another list.
+        let selected = await candidates.selectSuggestion(
+            MapSearchSuggestion(title: "Place A", subtitle: "Exact address"), directlySelect: true)
+        precondition(selected?.name == "Place A" && candidates.searchResults.isEmpty)
+        precondition(candidates.selectedLocation == nil && !candidates.isSearching)
+        let missing = MapViewModel(selectsFirstSearchResult: false, enablesSearchSuggestions: false) { _ in [] }
+        let unresolved = await missing.selectSuggestion(
+            MapSearchSuggestion(title: "Missing", subtitle: ""), directlySelect: true)
+        precondition(unresolved == nil && missing.errorMessage != nil)
+
+        // Submitting the route query must preserve the same six candidates, not
+        // replace them with a different keyword-search response.
+        var keywordRequests = 0
+        let unified = MapViewModel(selectsFirstSearchResult: false, enablesSearchSuggestions: false) { _ in
+            keywordRequests += 1
+            return [first]
+        }
+        unified.setOverseasSearch(false)
+        unified.updateSearchQuery("Jing'an Temple")
+        let sixSuggestions = (0..<6).map { MapSearchSuggestion(title: "Temple \($0)", subtitle: "Address \($0)") }
+        unified.searchSuggestions = sixSuggestions
+        await unified.submitRouteSearch()
+        await unified.submitRouteSearch()
+        precondition(unified.searchSuggestions.map(\.id) == sixSuggestions.map(\.id))
+        precondition(keywordRequests == 0 && unified.searchResults.isEmpty && unified.selectedLocation == nil)
+        unified.updateSearchQuery("31.2, 121.4")
+        await unified.submitRouteSearch()
+        precondition(unified.searchResults.first?.latitude == 31.2 && keywordRequests == 0)
+        unified.updateSearchQuery("91, 121")
+        await unified.submitRouteSearch()
+        precondition(unified.searchResults.isEmpty && unified.errorMessage != nil && keywordRequests == 0)
+
         let mainMap = MapViewModel(selectsFirstSearchResult: true, enablesSearchSuggestions: false) { _ in [first, second] }
         mainMap.updateSearchQuery("museum")
         await mainMap.search()
@@ -82,6 +114,13 @@ struct RoutePointSearchChecks {
         pending["cancel"]!.resume(throwing: NSError(domain: "test", code: 1))
         await cancelled.value
         precondition(racing.searchResults.isEmpty && racing.errorMessage == nil && !racing.isSearching)
+        let tapped = Task { await racing.selectSuggestion(
+            MapSearchSuggestion(title: "selected", subtitle: ""), directlySelect: true) }
+        while pending["selected"] == nil { await Task.yield() }
+        racing.clearSearch()
+        pending["selected"]!.resume(returning: [first])
+        let cancelledSelection = await tapped.value
+        precondition(cancelledSelection == nil, "A cancelled suggestion must not add a route point")
         racing.updateSearchQuery("empty")
         let empty = Task { await racing.search() }
         while pending["empty"] == nil { await Task.yield() }

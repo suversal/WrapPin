@@ -1,0 +1,41 @@
+{
+  "version": "1.0.25",
+  "build": 93,
+  "date": "2026-11-19",
+  "source_base_commit": "c51f66a4b1e867a4c29e51c4a7effcef8373daba",
+  "source_has_local_changes": true,
+  "purpose": "Unified route suggestions on submit and one-tap waypoint selection",
+  "xcode": "27.0 (27A266a)",
+  "unsigned": true,
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.25-build93-unsigned.ipa",
+      "bytes": 7117623,
+      "sha256": "b86567e92cad582a4cfca54e3d90079dbefcdb1dbab587c4b5d917f2b86526d5",
+      "bundle_id": "com.suversal.wrappin",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.25-build93-unsigned.ipa",
+      "bytes": 7175234,
+      "sha256": "ee2e38a66dfdbd6c225035aa1c0c9c848c6d59ce58c566374f6f80e66e76e2ad",
+      "bundle_id": "com.suversal.wrappin.selfsigned",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    }
+  ],
+  "verification": [
+    "Release archives for both editions",
+    "IPA integrity and Payload layout",
+    "App/extension version and build identity",
+    "iOS 18 minimum and iPhone/iPad support",
+    "Unsigned state and extension layout",
+    "arm64 executable architecture",
+    "Required legal resources",
+    "Package bytes match archive files"
+  ],
+  "physical_device_testing": "Pending; install with user-side signing"
+}
