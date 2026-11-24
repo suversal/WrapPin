@@ -17,14 +17,14 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.23（Build 75） · <strong>最低系统：</strong>iOS/iPadOS 18.0
+  <strong>当前版本：</strong>1.0.26（Build 96） · <strong>最低系统：</strong>iOS/iPadOS 18.0
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/iOS-18%2B-blue" alt="iOS 18+">
   <img src="https://img.shields.io/badge/UI-SwiftUI-orange" alt="SwiftUI">
   <img src="https://img.shields.io/badge/%E7%BB%B4%E6%8A%A4%E8%80%85-suversal-purple" alt="由 suversal 维护">
-  <img src="https://img.shields.io/badge/Release-1.0.23-blue" alt="Release 1.0.23">
+  <a href="https://github.com/suversal/WrapPin/releases/latest"><img src="https://img.shields.io/github/v/release/suversal/WrapPin?label=Release" alt="最新发行版"></a>
   <img src="https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0">
 </p>
 
@@ -34,6 +34,8 @@
   <a href="https://x.com/suversal">在 X 联系 @suversal</a>
 </p>
 
+**首次配对按系统版本选择。** iOS/iPadOS 18–26 需要用电脑生成并导入 RPPairing 文件。iOS/iPadOS 27 及以上可用六位码在设备上配对。[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)
+
 WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarthdev/Roam-Control) 的非官方社区中文分支，由 suversal 维护。上游提供设备配对、固定位置、模拟步行和真实位置恢复等核心能力；WrapPin 在此基础上完成简体中文界面与地图标签本地化、首次使用和连接引导、地址与坐标复制、连接诊断、坐标模式选择、路线预览和版本更新提醒。项目保留原作者署名和上游链接，不代表上游官方中文版。
 
 如果这个项目帮到了你，欢迎点一个 **Star**；如果你发现界面、文案、兼容性或连接流程还有改进空间，也欢迎提交 Issue 或 Pull Request。贡献前请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
@@ -42,15 +44,11 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 > 请只在你拥有并控制的设备上使用。不要用于欺骗他人、伪造证据、规避安全限制，或违反第三方服务规则。
 
-1.0.23（Build 75）优化重新配对：新一轮使用新身份，补齐 IPv4/IPv6 监听，重置等待旧任务结束并确认本地记录已删除；诊断可区分连接与配对码生成阶段。受影响设备的真实配对仍待回测。见[更新说明](Documentation/Release-1.0.23.zh-CN.md)。
-
-1.0.21 将最低系统扩展到 iOS/iPadOS 18.0。标准版 iOS 26.5 和 iPad iOS 26 已收到首轮成功反馈；Build 71 的完整真机回归，以及 iOS 18、隧道版和其他系统版本仍待分别验收。iOS 18–26 的首次配对步骤见[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)。
-
-Build 71 优化 iPad 面板交互：横向宽窗口侧栏可收起、恢复，竖向与窄窗口的卡片贴底；iPad 默认显示紧凑卡片，固定定位和路线收起后保留主要操作。已生成 Build 71 两版未签名 IPA，见[构建记录](Releases/PanelLayout-build71/receipt.json)；用户已反馈 iPad iOS 26 可定位、可横屏，新包仍需真机回归，见 [iPad 布局说明](Documentation/iPadLayout.zh-CN.md)。
+1.0.26 新增独立的模拟目标标记、固定准星与摇杆微调，以及收藏列表的铅笔改名入口，并修复选点面板裁切。[本版更新说明](Documentation/Release-1.0.26.zh-CN.md)
 
 ## 当前进展
 
-- 当前公开版本为 **1.0.23（Build 75）**，同一个 Release 提供标准版和隧道版两个 IPA；下载以 [GitHub Releases](https://github.com/suversal/WrapPin/releases/tag/v1.0.23) 为准。
+- 标准版和隧道版 IPA 一起发布。[下载最新版](https://github.com/suversal/WrapPin/releases/latest) · [构建与校验记录](Releases/README.md)
 - 标准版（`WrapPin-Standard-…`）供 SideStore 等自签方式安装，使用 LocalDevVPN 等外部隧道。隧道版（`WrapPin-Tunnel-…`）内置设备隧道，主 App 和扩展都需要带 Packet Tunnel 权限的签名配置，免费账号无法签名；它使用独立 App ID，不替换标准版。
 - 已完成完整简体中文界面、地图标签本地化、配对与连接引导、中文安装文档和使用手册。
 - 已完善地址与坐标复制、连接检测、诊断信息复制、异常会话恢复和真实位置恢复流程。
@@ -73,17 +71,18 @@ Build 71 优化 iPad 面板交互：横向宽窗口侧栏可收起、恢复，�
 ## 主要功能
 
 - 使用 Apple 地图搜索地点、输入经纬度，或直接轻点地图选点。
+- 在“精确选点”中拖动地图或拨动摇杆微调，使用固定准星确认目标坐标。
 - 固定位置可切换 GCJ-02 修正与 WGS84 原值。地区建议仅作起点；如果显示位置有偏差，可切换另一种方式再核对。
 - 一键复制所选地点的可读地址或经纬度坐标。
-- 启动固定位置后直接更换坐标，无需重新建立整条连接。
+- 固定模拟时单独标出当前模拟目标，可用“查看模拟位置”回到目标，也可选中其他地点后更换模拟坐标。
 - 预览 Apple 地图步行或驾车路线，有多条路线时最多提供三条供选择；步行支持三档预设或 1–12 公里/小时自定义速度，驾车支持 5–240 公里/小时。
 - 在步行期间暂停、继续、原路返回或更换目的地。
-- 保存常用地点，快速访问最近使用的位置。
+- 收藏常用地点，在“收藏与历史”里用铅笔改名，或快速选取最近使用的位置。
 - 会话结束时主动清除模拟坐标并恢复真实位置。
 - 为 Wi-Fi 和蜂窝网络提供分开的连接引导与诊断。
 - 在设置中选择 LocalDevVPN、Shadowrocket、Surge、Loon、Stash、Egern、Quantumult X 或 sing-box 作为连接不可用时的跳转应用。Shadowrocket、Surge 和 Loon 需要分别按 [Shadowrocket 配置](Documentation/ShadowrocketIntegration.zh-CN.md)、[Surge iOS 配置](Documentation/SurgeIntegration.zh-CN.md)、[Loon 配置](Documentation/LoonIntegration.zh-CN.md) 启用 `10.7.0.1` 设备通道。
 - 打开 App 时检查最新公开版本，有更新时提醒；也可在设置中手动检查、反馈问题或联系维护者。
-- 支持深浅色外观、不同地图样式、动态字体、VoiceOver 和“减弱动态效果”。
+- 支持深浅色外观、不同地图样式、动态字体、VoiceOver 和“减弱动态效果”。[iPad 布局说明](Documentation/iPadLayout.zh-CN.md)
 
 ## 实现原理
 
@@ -147,7 +146,7 @@ WrapPin 的主要优点：
 
 当前限制：
 
-- 当前版本最低系统为 iOS/iPadOS 18.0；iOS 18–26 先用电脑生成并导入 RPPairing，iOS 27 保留本机配对。标准版 iOS 26.5 已有首轮成功反馈，其他项目仍待验收。
+- 当前版本的最低系统是 iOS/iPadOS 18.0。iOS 18.x 的真机测试覆盖仍有限。
 - 必须开启开发者模式，并完成本机配对（iOS 27+）或导入对应设备的 RPPairing 文件（iOS 18–26）。
 - LocalDevVPN 用于本机隧道，通常不能和另一个正在接管系统 VPN 的工具同时工作。
 - SideStore 免费签名受 Apple 的七天刷新、App 数量和 App ID 数量限制。
@@ -161,8 +160,8 @@ WrapPin 的主要优点：
 
 你需要：
 
-- 一台运行 iOS 18 或更高版本的实体 iPhone，并已设置锁屏密码；iOS 18–26 首次配对需要电脑。
-- 一台 Mac、Windows 或 Linux 电脑，用于首次安装 SideStore；iOS 18–26 还需要用电脑生成 RPPairing 文件。
+- 一台运行 iOS/iPadOS 18 或更高版本的实体 iPhone 或 iPad，并已设置锁屏密码。
+- 一台 Mac、Windows 或 Linux 电脑，用于首次安装 SideStore。iOS/iPadOS 18–26 还需要用电脑生成 RPPairing 文件。
 - 一根可以传输数据的 USB 线。
 - 一个 Apple 账号，免费账号即可。
 - Wi-Fi。SideStore 安装或刷新 App 时需要同时连接 Wi-Fi 和 LocalDevVPN。
@@ -180,15 +179,15 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发，以 GitHub Release 中的
 
 ### 选择版本
 
-每个 Release 提供两个 IPA，功能相同。
+每个 Release 提供标准版和隧道版 IPA，两版都支持固定定位和路线模拟。
 
 | | 标准版 `WrapPin-Standard-…` | 隧道版 `WrapPin-Tunnel-…` |
 | --- | --- | --- |
-| 设备隧道 | 使用 LocalDevVPN | 内置，自动连接 |
-| 签名要求 | 免费 Apple 账号，通过 SideStore | 带 Packet Tunnel 权限的付费证书 |
+| 设备隧道 | 使用 LocalDevVPN 等兼容的外部隧道 | 内置，自动连接 |
+| 签名要求 | 免费 Apple 账号，通过 SideStore | 主 App 和扩展各需匹配的 Packet Tunnel 签名配置 |
 | 续签 | 每七天 | 取决于证书 |
 
-**不确定选哪个就下载标准版**，下面的安装步骤以它为准。隧道版不能用免费账号或 SideStore 签名，有付费证书请看[隧道版](#隧道版)。
+**不确定选哪个就下载标准版**，下面的安装步骤以它为准。使用自己的签名配置安装内置隧道，请看[隧道版](#隧道版)。
 
 ## 安装步骤
 
@@ -207,21 +206,10 @@ WrapPin 暂未通过 App Store 或 TestFlight 分发，以 GitHub Release 中的
 2. 用数据线连接并解锁 iPhone；如果出现“要信任此电脑吗”，选择“信任”并输入锁屏密码。
 3. 打开 iLoader，确认设备列表里出现了这台 iPhone。找不到时先换一根数据线，再确认 Finder、iTunes 或 Apple Devices 能看到这台 iPhone。
 4. 在 iLoader 中登录 Apple 账号，按提示输入双重认证验证码。
-5. 选择这台 iPhone，选择最新的 **SideStore (Stable)**。如果想使用本教程测试时的同一版本，见下方说明。
+5. 选择这台 iPhone，点击 **Install SideStore (Stable)**。
 6. 等待签名和安装完成，中途不要拔线。
 
-请使用最新的 SideStore Stable 版本，或本教程测试时使用的版本。其他版本尤其是旧版本，在 iOS 27 上很可能出问题。
-
-本教程测试使用的是 Nightly 构建 `SideStore-0.7.0-20260914.1447+1fce70de.ipa`，测试时间为 2026 年 9 月，因为当时的 Stable 版本无法使用。安装这个版本的方法：
-
-1. 登录 GitHub，下载[这个构建产物](https://github.com/SideStore/SideStore/actions/runs/34800395893/artifacts/10331626491)，解压后找到上述 IPA。
-2. 按上面的第 1–4 步操作，并在 iLoader 中选中这台 iPhone。
-3. 点 **INSTALLERS → Import IPA**，选择该 IPA，按提示完成安装。不要点 **SideStore (Nightly)**，它会下载当前的 Nightly 新版，而不是测试用的版本。
-4. 打开 SideStore，核对底部版本是否为 `0.7.0-20260914.1447+1fce70de`。
-
-如果已经安装了其他版本的 SideStore，先用之前的同一个 Apple 账号尝试直接覆盖安装。提示不能覆盖时，在 iPhone 上删除 SideStore，再重做第 3 步。删除会清掉原来的配对文件，所以安装后要在 iLoader 点 **Manage Pairing File**，在 SideStore 旁点 **Place**，放置成功后再打开 SideStore。
-
-GitHub 的构建产物有保留期限，上面的下载链接可能失效；失效后请使用最新的 Stable 版本。
+已安装 SideStore 时，优先用原来签名的 Apple 账号覆盖安装。不同系统版本的信任步骤见 [SideStore 官方安装文档](https://docs.sidestore.io/docs/installation/install)。
 
 如果 iLoader 询问是否撤销已有证书，先确认这个 Apple 账号有没有给其他侧载工具使用；撤销证书可能让此前用它签名的 App 失效。
 
@@ -249,7 +237,7 @@ GitHub 的构建产物有保留期限，上面的下载链接可能失效；失�
 1. 打开 [GitHub Releases](https://github.com/suversal/WrapPin/releases/latest)，下载 `WrapPin-Standard-…-unsigned.ipa`。
 2. 保存到 iPhone 的“文件”App。如果是在电脑上下载的，可以用 AirDrop、iCloud Drive 或数据线传到手机。
 
-每个 Release 都列出了 IPA 的 SHA-256。需要校验时，在 Mac 终端运行 `shasum -a 256 文件名.ipa`，确认结果与 Release 页面一致。
+需要校验 IPA 时，在 Mac 终端运行 `shasum -a 256 文件名.ipa`，再对照对应版本的[构建记录](Releases/README.md)。
 
 ### 6. 用 SideStore 侧载 WrapPin
 
@@ -283,11 +271,11 @@ iOS 18–26 请先按[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)�
 
 ## 模拟固定位置
 
-1. 搜索地点、输入经纬度、轻点地图，或从收藏和历史记录中选择位置。
+1. 搜索地点、输入经纬度、轻点地图，或从收藏和历史记录中选择位置。需要微调时，点地图上的准星按钮，拖动地图或拨动摇杆后点“确认选点”。
 2. 在地点卡片上选择模拟坐标模式。国内地点建议先试 GCJ-02，其他地点建议先试 WGS84；这只是初始建议。
 3. 检查地图上的位置点，轻点“开始模拟定位”。如果出现 LocalDevVPN 或蜂窝网络提示，按页面引导操作。
 4. 等待状态显示“模拟定位中”，再打开 Apple 地图核对实际显示位置。若有偏差，返回 WrapPin 切换另一种模式；同一地点的模拟坐标会随之更新。
-5. 需要换地点时，在 WrapPin 中选择新位置并轻点“更换模拟位置”，无需重新配对。
+5. 需要换地点时，选择新位置并轻点“更换模拟位置”。选点时可用“查看模拟位置”回到当前模拟目标。
 6. 测试结束后回到 WrapPin，轻点“停止模拟并恢复”，保持 App 在前台直到恢复完成。
 
 ## 模拟步行路线
@@ -332,11 +320,11 @@ iOS 18–26 请先按[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)�
 
 ## 隧道版
 
-隧道版自带设备隧道，不需要 LocalDevVPN。主 App 和内嵌扩展都必须用付费证书签名，并且描述文件要授予 Packet Tunnel（Network Extension）权限。
+隧道版使用内置设备隧道。主 App 和内嵌扩展须由同一开发者团队签名，各自使用匹配 Bundle ID 的描述文件。两份描述文件都要授予 Packet Tunnel（Network Extension）权限。
 
 签名有两种方式，以下只是大致步骤：
 
-- **付费证书加 iPhone 上的签名工具。** 把证书和描述文件导入 IPA 签名工具，再导入 `WrapPin-Tunnel-…-unsigned.ipa`，签名并安装。事先确认证书支持 VPN / Network Extension 类 App。本项目不提供、不推荐也不担保任何证书服务。
+- **付费证书加 iPhone 上的签名工具。** 确认工具可分别为主 App 和扩展使用匹配的描述文件，再导入 `WrapPin-Tunnel-…-unsigned.ipa` 签名安装。签名后扩展的 Bundle ID 为主 App ID 加 `.tunnel`。
 - **Xcode 加付费 Apple Developer 账号。** 在 `Configuration/Local.private.xcconfig` 中填入自己的团队和 Bundle ID，选择 **WrapPin Tunnel** scheme 并运行到 iPhone。这条路线维护者没有实测。
 
 安装之后：
@@ -356,7 +344,7 @@ iOS 18–26 请先按[电脑配对说明](Documentation/iOS26Pairing.zh-CN.md)�
 常见问题：
 
 - **SideStore 提示没有 Wi-Fi 或 LocalDevVPN：**确认两者都已连接，关闭其他 DNS、代理或 VPN 工具，再重启 LocalDevVPN 和 SideStore。
-- **SideStore 安装 IPA 卡在中途：**先确认使用的是最新的 SideStore Stable 或“安装步骤”第 2 步中的测试版本。然后依次尝试重新打开 SideStore、清理缓存、切换 Anisette Server、重启 iPhone；仍然失败时，用 iLoader 重新放置配对文件或重装 SideStore。
+- **SideStore 安装 IPA 卡在中途：**先通过 iLoader 核对是否已安装 SideStore Stable。然后依次尝试重新打开 SideStore、清理缓存、切换 Anisette Server 或重启 iPhone。仍然失败时，用 iLoader 重新放置配对文件或重装 SideStore。
 - **SideStore 的配对文件失效：**系统升级或还原设备都可能导致失效。连接电脑，在 iLoader 中删除旧配对并重新信任，再通过 **Manage Pairing File** 把新的配对文件放入 SideStore。
 - **停止后位置没有立即恢复：**重新打开 WrapPin，选择“恢复真实位置”并保持 App 在前台，再用 Apple 地图核对；必要时关闭并重新开启“定位服务”。
 - **一直找不到 iPhone：**确认 LocalDevVPN 已连接、关闭其他系统 VPN、重新开关 LocalDevVPN，并确认配对记录属于当前设备。

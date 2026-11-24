@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Current release:</strong>1.0.23 (Build 75) · <strong>Minimum:</strong>iOS/iPadOS 18.0
+  <strong>Current release:</strong> 1.0.26 (Build 96) · <strong>Minimum:</strong> iOS/iPadOS 18.0
 </p>
 
 <p align="center">
@@ -26,17 +26,15 @@
   <a href="https://x.com/suversal">@suversal on X</a>
 </p>
 
+**First-time pairing depends on your OS version.** On iOS/iPadOS 18–26, create an RPPairing file on a computer and import it into WrapPin. On iOS/iPadOS 27 and later, use the six-digit code to pair on the device. [Computer pairing guide](Documentation/iOS26Pairing.md)
+
 WrapPin sets a fixed location or moves along a walking or driving route on an iPhone running **iOS 18 or newer**, without a jailbreak and without installing a MITM root certificate. It uses the iOS developer location simulation service. The app interface is available in English and Simplified Chinese and follows the system language.
 
 WrapPin is an unofficial community fork of [Roam Control](https://github.com/seanhowarthdev/Roam-Control) by Sean Howarth, maintained by suversal. Upstream provides the core pairing, fixed-location, walking and restore features. WrapPin adds Simplified Chinese localisation, setup and connection guidance, coordinate-mode selection, driving routes, connection diagnostics and an optional built-in tunnel. It keeps the original author's attribution and is not an official upstream release.
 
 > Use WrapPin only on devices you own and control. Do not use it to deceive other people, fabricate evidence, bypass security restrictions, or break the rules of third-party services.
 
-Version 1.0.23 (Build 75) gives new pairing attempts fresh identities, adds dual-stack listening and drains old work before reset completes. Copied diagnostics distinguish connection and PIN-generation stages. Affected-device pairing acceptance remains pending. See [release notes](Documentation/Release-1.0.23.md).
-
-Version 1.0.21 lowers the minimum to iOS/iPadOS 18.0. Initial success was reported on Standard with iOS 26.5 and on iPad with iOS 26. Full Build 71 device regression, iOS 18, Tunnel and other OS versions still need acceptance. See [computer pairing on iOS 18–26](Documentation/iOS26Pairing.md).
-
-Build 71 makes the landscape sidebar hideable and restores bottom-docked cards in portrait/narrow windows. iPad starts compact, with fixed/route session controls retained on collapse. Both unsigned Build 71 packages are recorded in the [receipt](Releases/PanelLayout-build71/receipt.json). The user reported working location and landscape on iPad iOS 26; the new build still needs physical regression. See [iPad layout](Documentation/iPadLayout.md).
+Version 1.0.26 adds a separate simulated target marker, a fixed crosshair and joystick for precision selection, and a pencil button for renaming favourites. It also fixes clipping in the selected-place card. [Release notes](Documentation/Release-1.0.26.md) · [iPad layout](Documentation/iPadLayout.md)
 
 ## Contents
 
@@ -57,8 +55,8 @@ Build 71 makes the landscape sidebar hideable and restores bottom-docked cards i
 
 This guide uses the free route: **iLoader + SideStore + LocalDevVPN + WrapPin**.
 
-- A physical iPhone running iOS 18 or newer, with a passcode set. iOS 18–26 needs a computer for initial pairing.
-- A Mac, Windows or Linux computer for initial SideStore installation; iOS 18–26 also needs it to generate an RPPairing file.
+- A physical iPhone or iPad running iOS/iPadOS 18 or newer, with a passcode set.
+- A Mac, Windows or Linux computer for initial SideStore installation. On iOS/iPadOS 18–26, use it to generate an RPPairing file as well.
 - A USB cable that carries data.
 - An Apple account. A free account is enough.
 - Wi-Fi. SideStore needs Wi-Fi and LocalDevVPN whenever it installs or refreshes an app.
@@ -76,15 +74,15 @@ Do not install an IPA from an unknown mirror or file-sharing link. It may have b
 
 ## Which edition to download
 
-Each release provides two IPA files with the same features.
+Each release provides Standard and Tunnel IPAs. Both support fixed locations and route simulation.
 
 | | Standard `WrapPin-Standard-…` | Tunnel `WrapPin-Tunnel-…` |
 | --- | --- | --- |
-| Device tunnel | Uses LocalDevVPN | Built in; connects automatically |
-| Signing | Free Apple account through SideStore | Paid certificate with the Packet Tunnel entitlement |
+| Device tunnel | Uses LocalDevVPN or another compatible external tunnel | Built in, connects automatically |
+| Signing | Free Apple account through SideStore | Matching Packet Tunnel signing profiles for the app and extension |
 | Renewal | Every seven days | Depends on the certificate |
 
-**If you are not sure, download the Standard edition.** The main guide below installs it. The Tunnel edition cannot be signed with a free account or with SideStore; see [Tunnel edition](#tunnel-edition) if you have a paid certificate.
+**If you are not sure, download the Standard edition.** The main guide below installs it. To use your own signing profiles for the built-in tunnel, see the [Tunnel edition instructions](#tunnel-edition).
 
 ## Install step by step
 
@@ -103,21 +101,10 @@ Despite its name, LocalDevVPN does not change your public IP address or route yo
 2. Connect the iPhone with the cable and unlock it. If the iPhone asks whether to trust this computer, tap **Trust** and enter your passcode.
 3. Open iLoader and check that the iPhone appears in the device list. If it does not, try another cable and confirm that Finder, iTunes or Apple Devices can see the iPhone.
 4. Sign in to iLoader with your Apple account. Enter the two-factor code if asked.
-5. Select the iPhone and choose the latest **SideStore (Stable)**. To use the exact build this guide was tested with instead, see the note below.
+5. Select the iPhone and choose **Install SideStore (Stable)**.
 6. Wait for signing and installation to finish. Do not unplug the cable.
 
-Use the latest SideStore Stable release, or the exact build this guide was tested with. Other versions, especially older builds, are likely to fail on iOS 27.
-
-The tested build is the Nightly build `SideStore-0.7.0-20260914.1447+1fce70de.ipa`, used in September 2026 because the Stable release available at that time did not work. To install it:
-
-1. Sign in to GitHub and download [this build artifact](https://github.com/SideStore/SideStore/actions/runs/34800395893/artifacts/10331626491). Unzip it and find the IPA with that name.
-2. Follow steps 1–4 above, then select the iPhone in iLoader.
-3. Choose **INSTALLERS → Import IPA**, select that IPA and follow the prompts. Do not choose **SideStore (Nightly)**: it downloads the current Nightly build, not the tested one.
-4. Open SideStore and check that the version shown at the bottom is `0.7.0-20260914.1447+1fce70de`.
-
-If a different SideStore version is already installed, try installing the tested build over it first, signed in with the same Apple account as before. If iLoader reports that it cannot install over the existing app, delete SideStore on the iPhone and repeat step 3. Deleting SideStore also removes its pairing file, so afterwards choose **Manage Pairing File** in iLoader and tap **Place** next to SideStore before you open it.
-
-GitHub deletes build artifacts after a retention period, so the download link may stop working. If it has, use the latest Stable release.
+If SideStore is already installed, try installing over it with the same Apple account. For the trust steps on your OS version, see the [official SideStore installation guide](https://docs.sidestore.io/docs/installation/install).
 
 If iLoader asks whether to revoke an existing certificate, check first whether you use the same Apple account with another sideloading tool. Revoking the certificate can stop apps that were signed with it.
 
@@ -145,7 +132,7 @@ SideStore is fully set up once this refresh succeeds. You no longer need the com
 1. Open [GitHub Releases](https://github.com/suversal/WrapPin/releases/latest) and download `WrapPin-Standard-…-unsigned.ipa`.
 2. Save it to the **Files** app on the iPhone. If you downloaded it on a computer, send it over with AirDrop, iCloud Drive or the cable.
 
-Each release lists the SHA-256 checksum of its IPA files. To check a download on a Mac, run `shasum -a 256 <file>.ipa` and compare the result.
+To verify a download on a Mac, run `shasum -a 256 <file>.ipa` and compare it with the checksum in the [release's build record](Releases/README.md).
 
 ### 6. Sideload WrapPin with SideStore
 
@@ -183,9 +170,11 @@ Pairing is normally needed only once. The pairing record is stored in this iPhon
 5. Wait for the status to show that the location is active.
 6. Open Apple Maps and confirm that your position has changed.
 
+For finer adjustments, tap the crosshair button to open **Precision Selection**. Drag the map or move the joystick, then tap **Confirm selection**. To rename a favourite, tap the pencil beside it in Saved Places.
+
 Check the result in Apple Maps first, not in a third-party app. Other apps may also use your IP address, Wi-Fi, cell towers, account region, cached data or their own risk signals. WrapPin changes only the location reported by the developer simulation service.
 
-To move while a session is active, choose another place and tap **Update Location**. You do not need to pair or reconnect.
+To move while a session is active, choose another place and tap **Update Location**. The map keeps a separate marker for the active target. Tap **Show simulated target** to center the map on it.
 
 ### A walking or driving route
 
@@ -236,11 +225,11 @@ The seven-day limit and the limits on the number of apps and App IDs are Apple's
 
 ## Tunnel edition
 
-The Tunnel edition has its own device tunnel, so it does not need LocalDevVPN. Both the app and its embedded extension must be signed with a paid certificate whose provisioning profile grants the Packet Tunnel (Network Extension) entitlement.
+The Tunnel edition uses its built-in device tunnel. Sign the app and embedded extension with the same developer team. Each requires a provisioning profile for its own bundle ID that grants the Packet Tunnel (Network Extension) entitlement.
 
 There are two ways to sign it. These are outlines only:
 
-- **A paid certificate and a signing tool on the iPhone.** Import the certificate and provisioning profile into an IPA signing tool, import `WrapPin-Tunnel-…-unsigned.ipa`, then sign and install it. Confirm beforehand that the certificate supports VPN / Network Extension apps. This project does not provide, recommend or vouch for any certificate service.
+- **A paid certificate and a signing tool on the iPhone.** Use a tool that can apply separate profiles to the app and extension. Import `WrapPin-Tunnel-…-unsigned.ipa`, then sign and install it. The extension's signed bundle ID must be the app's bundle ID plus `.tunnel`.
 - **Xcode and a paid Apple Developer account.** Set your team and bundle ID in `Configuration/Local.private.xcconfig`, select the **WrapPin Tunnel** scheme and run it on your iPhone. The maintainer has not tested this route.
 
 After installing:
@@ -255,7 +244,7 @@ Wherever this guide tells you to connect LocalDevVPN before using WrapPin, the b
 
 **SideStore says there is no Wi-Fi or LocalDevVPN.** Confirm that both are connected. Turn off other DNS, proxy and VPN tools, then restart LocalDevVPN and SideStore.
 
-**SideStore stops partway through installing the IPA.** Make sure you are on the latest SideStore Stable release or on the tested build named in step 2, and switch to one of them if not. Then try, in order: reopen SideStore, clear its cache, switch to another Anisette server, restart the iPhone. If it still fails, use iLoader to replace the pairing file or reinstall SideStore.
+**SideStore stops partway through installing the IPA.** Use iLoader to check that SideStore Stable is installed. Try reopening SideStore, clearing its cache, switching to another Anisette server or restarting the iPhone. If it still fails, use iLoader to replace the pairing file or reinstall SideStore.
 
 **SideStore's pairing file is no longer valid.** An iOS update or a device restore can invalidate it. Connect the iPhone to the computer, remove the old pairing in iLoader, trust the computer again, and use **Manage Pairing File** to place a new one in SideStore.
 
@@ -271,7 +260,7 @@ Wherever this guide tells you to connect LocalDevVPN before using WrapPin, the b
 
 ## Limits you should know
 
-- This release targets physical iPhones and iPads running iOS/iPadOS 18 or newer; the remaining iOS 18–26 regression is pending. The simulator can show the interface but cannot pair or simulate a location.
+- This release targets physical iPhones and iPads running iOS/iPadOS 18 or newer. Physical-device test coverage on iOS 18.x is still limited. The simulator supports interface checks only.
 - WrapPin changes the developer-simulated location. It does not change your public IP address, carrier, Apple account region or App Store region.
 - Not every third-party app accepts a simulated location.
 - LocalDevVPN usually cannot run at the same time as another app that controls the system VPN.
