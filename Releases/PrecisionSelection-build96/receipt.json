@@ -1,0 +1,39 @@
+{
+  "version": "1.0.26",
+  "build": 96,
+  "date": "2026-11-24",
+  "build_timestamp_utc": "2026-11-24T07:03:24Z",
+  "source_commit": "87fca02c2539719cff2fb17b3424617a8d30adef",
+  "xcode": "27.0 (27A266a)",
+  "unsigned": true,
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.26-build96-unsigned.ipa",
+      "bytes": 7161177,
+      "sha256": "08468a4b367a4e9499e39fe27f51fd59a234e3d5a8e114c193e147090d79f4f4",
+      "bundle_id": "com.suversal.wrappin",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.26-build96-unsigned.ipa",
+      "bytes": 7220350,
+      "sha256": "bcb67dda2118c5cc7a2c2896fe52339abc503b3ebec6b09792010a23cf85b841",
+      "bundle_id": "com.suversal.wrappin.selfsigned",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    }
+  ],
+  "verification": [
+    "Release archives for both editions",
+    "IPA integrity, matching archive bytes, and required legal resources",
+    "App and extension version, bundle identifier, device families, and iOS 18 minimum",
+    "arm64 executable architecture and unsigned state",
+    "Standard linkage, Tunnel extension layout, and stable public service settings",
+    "Localization, favourite naming and legacy persistence, search, location continuity and route recovery checks",
+    "iPhone 17 Pro simulator checks on the pre-release code for precision selection, panel layout and favourite rename"
+  ],
+  "physical_device_testing": "The maintainer approved publication after receiving Build 95. The unsigned Build 96 packages were checked locally. No Build 96 signed-device result was recorded."
+}

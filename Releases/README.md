@@ -1,5 +1,11 @@
 # WrapPin releases
 
+## WrapPin 1.0.26 — Build 96
+
+Adds a separate simulated target marker, fixed-crosshair precision selection, and a visible rename button for favourites. [Release notes](../Documentation/Release-1.0.26.zh-CN.md) · [Verification](PrecisionSelection-build96/测试说明.md) · [Receipt](PrecisionSelection-build96/receipt.json).
+
+Downloads: [WrapPin 1.0.26](https://github.com/suversal/WrapPin/releases/tag/v1.0.26).
+
 ## WrapPin 1.0.25 — Build 93
 
 Unifies domestic route-search suggestions before and after submit, adds tapped places directly, and shows consistent add icons. [Release notes](../Documentation/Release-1.0.25.zh-CN.md) · [Verification](UnifiedSuggestions-build93/测试说明.md) · [Receipt](UnifiedSuggestions-build93/receipt.json).
