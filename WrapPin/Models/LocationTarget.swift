@@ -5,6 +5,19 @@ struct LocationTarget: Codable, Hashable, Identifiable, Sendable {
     let subtitle: String
     let latitude: Double
     let longitude: Double
+    let isCustomName: Bool?
+
+    init(name: String, subtitle: String, latitude: Double, longitude: Double, isCustomName: Bool? = nil) {
+        self.name = name
+        self.subtitle = subtitle
+        self.latitude = latitude
+        self.longitude = longitude
+        self.isCustomName = isCustomName
+    }
+
+    func renamed(to name: String) -> Self {
+        Self(name: name, subtitle: subtitle, latitude: latitude, longitude: longitude, isCustomName: true)
+    }
 
     var id: String {
         "\(latitude.bitPattern)-\(longitude.bitPattern)"
@@ -15,6 +28,7 @@ struct LocationTarget: Codable, Hashable, Identifiable, Sendable {
     }
 
     var usesGenericMapName: Bool {
+        guard isCustomName != true else { return false }
         let genericNames: Set<String> = [
             "Dropped Pin",
             "地图选点",

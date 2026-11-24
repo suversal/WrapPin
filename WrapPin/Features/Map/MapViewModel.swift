@@ -45,6 +45,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     @ObservationIgnored
     private var locationTimeout: Task<Void, Never>?
     @ObservationIgnored
+    private var delayedRealLocationRefresh: Task<Void, Never>?
+    @ObservationIgnored
     private var shouldReportLocationErrors = false
     @ObservationIgnored
     private var lastRealLocation: CLLocation?
@@ -256,7 +258,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             target.coordinate,
             fallbackName: refreshedFallbackName(for: target),
             recenter: false,
-            preserveName: !target.usesGenericMapName
+            preserveName: !target.usesGenericMapName,
+            isCustomName: target.isCustomName
         )
 
         guard selectedLocation?.id == target.id else { return nil }
@@ -264,6 +267,7 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     }
 
     private func refreshedFallbackName(for target: LocationTarget) -> String {
+        if target.isCustomName == true { return target.name }
         let storedName = target.name.trimmingCharacters(in: .whitespacesAndNewlines)
         if ["Entered Location", "坐标位置"].contains(storedName) {
             return String(localized: "Entered Location")
@@ -310,10 +314,21 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         )
     }
 
+    func stopRecenteringOnRealLocation() {
+        delayedRealLocationRefresh?.cancel()
+        delayedRealLocationRefresh = nil
+        recenterOnNextRealLocation = false
+        isFindingRealLocation = false
+    }
+
     func showRealLocationAfterSession() {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(900))
-            self?.refreshRealLocationAfterRestoration()
+        delayedRealLocationRefresh?.cancel()
+        delayedRealLocationRefresh = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .milliseconds(900)) }
+            catch { return }
+            guard !Task.isCancelled, let self else { return }
+            self.delayedRealLocationRefresh = nil
+            self.refreshRealLocationAfterRestoration()
         }
     }
 
@@ -497,7 +512,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         _ coordinate: CLLocationCoordinate2D,
         fallbackName: String,
         recenter: Bool,
-        preserveName: Bool = false
+        preserveName: Bool = false,
+        isCustomName: Bool? = nil
     ) async {
         errorMessage = nil
         let lookupID = UUID()
@@ -514,7 +530,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             name: fallbackName,
             subtitle: String(localized: "Finding nearby address…"),
             latitude: coordinate.latitude,
-            longitude: coordinate.longitude
+            longitude: coordinate.longitude,
+            isCustomName: isCustomName
         )
         selectedLocation = pendingTarget
 
@@ -530,24 +547,18 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         let item = await reverseGeocode(coordinate)
         guard
             activeAddressLookupID == lookupID,
-            selectedLocation?.id == pendingTarget.id
+            let selected = selectedLocation,
+            selected.id == pendingTarget.id
         else { return }
 
-        if let item {
-            selectedLocation = LocationTarget(
-                name: preserveName ? fallbackName : (item.name ?? fallbackName),
-                subtitle: placeDescription(for: item),
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
-            )
-        } else {
-            selectedLocation = LocationTarget(
-                name: fallbackName,
-                subtitle: unavailableAddressDescription(for: coordinate),
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
-            )
-        }
+        let name = preserveName || selected.isCustomName == true ? selected.name : (item?.name ?? fallbackName)
+        selectedLocation = LocationTarget(
+            name: name,
+            subtitle: item.map(placeDescription(for:)) ?? unavailableAddressDescription(for: coordinate),
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            isCustomName: selected.isCustomName
+        )
     }
 
     private func reverseGeocode(_ coordinate: CLLocationCoordinate2D) async -> MKMapItem? {
@@ -627,8 +638,8 @@ final class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         errorMessage = nil
     }
 
-    func clearSelectedLocation() {
-        selectedLocation = nil
+    func clearSelectedLocation(revertingTo target: LocationTarget? = nil) {
+        selectedLocation = target
         errorMessage = nil
     }
 

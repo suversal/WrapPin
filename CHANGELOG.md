@@ -2,6 +2,13 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.26] - 2026-11-24
+
+- Show the active fixed simulation target separately from the selected pin so it stays visible when choosing another location.
+- Add Precision Selection with a fixed crosshair, map dragging and a joystick for fine adjustments before confirming a destination.
+- Keep selected-place titles and actions visible above the scrollable details on the map card.
+- Add a visible rename button for each favourite and preserve custom names during address refreshes. See the [release notes](Documentation/Release-1.0.26.md).
+
 ## [1.0.23] - 2026-11-16
 
 - Give new pairing attempts fresh host identifiers consistent with their new keys; preserve existing saved pairings on ordinary launches.

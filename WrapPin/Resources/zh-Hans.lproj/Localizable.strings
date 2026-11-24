@@ -348,6 +348,16 @@
 "Driving route" = "驾车路线";
 "Driving routes" = "驾车路线";
 "Simulated route location" = "模拟路线位置";
+"Current simulated target" = "当前模拟目标";
+"Show simulated target" = "查看模拟位置";
+"Precision selection" = "精确选点";
+"Crosshair coordinates" = "准星坐标";
+"Confirm selection" = "确认选点";
+"Map joystick" = "地图摇杆";
+"Move up" = "向上微调";
+"Move down" = "向下微调";
+"Move left" = "向左微调";
+"Move right" = "向右微调";
 "Follow simulated car" = "跟随模拟车辆";
 "Show whole route" = "查看整条路线";
 "Simulated speed" = "模拟速度";

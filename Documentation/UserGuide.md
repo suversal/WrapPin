@@ -45,9 +45,11 @@ To see more of the map, tap Hide Details or swipe down on the card header; tap S
 3. Follow the LocalDevVPN guidance if it appears.
 4. Wait for the status to show that the location is active.
 
-There is no separate confirmation step after choosing a location.
+For finer adjustments, open **Precision Selection** with the crosshair button. Drag the map or use the joystick to line up a destination under the fixed crosshair, then tap **Confirm selection** to select the location.
 
 To move an active session, choose another place and tap **Update Location**. WrapPin keeps the existing secure session and changes the location directly.
+
+The map shows the active fixed simulation target separately from the selected pin. Tap **Show simulated target** to center the map on it.
 
 Tap **Stop & Restore** when you want iOS to return to the real location, then confirm the choice. Keep WrapPin open while it restores the real location.
 
@@ -135,7 +137,7 @@ Choose a destination and tap **Preview Drive**. Check the road route, then set a
 - **Current location** flies to the iPhone's real position and turns the map north-up. It is unavailable while a simulated location is active.
 - **Compass** appears after the map is rotated. It shows N, E, S and W; tap it to face north again.
 - **Connection status** opens pairing and connection setup.
-- **Favourites and history** opens saved places. Swipe an item to delete it; swipe a favourite to rename it.
+- **Favourites and history** opens saved places. Tap the pencil next to a favourite to rename it. Swipe an item to delete it.
 - **Settings** controls appearance, map style, diagnostics, pairing, feedback, help and reset.
 
 ## Feedback

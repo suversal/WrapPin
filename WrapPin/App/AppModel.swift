@@ -225,24 +225,20 @@ final class AppModel {
         preferences.set(true, forKey: Self.hasSeenFavouriteReorderHintKey)
     }
 
-    func renameFavourite(_ target: LocationTarget, to proposedName: String) {
+    func renameFavourite(_ target: LocationTarget, to proposedName: String) -> LocationTarget? {
         let name = proposedName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard
             !name.isEmpty,
             let index = favouriteLocations.firstIndex(where: { $0.id == target.id })
-        else { return }
+        else { return nil }
 
-        let renamed = LocationTarget(
-            name: name,
-            subtitle: target.subtitle,
-            latitude: target.latitude,
-            longitude: target.longitude
-        )
+        let renamed = favouriteLocations[index].renamed(to: name)
         favouriteLocations[index] = renamed
-        if selectedTarget?.id == target.id {
-            selectedTarget = renamed
+        if let selectedTarget, selectedTarget.id == target.id {
+            self.selectedTarget = selectedTarget.renamed(to: name)
         }
         save(favouriteLocations, forKey: Self.favouritesKey)
+        return renamed
     }
 
     func removeFromHistory(_ target: LocationTarget) {
@@ -764,7 +760,8 @@ final class AppModel {
             name: stored.usesGenericMapName ? refreshed.name : stored.name,
             subtitle: refreshed.subtitle,
             latitude: stored.latitude,
-            longitude: stored.longitude
+            longitude: stored.longitude,
+            isCustomName: stored.isCustomName
         )
     }
 

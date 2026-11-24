@@ -26,22 +26,29 @@ struct LocationSelectionCard: View {
     let onPreviewRoute: (RouteMode) -> Void
     let onStart: () -> Void
     let onStop: () -> Void
+    var onDockContentHeightChanged: ((CGFloat) -> Void)? = nil
 
     @State private var panelDrag: CGFloat = 0
     private var expansion: CGFloat { min(1, max(0, (isCollapsed ? 0 : 1) - panelDrag / 220)) }
 
     @State private var didCopyCoordinates = false
     @State private var isConfirmingStop = false
+    @State private var dockHeaderHeight: CGFloat = 0
+    @State private var dockDetailsHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
             if location != nil && !isEmbeddedMapPanel {
                 MapPanelDisclosure(isCollapsed: $isCollapsed) { panelDrag = $0 }
             }
-            cardContent
+            if let location, let onDockContentHeightChanged {
+                dockContent(for: location, onHeightChanged: onDockContentHeightChanged)
+            } else {
+                cardContent
+                    .padding(.bottom, 16)
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 16)
         .padding(.top, location == nil ? 16 : 0)
         .background {
             if !isEmbeddedMapPanel {
@@ -62,35 +69,82 @@ struct LocationSelectionCard: View {
         }
     }
 
+    private func dockContent(
+        for location: LocationTarget,
+        onHeightChanged: @escaping (CGFloat) -> Void
+    ) -> some View {
+        VStack(spacing: 0) {
+            locationHeader(for: location)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 5)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockHeaderHeight = $0 }
+
+            ScrollView {
+                locationDetails
+                    .padding(.top, 5)
+                    .padding(.bottom, 12)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockDetailsHeight = $0 }
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .accessibilityIdentifier("map.bottomCard")
+        }
+        .onChange(of: dockHeaderHeight + dockDetailsHeight, initial: true) { _, height in
+            if height > 0 { onHeightChanged(height) }
+        }
+    }
+
     @ViewBuilder
     private var cardContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if let location {
+        if let location {
+            VStack(alignment: .leading, spacing: 16) {
                 locationHeader(for: location)
+                locationDetails
+            }
+        } else {
+            HStack(spacing: 14) {
+                Image(systemName: "hand.tap")
+                    .font(.title2)
+                    .foregroundStyle(.blue)
 
-                MapPanelDetails(progress: expansion) { coordinateModeSelection }
-
-                Button(action: primaryAction) {
-                    HStack(spacing: 8) {
-                        if isWorking {
-                            ProgressView().controlSize(.small).frame(width: 18, height: 18)
-                        } else {
-                            Image(systemName: primarySymbol).font(.system(size: 17, weight: .semibold))
-                        }
-                        Text(primaryTitle).font(.body.weight(.semibold))
-                            .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.horizontal, 12)
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .foregroundStyle(isPrimaryDisabled ? Color.secondary : .white)
-                    .background(isPrimaryDisabled ? Color(uiColor: .secondarySystemFill) : (isShowingActiveTarget ? Color.red : Color.blue), in: Capsule())
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Choose a location")
+                        .font(.headline)
+                    Text("Search for a place, or tap the map to choose one.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
-                .disabled(isPrimaryDisabled)
-                .accessibilityIdentifier("map.primaryLocationAction")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
 
-                if canPreviewRoute {
-                    MapPanelDetails(progress: expansion) {
+    private var locationDetails: some View {
+        VStack(alignment: .leading, spacing: onDockContentHeightChanged == nil ? 16 : 10) {
+            MapPanelDetails(progress: expansion) { coordinateModeSelection }
+
+            Button(action: primaryAction) {
+                HStack(spacing: 8) {
+                    if isWorking {
+                        ProgressView().controlSize(.small).frame(width: 18, height: 18)
+                    } else {
+                        Image(systemName: primarySymbol).font(.system(size: 17, weight: .semibold))
+                    }
+                    Text(primaryTitle).font(.body.weight(.semibold))
+                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .foregroundStyle(isPrimaryDisabled ? Color.secondary : .white)
+                .background(isPrimaryDisabled ? Color(uiColor: .secondarySystemFill) : (isShowingActiveTarget ? Color.red : Color.blue), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(isPrimaryDisabled)
+            .accessibilityIdentifier("map.primaryLocationAction")
+
+            if canPreviewRoute {
+                MapPanelDetails(progress: expansion) {
                     if dynamicTypeSize.isAccessibilitySize {
                         VStack(spacing: 8) {
                             routePreviewButton(for: .walking)
@@ -104,61 +158,45 @@ struct LocationSelectionCard: View {
                         .transition(detailTransition)
                     }
                 }
-                }
+            }
 
-                if let routeError {
-                    Text(routeError)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+            if let routeError {
+                Text(routeError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-                if isActive && !isShowingActiveTarget {
-                    Button("Stop & Restore", role: .destructive) {
-                        isConfirmingStop = true
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .frame(maxWidth: .infinity)
+            if isActive && !isShowingActiveTarget {
+                Button("Stop & Restore", role: .destructive) {
+                    isConfirmingStop = true
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .frame(maxWidth: .infinity)
+            }
 
-                MapPanelDetails(progress: isRoutineStatus ? expansion : 1) {
-                    Text(statusMessage)
-                        .font(.caption)
-                        .foregroundStyle(isFailure ? .red : .secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .transition(.opacity)
-                }
+            MapPanelDetails(progress: isRoutineStatus ? expansion : 1) {
+                Text(statusMessage)
+                    .font(.caption)
+                    .foregroundStyle(isFailure ? .red : .secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .transition(.opacity)
+            }
 
-                if shouldOfferTunnelApp {
-                    Link(destination: tunnelAppInstallURL) {
-                        Label(
-                            String(
-                                format: NSLocalizedString("Get %@", comment: ""),
-                                tunnelHandoffApp.title),
-                            systemImage: "arrow.up.right.square"
-                        )
-                        .font(.subheadline.weight(.semibold))
-                    }
-                    .frame(maxWidth: .infinity)
+            if shouldOfferTunnelApp {
+                Link(destination: tunnelAppInstallURL) {
+                    Label(
+                        String(
+                            format: NSLocalizedString("Get %@", comment: ""),
+                            tunnelHandoffApp.title),
+                        systemImage: "arrow.up.right.square"
+                    )
+                    .font(.subheadline.weight(.semibold))
                 }
-            } else {
-                HStack(spacing: 14) {
-                    Image(systemName: "hand.tap")
-                        .font(.title2)
-                        .foregroundStyle(.blue)
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Choose a location")
-                            .font(.headline)
-                        Text("Search for a place, or tap the map to choose one.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -454,7 +492,9 @@ struct LocationSelectionCard: View {
         switch sessionPhase {
         case .idle, .failed:
             true
-        case .openingLocalDevVPN, .discovering, .connecting, .active, .stopping:
+        case .active:
+            !isShowingActiveTarget
+        case .openingLocalDevVPN, .discovering, .connecting, .stopping:
             false
         }
     }

@@ -20,6 +20,7 @@ struct HomeView: View {
     @State private var shouldClearLocationAfterRestoration = false
     @State private var isLocatingRealLocationAfterRestoration = false
     @State private var visibleMapCamera: MapCamera?
+    @State private var isPreciselyPicking = false
     @State private var isPreparingRecoveredWalk = false
     @State private var recoveredWalkPreparationIdentifier: UUID?
     @State private var recoveredWalkError: String?
@@ -32,6 +33,8 @@ struct HomeView: View {
     @GestureState private var isDockDragging = false
     @State private var expandedDockContentHeight: CGFloat = 280
     @State private var compactDockContentHeight: CGFloat = 176
+    @State private var dockMapControlsHeight: CGFloat = 0
+    @State private var dockWarningHeight: CGFloat = 0
     @State private var bottomDockHeight: CGFloat = 0
     @FocusState private var isSearchFocused: Bool
     @AppStorage("isMapPanelDetailsCollapsed") private var areDetailsCollapsed =
@@ -52,39 +55,43 @@ struct HomeView: View {
             let isWide = geometry.size.width >= 900 && geometry.size.width > geometry.size.height
             let sidebarWidth = min(400, max(360, geometry.size.width * 0.3))
             let showsDock =
-                isWide
-                ? isSidebarCollapsed && hasSelectedSessionContent : !isSearchingForLocation
+                !isPreciselyPicking
+                && (isWide
+                    ? isSidebarCollapsed && hasSelectedSessionContent : !isSearchingForLocation)
             ZStack {
                 if isWide {
                     HStack(spacing: 0) {
                         if !isSidebarCollapsed {
                             sidebar
                                 .frame(width: sidebarWidth)
+                                .disabled(isPreciselyPicking)
                                 .transition(
                                     reduceMotion
                                         ? .opacity : .move(edge: .leading).combined(with: .opacity))
                         }
                         mapContent
                             .overlay(alignment: .topLeading) {
-                                if isSidebarCollapsed {
+                                if isSidebarCollapsed && !isPreciselyPicking {
                                     showSidebarButton
                                         .padding(16)
                                 }
                             }
                             .overlay(alignment: .bottomTrailing) {
-                                if !isSidebarCollapsed {
+                                if !showsDock && !isPreciselyPicking {
                                     mapControls.padding(16)
                                 }
                             }
                     }
-                    if isSidebarCollapsed, hasSelectedSessionContent {
+                    if showsDock {
                         bottomDock(
                             availableHeight: geometry.size.height,
                             detailsCollapsed: hiddenSidebarDisclosure)
                     }
                 } else {
                     mapContent
-                    compactControls(availableHeight: geometry.size.height)
+                    if !isPreciselyPicking {
+                        compactControls(availableHeight: geometry.size.height)
+                    }
                 }
                 sessionOverlays(
                     reservedBottomSpace: showsDock ? bottomDockHeight : 0,
@@ -101,7 +108,7 @@ struct HomeView: View {
                 mapModel.center(on: interruptedLocation)
             }
             mapModel.prepareCurrentLocation(
-                recenter: appModel.interruptedSession == nil
+                recenter: appModel.interruptedSession == nil && !isPreciselyPicking
             )
             if isShowingDeviceSetup {
                 appModel.deviceSetupWasPresented()
@@ -109,6 +116,9 @@ struct HomeView: View {
         }
         .onChange(of: appModel.shortcutRequest?.id, initial: true) {
             handleShortcutRequest()
+        }
+        .onChange(of: canPickPrecisely) { _, canPick in
+            if !canPick { isPreciselyPicking = false }
         }
         .onChange(of: appModel.deviceSession.phase) { oldPhase, newPhase in
             walkingSimulation.handleDeviceSessionPhase(
@@ -185,7 +195,10 @@ struct HomeView: View {
             isLocatingRealLocationAfterRestoration = false
         }
         .onChange(of: scenePhase) { _, newPhase in
-            guard newPhase == .active else { return }
+            guard newPhase == .active else {
+                isPreciselyPicking = false
+                return
+            }
             appModel.deviceSession.appDidBecomeActive()
 
             guard shouldRefreshRealLocationWhenActive else { return }
@@ -236,7 +249,12 @@ struct HomeView: View {
                 onDeleteFavourite: appModel.removeFavourite,
                 onMoveFavourites: appModel.moveFavouriteLocations,
                 onDismissFavouriteReorderHint: appModel.dismissFavouriteReorderHint,
-                onRenameFavourite: appModel.renameFavourite,
+                onRenameFavourite: { target, name in
+                    if let renamed = appModel.renameFavourite(target, to: name),
+                       let selected = mapModel.selectedLocation, selected.id == renamed.id {
+                        mapModel.selectedLocation = selected.renamed(to: renamed.name)
+                    }
+                },
                 onDeleteHistory: appModel.removeFromHistory,
                 onClearFavourites: appModel.clearFavouriteLocations,
                 onClearHistory: appModel.clearLocationHistory
@@ -248,7 +266,9 @@ struct HomeView: View {
     // the same layout rules. Session state stays in the shared models above.
     private var mapContent: some View {
         MapReader { proxy in
-            Map(position: $mapModel.cameraPosition) {
+            let fixedTarget = activeFixedTarget
+            Map(position: $mapModel.cameraPosition,
+                interactionModes: isPreciselyPicking ? [.pan, .zoom, .rotate] : .all) {
                 // Draw the alternatives first so the selected route stays on top.
                 ForEach(
                     Array(walkingRoutePlanner.routes.enumerated()),
@@ -269,22 +289,23 @@ struct HomeView: View {
                     UserAnnotation()
                 }
 
-                if let target = mapModel.selectedLocation {
+                if let target = mapModel.selectedLocation, target.id != fixedTarget?.id {
                     Marker(target.name, coordinate: target.coordinate)
                         .tint(.blue)
                 }
 
+                if let fixedTarget {
+                    Annotation(String(localized: "Current simulated target"), coordinate: fixedTarget.coordinate) {
+                        simulatedLocationGlyph("location.circle.fill")
+                    }
+                }
+
                 if let coordinate = walkingSimulation.currentCoordinate {
                     Annotation(String(localized: "Simulated route location"), coordinate: coordinate) {
-                        Image(
-                            systemName: walkingRoutePlanner.route?.isCustom == true ? "location.circle.fill" : walkingSimulation.mode == .walking
+                        simulatedLocationGlyph(
+                            walkingRoutePlanner.route?.isCustom == true ? "location.circle.fill" : walkingSimulation.mode == .walking
                                 ? "figure.walk.circle.fill" : "car.circle.fill"
                         )
-                        .font(.title.weight(.semibold))
-                        .foregroundStyle(.white, .green)
-                        .padding(4)
-                        .background(.regularMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
                     }
                 }
             }
@@ -301,13 +322,34 @@ struct HomeView: View {
                     return
                 }
 
-                guard !walkingSimulation.locksDestination else { return }
+                guard !isPreciselyPicking, !walkingSimulation.locksDestination else { return }
                 guard let coordinate = proxy.convert(point, from: .local) else { return }
                 if selectPreviewedRoute(at: point, coordinate: coordinate, proxy: proxy) { return }
                 Task { await mapModel.selectDroppedPin(at: coordinate) }
             }
+            .ignoresSafeArea()
+            .overlay {
+                if isPreciselyPicking {
+                    PrecisionMapPicker(
+                        camera: visibleMapCamera,
+                        coordinateAtPoint: { proxy.convert($0, from: .named(PrecisionMapPicker.mapSpace)) },
+                        onMove: { movePrecisionCamera(by: $0, with: proxy) },
+                        onConfirm: confirmPrecisionSelection,
+                        onCancel: { isPreciselyPicking = false }
+                    )
+                }
+            }
         }
-        .ignoresSafeArea()
+        .coordinateSpace(name: PrecisionMapPicker.mapSpace)
+    }
+
+    private func simulatedLocationGlyph(_ symbol: String) -> some View {
+        Image(systemName: symbol)
+            .font(.title.weight(.semibold))
+            .foregroundStyle(.white, .green)
+            .padding(4)
+            .background(.regularMaterial, in: Circle())
+            .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
     }
 
     private var sidebar: some View {
@@ -426,9 +468,16 @@ struct HomeView: View {
         topClearance: CGFloat = 60
     ) -> some View {
         let maximum = max(200, availableHeight - 8)
-        let compact = min(maximum, max(180, compactDockContentHeight + 44))
-        let medium = min(maximum, max(compact, min(availableHeight * 0.48, expandedDockContentHeight + 44)))
-        let full = min(maximum, max(medium + 32, expandedDockContentHeight + 44))
+        let pinsLocationHeader = availableHeight >= 420 && mapModel.selectedLocation != nil
+            && !isLocatingRealLocationAfterRestoration && walkingRoutePlanner.route == nil
+        let mediumLimit = pinsLocationHeader
+            ? max(availableHeight * 0.48, availableHeight - topClearance - dockMapControlsHeight - 18)
+            : availableHeight * 0.48
+        let warningSpace = pinsLocationHeader && showsBackgroundWarning ? dockWarningHeight + 10 : 0
+        let compact = min(maximum, max(180, compactDockContentHeight + warningSpace + 44))
+        let expandedContent = expandedDockContentHeight + warningSpace + 44
+        let medium = min(maximum, max(compact, min(mediumLimit, expandedContent)))
+        let full = min(maximum, max(medium + 32, expandedContent))
         let heights: [CGFloat] = [compact, medium, full]
         let height = min(maximum, max(heights[0], heights[dockPosition.rawValue] - dockDrag))
         let collapsed = Binding(
@@ -437,6 +486,7 @@ struct HomeView: View {
         return VStack(spacing: 10) {
             if !hasSelectedSessionContent || dockPosition != .expanded {
                 mapControls.padding(.horizontal, 16)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockMapControlsHeight = $0 }
             }
             if hasSelectedSessionContent {
                 VStack(spacing: 0) {
@@ -459,21 +509,30 @@ struct HomeView: View {
                         .accessibilityIdentifier("map.panelHandle")
                         .accessibilityAction(named: Text("Expand route panel")) { setDockPosition(.expanded) }
                         .accessibilityAction(named: Text("Collapse route panel")) { setDockPosition(.collapsed) }
-                    ScrollView {
+                    if pinsLocationHeader {
                         VStack(spacing: 10) {
-                            backgroundWarning
-                            selectionCard(detailsCollapsed: collapsed)
+                            if showsBackgroundWarning {
+                                backgroundWarning
+                                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockWarningHeight = $0 }
+                            }
+                            selectionCard(detailsCollapsed: collapsed, onDockContentHeightChanged: recordDockContentHeight)
                         }
                         .environment(\.isEmbeddedMapPanel, true)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight in
-                            if dockPosition == .collapsed { compactDockContentHeight = contentHeight }
-                            else { expandedDockContentHeight = contentHeight }
-                        }
                         .transaction { $0.animation = nil }
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 10) {
+                                backgroundWarning
+                                selectionCard(detailsCollapsed: collapsed)
+                            }
+                            .environment(\.isEmbeddedMapPanel, true)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { recordDockContentHeight($0) }
+                            .transaction { $0.animation = nil }
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .accessibilityIdentifier("map.bottomCard")
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .accessibilityIdentifier("map.bottomCard")
                 }
                 .frame(height: height, alignment: .top)
                 .animation(reduceMotion || isDockDragging ? nil : .easeInOut(duration: 0.22), value: height)
@@ -498,6 +557,11 @@ struct HomeView: View {
         .frame(maxWidth: 600)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomDockHeight = $0 }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+    }
+
+    private func recordDockContentHeight(_ height: CGFloat) {
+        if dockPosition == .collapsed { compactDockContentHeight = height }
+        else { expandedDockContentHeight = height }
     }
 
     private func setDockPosition(_ position: DockPosition) {
@@ -693,12 +757,15 @@ struct HomeView: View {
         }
     }
 
+    private var showsBackgroundWarning: Bool {
+        guard case .active = appModel.deviceSession.phase else { return false }
+        return !appModel.deviceSession.backgroundKeepAlive.started
+            && appModel.deviceSession.backgroundKeepAlive.status != .awaitingAuthorization
+    }
+
     @ViewBuilder
     private var backgroundWarning: some View {
-        if case .active = appModel.deviceSession.phase,
-            !appModel.deviceSession.backgroundKeepAlive.started,
-            appModel.deviceSession.backgroundKeepAlive.status != .awaitingAuthorization
-        {
+        if showsBackgroundWarning {
             Label(
                 "The current simulation can still work in the foreground, but background continuity is unavailable. Check Location access for WrapPin in Settings.",
                 systemImage: "exclamationmark.triangle.fill"
@@ -719,6 +786,18 @@ struct HomeView: View {
             Spacer()
 
             VStack(spacing: 10) {
+                if canPickPrecisely {
+                    mapControl("Precision selection", symbol: "scope", action: beginPrecisionSelection)
+                        .disabled(visibleMapCamera == nil)
+                        .accessibilityIdentifier("map.beginPrecisionSelection")
+                }
+
+                if let target = activeFixedTarget {
+                    mapControl("Show simulated target", symbol: "location.circle.fill") {
+                        mapModel.center(on: target)
+                    }
+                }
+
                 if walkingSimulation.mode == .driving,
                     let coordinate = walkingSimulation.currentCoordinate,
                     let route = walkingRoutePlanner.route
@@ -786,8 +865,26 @@ struct HomeView: View {
         }
     }
 
+    private func mapControl(
+        _ title: LocalizedStringKey, symbol: String, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 44, height: 44)
+                .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+    }
+
     @ViewBuilder
-    private func selectionCard(detailsCollapsed: Binding<Bool>) -> some View {
+    private func selectionCard(
+        detailsCollapsed: Binding<Bool>,
+        onDockContentHeightChanged: ((CGFloat) -> Void)? = nil
+    ) -> some View {
         if isLocatingRealLocationAfterRestoration {
             RestoringRealLocationCard()
         } else if let route = walkingRoutePlanner.route,
@@ -880,7 +977,7 @@ struct HomeView: View {
                 onClearSelection: {
                     walkingSimulation.reset()
                     walkingRoutePlanner.clear()
-                    mapModel.clearSelectedLocation()
+                    mapModel.clearSelectedLocation(revertingTo: activeFixedTarget)
                 },
                 onPreviewRoute: { mode in
                     guard !mapModel.isResolvingAddress else { return }
@@ -912,7 +1009,8 @@ struct HomeView: View {
                 onStop: {
                     shouldClearLocationAfterRestoration = true
                     appModel.stopLocationSession()
-                }
+                },
+                onDockContentHeightChanged: onDockContentHeightChanged
             )
         }
     }
@@ -1052,7 +1150,10 @@ struct HomeView: View {
     }
 
     private var shouldShowRealLocation: Bool {
-        switch appModel.deviceSession.phase {
+        guard !appModel.deviceSession.isReconnecting, appModel.interruptedSession == nil,
+            !appModel.isRestoringInterruptedSession, !isLocatingRealLocationAfterRestoration
+        else { return false }
+        return switch appModel.deviceSession.phase {
         case .active, .stopping:
             false
         case .idle, .openingLocalDevVPN, .discovering, .connecting, .failed:
@@ -1072,6 +1173,58 @@ struct HomeView: View {
     private var isLocationSessionActive: Bool {
         if case .active = appModel.deviceSession.phase { return true }
         return false
+    }
+
+    private var activeFixedTarget: LocationTarget? {
+        guard !appModel.isRestoringInterruptedSession,
+            !appModel.isRunningRouteSession,
+            walkingSimulation.currentCoordinate == nil,
+            case .active(let target) = appModel.deviceSession.phase
+        else { return nil }
+        return target
+    }
+
+    private var canPickPrecisely: Bool {
+        !isSearchingForLocation && !mapModel.isSearching && !walkingSimulation.locksDestination
+            && !walkingRoutePlanner.isLoading && !appModel.isRunningRouteSession
+            && !appModel.deviceSession.isBusy && appModel.deviceSession.mobileDataGuidance == nil
+            && !appModel.isStartingLocationSession && appModel.interruptedSession == nil
+            && !appModel.isRestoringInterruptedSession && !isLocatingRealLocationAfterRestoration
+    }
+
+    private func beginPrecisionSelection() {
+        guard canPickPrecisely, let camera = visibleMapCamera else { return }
+        shouldRefreshRealLocationWhenActive = false
+        mapModel.clearSearch()
+        mapModel.stopRecenteringOnRealLocation()
+        mapModel.cameraPosition = .camera(MapCamera(
+            centerCoordinate: camera.centerCoordinate,
+            distance: camera.distance,
+            heading: camera.heading
+        ))
+        isPreciselyPicking = true
+    }
+
+    private func confirmPrecisionSelection(at coordinate: CLLocationCoordinate2D) {
+        guard canPickPrecisely, isPreciselyPicking else { return }
+        isPreciselyPicking = false
+        Task { await mapModel.selectDroppedPin(at: coordinate) }
+    }
+
+    private func movePrecisionCamera(by offset: CGSize, with proxy: MapProxy) {
+        let space = NamedCoordinateSpace.named(PrecisionMapPicker.mapSpace)
+        guard isPreciselyPicking, let camera = visibleMapCamera,
+            let center = proxy.convert(camera.centerCoordinate, to: space),
+            let coordinate = proxy.convert(
+                CGPoint(x: center.x + offset.width, y: center.y + offset.height), from: space
+            ),
+            CLLocationCoordinate2DIsValid(coordinate)
+        else { return }
+        mapModel.cameraPosition = .camera(MapCamera(
+            centerCoordinate: coordinate,
+            distance: camera.distance,
+            heading: camera.heading
+        ))
     }
 
     private var normalisedMapHeading: Double {
@@ -1161,6 +1314,7 @@ struct HomeView: View {
     // Performs App Shortcuts requests with the same steps as the matching buttons.
     private func handleShortcutRequest() {
         guard let request = appModel.takeShortcutRequest() else { return }
+        isPreciselyPicking = false
         switch request.action {
         case .start(let target):
             isShowingSettings = false
