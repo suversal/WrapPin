@@ -44,7 +44,8 @@ struct SavedPlacesView: View {
                                 symbol: "heart.fill",
                                 isFavourite: true,
                                 onSelect: { select(location) },
-                                onToggleFavourite: { onToggleFavourite(location) }
+                                onToggleFavourite: { onToggleFavourite(location) },
+                                onRename: editMode.isEditing ? nil : { beginRenaming(location) }
                             )
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button(role: .destructive) {
@@ -141,19 +142,17 @@ struct SavedPlacesView: View {
                 isPresented: Binding(
                     get: { favouriteBeingRenamed != nil },
                     set: { if !$0 { favouriteBeingRenamed = nil } }
-                )
-            ) {
+                ),
+                presenting: favouriteBeingRenamed
+            ) { location in
                 TextField("Favourite name", text: $favouriteName)
-                Button("Cancel", role: .cancel) {
-                    favouriteBeingRenamed = nil
-                }
+                    .accessibilityIdentifier("favourites.rename.field")
+                Button("Cancel", role: .cancel) {}
                 Button("Save") {
-                    guard let favouriteBeingRenamed else { return }
-                    onRenameFavourite(favouriteBeingRenamed, favouriteName)
-                    self.favouriteBeingRenamed = nil
+                    onRenameFavourite(location, favouriteName)
                 }
                 .disabled(favouriteName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            } message: {
+            } message: { _ in
                 Text("Give this saved place a name that is easy to recognise.")
             }
             .confirmationDialog(
@@ -230,6 +229,7 @@ private struct SavedPlaceRow: View {
     let isFavourite: Bool
     let onSelect: () -> Void
     let onToggleFavourite: () -> Void
+    var onRename: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -257,13 +257,26 @@ private struct SavedPlaceRow: View {
             .accessibilityLabel(locationAccessibilityLabel)
             .accessibilityHint("Selects this location")
 
-            Button(action: onToggleFavourite) {
-                Image(systemName: isFavourite ? "heart.fill" : "heart")
-                    .foregroundStyle(isFavourite ? .pink : .secondary)
-                    .frame(width: 44, height: 44)
+            HStack(spacing: 2) {
+                if let onRename {
+                    Button(action: onRename) {
+                        Image(systemName: "pencil")
+                            .foregroundStyle(.tint)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Rename Favourite")
+                    .accessibilityIdentifier("favourites.rename")
+                }
+
+                Button(action: onToggleFavourite) {
+                    Image(systemName: isFavourite ? "heart.fill" : "heart")
+                        .foregroundStyle(isFavourite ? .pink : .secondary)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isFavourite ? "Remove from favourites" : "Add to favourites")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isFavourite ? "Remove from favourites" : "Add to favourites")
         }
     }
 
