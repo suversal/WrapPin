@@ -4,6 +4,7 @@ import SwiftUI
 struct WalkingRoutePreviewCard: View {
     @Environment(\.isEmbeddedMapPanel) private var isEmbeddedMapPanel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let route: SimulationRoute
     let routes: [SimulationRoute]
@@ -37,10 +38,14 @@ struct WalkingRoutePreviewCard: View {
         .padding(.bottom, 16)
         .background {
             if !isEmbeddedMapPanel {
-                RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.regularMaterial)
+                Color.clear
+                    .liquidGlassSurface(
+                        in: RoundedRectangle(cornerRadius: 24, style: .continuous),
+                        prominentShadow: true
+                    )
             }
         }
-        .shadow(color: .black.opacity(isEmbeddedMapPanel ? 0 : 0.12), radius: 16, y: 5)
+        .sensoryFeedback(.selection, trigger: selectedRouteIndex)
         .confirmationDialog(
             "Stop the route and restore this iPhone's real location?",
             isPresented: $isConfirmingStop,
@@ -66,6 +71,7 @@ struct WalkingRoutePreviewCard: View {
                 Image(systemName: phaseSymbol)
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(phaseColour)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(width: 32)
                     .accessibilityHidden(true)
 
@@ -110,6 +116,7 @@ struct WalkingRoutePreviewCard: View {
             if showsProgress {
                 ProgressView(value: simulation.progress)
                     .tint(simulation.phase == .arrived ? .green : .blue)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: simulation.progress)
             }
 
             if isCollapsed {
@@ -283,7 +290,11 @@ struct WalkingRoutePreviewCard: View {
                     .stroke(.blue, lineWidth: isSelected ? 1.5 : 0)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TactilePressButtonStyle(pressedScale: 0.96))
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.8),
+            value: isSelected
+        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             String(
@@ -342,8 +353,7 @@ struct WalkingRoutePreviewCard: View {
                 )
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .wrapPinPrimaryButton()
             .disabled(!isPaired)
 
         case .preparing:
@@ -379,8 +389,7 @@ struct WalkingRoutePreviewCard: View {
                     Label(route.isCustom ? String(localized: "Follow route back") : String(localized: "Walk Route Back"), systemImage: "arrow.uturn.backward")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .wrapPinPrimaryButton()
             }
 
             Group {
@@ -410,8 +419,7 @@ struct WalkingRoutePreviewCard: View {
                 Label("Try Again", systemImage: "arrow.clockwise")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .wrapPinPrimaryButton()
             .disabled(!isPaired)
         }
     }
@@ -424,10 +432,10 @@ struct WalkingRoutePreviewCard: View {
                     : String(localized: "Pause"),
                 systemImage: simulation.phase == .paused ? "play.fill" : "pause.fill"
             )
+            .contentTransition(.symbolEffect(.replace))
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .wrapPinPrimaryButton()
     }
 
     @ViewBuilder
@@ -443,8 +451,7 @@ struct WalkingRoutePreviewCard: View {
                     .frame(width: 28)
             }
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
+        .wrapPinSecondaryButton(tint: .red)
         .accessibilityLabel("Stop route and restore real location")
     }
 
@@ -453,8 +460,7 @@ struct WalkingRoutePreviewCard: View {
             Label("New Location", systemImage: "mappin.and.ellipse")
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
+        .wrapPinSecondaryButton()
     }
 
     @ViewBuilder
@@ -470,8 +476,7 @@ struct WalkingRoutePreviewCard: View {
                     .frame(width: 28)
             }
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
+        .wrapPinSecondaryButton(tint: .red)
         .accessibilityLabel("Stop and restore real location")
     }
 
@@ -746,13 +751,18 @@ private struct RouteMetric: View {
                 .lineLimit(1)
 
             Text(value)
-                .font(.subheadline.weight(.semibold))
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .contentTransition(.numericText())
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(.primary.opacity(0.06), lineWidth: 0.75)
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(value)")
     }

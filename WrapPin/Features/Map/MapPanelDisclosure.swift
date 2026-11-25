@@ -30,7 +30,7 @@ struct MapPanelDisclosure: View {
     }
 
     private func setCollapsed(_ collapsed: Bool) {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) { isCollapsed = collapsed }
+        withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.84)) { isCollapsed = collapsed }
     }
 }
 
@@ -76,27 +76,60 @@ struct MapPanelViewport<Content: View>: View {
     }
 }
 
-/// Blur map detail behind text; full-height panels use an opaque reading surface.
+/// Native-like velocity-aware detent snapping and rubber-band resistance for map docks.
+enum DockDetentPhysics {
+    static func rubberBandedHeight(raw: CGFloat, minimum: CGFloat, maximum: CGFloat) -> CGFloat {
+        if raw < minimum {
+            let overscroll = minimum - raw
+            return minimum - (overscroll * 0.22) / (1 + overscroll / 120)
+        } else if raw > maximum {
+            let overscroll = raw - maximum
+            return maximum + (overscroll * 0.22) / (1 + overscroll / 120)
+        }
+        return raw
+    }
+
+    static func targetDetentIndex(
+        currentIndex: Int,
+        heights: [CGFloat],
+        translation: CGFloat,
+        predictedTranslation: CGFloat
+    ) -> Int {
+        guard heights.indices.contains(currentIndex) else { return currentIndex }
+        let projectedHeight = heights[currentIndex] - predictedTranslation
+        // Find the detent closest to the momentum-projected height.
+        var bestIndex = currentIndex
+        var bestDistance = abs(heights[currentIndex] - projectedHeight)
+        for index in heights.indices {
+            let distance = abs(heights[index] - projectedHeight)
+            if distance < bestDistance {
+                bestDistance = distance
+                bestIndex = index
+            }
+        }
+        // If a deliberate flick didn't cross midpoint, still step one detent in flick direction.
+        if bestIndex == currentIndex {
+            let velocityDelta = predictedTranslation - translation
+            if velocityDelta < -80 || translation < -44 {
+                bestIndex = min(heights.count - 1, currentIndex + 1)
+            } else if velocityDelta > 80 || translation > 44 {
+                bestIndex = max(0, currentIndex - 1)
+            }
+        }
+        return bestIndex
+    }
+}
+
+/// Consistent floating Liquid Glass panel across all detents.
 struct MapFloatingPanelBackground: View {
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let isExpanded: Bool
 
     var body: some View {
-        if isExpanded {
-            UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32)
-                .fill(Color(uiColor: .systemBackground))
-                .ignoresSafeArea(.container, edges: .bottom)
-        } else if reduceTransparency {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(Color(uiColor: .systemBackground))
-        } else {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(.regularMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .fill(Color(uiColor: .systemBackground).opacity(0.16))
-                }
-        }
+        Color.clear
+            .liquidGlassSurface(
+                in: RoundedRectangle(cornerRadius: 32, style: .continuous),
+                prominentShadow: true
+            )
     }
 }
 

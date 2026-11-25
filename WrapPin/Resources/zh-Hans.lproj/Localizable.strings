@@ -259,7 +259,7 @@
 "The iPhone could not start the location session." = "iPhone 无法启动定位会话。";
 
 /* Onboarding */
-"ROAM CONTROL" = "WrapPin";
+"WRAPPIN" = "WrapPin";
 "WrapPin" = "WrapPin";
 "Close introduction" = "关闭使用介绍";
 "Page %lld of %lld" = "第 %lld 页，共 %lld 页";

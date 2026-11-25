@@ -17,8 +17,10 @@ struct RestoringRealLocationCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(22)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 18, y: 8)
+        .liquidGlassSurface(
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous),
+            prominentShadow: true
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Location simulation stopped. Waiting for a fresh location from this iPhone.")
     }

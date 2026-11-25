@@ -105,7 +105,7 @@ struct PairingSetupView: View {
                 Button("Replace Pairing File") {
                     isImporting = true
                 }
-                .buttonStyle(.bordered)
+                .wrapPinSecondaryButton()
                 .frame(maxWidth: .infinity)
                 .disabled(isBusy)
 
@@ -122,7 +122,7 @@ struct PairingSetupView: View {
                         Button("Cancel Pairing", role: .cancel) {
                             appModel.cancelOnDevicePairing()
                         }
-                        .buttonStyle(.bordered)
+                        .wrapPinSecondaryButton()
                         .frame(maxWidth: .infinity)
                     } else {
                         Button {
@@ -131,8 +131,7 @@ struct PairingSetupView: View {
                             Label("Pair This Device", systemImage: "iphone.and.arrow.forward")
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        .wrapPinPrimaryButton()
                         .disabled(isBusy)
                     }
                 } else if DevicePairingSupport.supportsOnDevicePairing {
@@ -142,10 +141,9 @@ struct PairingSetupView: View {
                 }
 
                 if DevicePairingSupport.supportsOnDevicePairing {
-                    importButton.buttonStyle(.bordered)
+                    importButton.wrapPinSecondaryButton()
                 } else {
-                    importButton.buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                    importButton.wrapPinPrimaryButton()
                 }
 
                 Button {
@@ -307,7 +305,11 @@ struct PairingSetupView: View {
         VStack(alignment: .leading, spacing: 14, content: content)
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.75)
+            }
     }
 
     private func requirementRow(number: String, text: String) -> some View {

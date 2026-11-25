@@ -25,7 +25,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 0) {
                 ZStack {
-                    Text("ROAM CONTROL")
+                    Text("WRAPPIN")
                         .font(.caption.weight(.bold))
                         .tracking(2.2)
                         .foregroundStyle(.secondary)
@@ -84,12 +84,12 @@ struct OnboardingView: View {
                         HStack {
                             Text(finalButtonTitle)
                             Image(systemName: finalButtonSymbol)
+                                .contentTransition(.symbolEffect(.replace))
                         }
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .wrapPinPrimaryButton()
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 28)

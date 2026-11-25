@@ -52,10 +52,13 @@ struct LocationSelectionCard: View {
         .padding(.top, location == nil ? 16 : 0)
         .background {
             if !isEmbeddedMapPanel {
-                RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.regularMaterial)
+                Color.clear
+                    .liquidGlassSurface(
+                        in: RoundedRectangle(cornerRadius: 24, style: .continuous),
+                        prominentShadow: true
+                    )
             }
         }
-        .shadow(color: .black.opacity(isEmbeddedMapPanel ? 0 : 0.12), radius: 16, y: 5)
         .sensoryFeedback(.selection, trigger: isCollapsed)
         .confirmationDialog(
             "Stop the simulated location and restore your real location?",
@@ -129,18 +132,23 @@ struct LocationSelectionCard: View {
                     if isWorking {
                         ProgressView().controlSize(.small).frame(width: 18, height: 18)
                     } else {
-                        Image(systemName: primarySymbol).font(.system(size: 17, weight: .semibold))
+                        Image(systemName: primarySymbol)
+                            .font(.system(size: 17, weight: .semibold))
+                            .contentTransition(.symbolEffect(.replace))
                     }
-                    Text(primaryTitle).font(.body.weight(.semibold))
-                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                    Text(primaryTitle)
+                        .font(.body.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 12)
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .foregroundStyle(isPrimaryDisabled ? Color.secondary : .white)
-                .background(isPrimaryDisabled ? Color(uiColor: .secondarySystemFill) : (isShowingActiveTarget ? Color.red : Color.blue), in: Capsule())
+                .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.plain)
+            .wrapPinPrimaryButton(tint: isShowingActiveTarget ? .red : .blue)
             .disabled(isPrimaryDisabled)
+            .animation(
+                reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.82),
+                value: primaryTitle
+            )
             .accessibilityIdentifier("map.primaryLocationAction")
 
             if canPreviewRoute {
@@ -172,8 +180,7 @@ struct LocationSelectionCard: View {
                 Button("Stop & Restore", role: .destructive) {
                     isConfirmingStop = true
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .wrapPinSecondaryButton(tint: .red)
                 .frame(maxWidth: .infinity)
             }
 
@@ -268,10 +275,10 @@ struct LocationSelectionCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
             }
-            .frame(maxWidth: .infinity, minHeight: 44)
+            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.bordered)
-        .disabled(previewingRouteMode != nil)
+        .wrapPinSecondaryButton()
+        .disabled(isResolvingAddress || previewingRouteMode != nil)
     }
 
     @ViewBuilder
@@ -325,13 +332,25 @@ struct LocationSelectionCard: View {
                     } label: {
                         Label(
                             didCopyCoordinates ? "Coordinates copied" : "Copy coordinates",
-                            systemImage: didCopyCoordinates ? "checkmark" : "doc.on.doc"
+                            systemImage: didCopyCoordinates ? "checkmark.circle.fill" : "doc.on.doc"
                         )
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(didCopyCoordinates ? .green : .blue)
-                        .frame(minHeight: 44)
+                        .contentTransition(.symbolEffect(.replace))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            (didCopyCoordinates ? Color.green : Color.blue).opacity(0.12),
+                            in: Capsule()
+                        )
+                        .frame(minHeight: 36, alignment: .leading)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(TactilePressButtonStyle())
+                    .sensoryFeedback(.success, trigger: didCopyCoordinates)
+                    .animation(
+                        reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.78),
+                        value: didCopyCoordinates
+                    )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -344,9 +363,11 @@ struct LocationSelectionCard: View {
             Image(systemName: isFavourite ? "heart.fill" : "heart")
                 .font(.title3)
                 .foregroundStyle(isFavourite ? .pink : .secondary)
+                .symbolEffect(.bounce, value: isFavourite)
                 .frame(width: 44, height: 44)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TactilePressButtonStyle())
+        .sensoryFeedback(.impact(weight: .medium), trigger: isFavourite)
         .disabled(isResolvingAddress)
         .accessibilityLabel(isFavourite ? "Remove from favourites" : "Add to favourites")
 
@@ -357,7 +378,7 @@ struct LocationSelectionCard: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 44, height: 44)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TactilePressButtonStyle())
             .accessibilityLabel("Clear selected location")
         }
     }
@@ -500,8 +521,7 @@ struct LocationSelectionCard: View {
     }
 
     private var canPreviewRoute: Bool {
-        guard !isResolvingAddress else { return false }
-        return switch sessionPhase {
+        switch sessionPhase {
         case .idle, .active:
             true
         case .openingLocalDevVPN, .discovering, .connecting, .stopping, .failed:

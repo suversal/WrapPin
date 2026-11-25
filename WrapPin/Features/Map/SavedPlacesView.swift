@@ -272,9 +272,11 @@ private struct SavedPlaceRow: View {
                 Button(action: onToggleFavourite) {
                     Image(systemName: isFavourite ? "heart.fill" : "heart")
                         .foregroundStyle(isFavourite ? .pink : .secondary)
+                        .symbolEffect(.bounce, value: isFavourite)
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .medium), trigger: isFavourite)
                 .accessibilityLabel(isFavourite ? "Remove from favourites" : "Add to favourites")
             }
         }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MapSearchBar: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var symbolSize = 17
     @Binding var query: String
     @FocusState.Binding var isFocused: Bool
@@ -36,8 +37,10 @@ struct MapSearchBar: View {
 
                     if isFocused {
                         Divider()
-                            .frame(height: 24)
+                            .frame(height: 22)
+                            .transition(.opacity)
                         dismissKeyboardButton
+                            .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
                     }
                 }
             }
@@ -45,15 +48,33 @@ struct MapSearchBar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, dynamicTypeSize.isAccessibilitySize ? 8 : 4)
         .frame(minHeight: 52)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
+        .liquidGlassSurface(
+            in: RoundedRectangle(
+                cornerRadius: dynamicTypeSize.isAccessibilitySize ? 24 : 26,
+                style: .continuous
+            ),
+            interactive: true
+        )
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.82),
+            value: isFocused
+        )
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.82),
+            value: query.isEmpty
+        )
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.82),
+            value: isOverseasSearch
+        )
     }
 
     private var searchFieldRow: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Image(systemName: isOverseasSearch == true ? "globe.asia.australia.fill" : "magnifyingglass")
-                .font(.system(size: min(symbolSize, 24)))
+                .font(.system(size: min(symbolSize, 24), weight: .medium))
                 .foregroundStyle(isOverseasSearch == true ? AnyShapeStyle(.blue) : AnyShapeStyle(.secondary))
+                .contentTransition(.symbolEffect(.replace))
                 .accessibilityHidden(true)
 
             TextField(
@@ -76,6 +97,7 @@ struct MapSearchBar: View {
             if isSearching {
                 ProgressView()
                     .controlSize(.small)
+                    .transition(.opacity)
             } else if !query.isEmpty {
                 Button(action: onClear) {
                     Image(systemName: "xmark.circle.fill")
@@ -83,8 +105,9 @@ struct MapSearchBar: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 44, height: 44)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressButtonStyle())
                 .accessibilityLabel("Clear search")
+                .transition(reduceMotion ? .opacity : .scale(scale: 0.7).combined(with: .opacity))
             }
 
             if !dynamicTypeSize.isAccessibilitySize {
@@ -104,12 +127,13 @@ struct MapSearchBar: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
-                        isOverseasSearch ? AnyShapeStyle(.blue) : AnyShapeStyle(.quaternary),
+                        isOverseasSearch ? AnyShapeStyle(.blue.gradient) : AnyShapeStyle(.quaternary),
                         in: Capsule()
                     )
                     .frame(minHeight: 44)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TactilePressButtonStyle())
+            .sensoryFeedback(.selection, trigger: isOverseasSearch)
             .accessibilityLabel("Overseas search")
             .accessibilityHint("Switches between domestic and overseas place search")
             .accessibilityAddTraits(isOverseasSearch ? .isSelected : [])
@@ -121,7 +145,8 @@ struct MapSearchBar: View {
             isFocused = false
         }
         .font(.subheadline.weight(.semibold))
-        .buttonStyle(.plain)
+        .foregroundStyle(.blue)
+        .buttonStyle(TactilePressButtonStyle())
         .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel("Dismiss keyboard")
         .accessibilityHint("Dismisses the keyboard")
