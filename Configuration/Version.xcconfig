@@ -1,6 +1,6 @@
 // The one place to set the version, build and build timestamp. The Standard
 // app, the Tunnel app and the Packet Tunnel extension all read these values;
 // an extension must carry the same version and build as the app embedding it.
-MARKETING_VERSION = 1.0.26
-CURRENT_PROJECT_VERSION = 105
-WRAPPIN_BUILD_TIMESTAMP = 2026-11-26T12:18:15Z
+MARKETING_VERSION = 1.0.27
+CURRENT_PROJECT_VERSION = 106
+WRAPPIN_BUILD_TIMESTAMP = 2026-11-26T14:32:00Z
