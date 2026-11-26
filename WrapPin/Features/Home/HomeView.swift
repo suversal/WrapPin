@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @ScaledMetric(relativeTo: .body) private var mapControlSymbolSize = 17
     @State private var mapModel = MapViewModel()
     @State private var walkingRoutePlanner = WalkingRoutePlanner()
@@ -40,8 +41,7 @@ struct HomeView: View {
     @State private var bottomDockHeight: CGFloat = 0
     @FocusState private var isSearchFocused: Bool
     @AppStorage("isMapPanelDetailsCollapsed") private var areDetailsCollapsed =
-        UIDevice.current.userInterfaceIdiom == .pad
-        || UserDefaults.standard.bool(forKey: "isLocationCardCollapsed")
+        UserDefaults.standard.bool(forKey: "isLocationCardCollapsed")
     @AppStorage("isMapSidebarCollapsed") private var isSidebarCollapsed = false
 
     init(
@@ -54,8 +54,14 @@ struct HomeView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let isWide = geometry.size.width >= 900 && geometry.size.width > geometry.size.height
-            let sidebarWidth = min(400, max(360, geometry.size.width * 0.3))
+            let division = MapLayoutMetrics.DivisionGuide.from(geometry)
+            let isWide = MapLayoutMetrics.usesSidebar(for: geometry.size, division: division)
+            let sidebarWidth = MapLayoutMetrics.sidebarWidth(for: geometry.size, division: division)
+            let hingeGap = MapLayoutMetrics.sidebarHingeGap(
+                for: geometry.size,
+                sidebarWidth: sidebarWidth,
+                division: division
+            )
             let showsDock =
                 !isPreciselyPicking
                 && (isWide
@@ -70,6 +76,13 @@ struct HomeView: View {
                                 .transition(
                                     reduceMotion
                                         ? .opacity : .move(edge: .leading).combined(with: .opacity))
+                            Divider()
+                                .ignoresSafeArea(edges: [.top, .bottom])
+                            if hingeGap > 0 {
+                                Color.clear
+                                    .frame(width: hingeGap)
+                                    .allowsHitTesting(false)
+                            }
                         }
                         mapContent
                             .overlay(alignment: .topLeading) {
@@ -87,22 +100,33 @@ struct HomeView: View {
                     if showsDock {
                         bottomDock(
                             availableHeight: geometry.size.height,
-                            detailsCollapsed: hiddenSidebarDisclosure)
+                            detailsCollapsed: hiddenSidebarDisclosure,
+                            division: division)
                     }
                 } else {
                     mapContent
                     if !isPreciselyPicking {
-                        compactControls(availableHeight: geometry.size.height)
+                        compactControls(
+                            availableHeight: geometry.size.height,
+                            division: division)
                     }
                 }
                 sessionOverlays(
                     reservedBottomSpace: showsDock ? bottomDockHeight : 0,
-                    leadingInset: isWide && !isSidebarCollapsed ? sidebarWidth : 0
+                    leadingInset: isWide && !isSidebarCollapsed ? sidebarWidth + hingeGap : 0,
+                    availableHeight: geometry.size.height
                 )
             }
             .animation(
                 reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.9),
                 value: isSidebarCollapsed)
+        }
+        .onChange(of: horizontalSizeClass, initial: true) { _, sizeClass in
+            if UserDefaults.standard.object(forKey: "isMapPanelDetailsCollapsed") == nil,
+                sizeClass == .regular
+            {
+                areDetailsCollapsed = true
+            }
         }
         .task {
             await appModel.restorePairingStatus()
@@ -292,68 +316,69 @@ struct HomeView: View {
     private var mapContent: some View {
         MapReader { proxy in
             let fixedTarget = activeFixedTarget
-            Map(position: $mapModel.cameraPosition,
-                interactionModes: isPreciselyPicking ? [.pan, .zoom, .rotate] : .all) {
-                // Draw the alternatives first so the selected route stays on top.
-                ForEach(
-                    Array(walkingRoutePlanner.routes.enumerated()),
-                    id: \.offset
-                ) { index, alternative in
-                    if index != walkingRoutePlanner.selectedRouteIndex {
-                        MapPolyline(alternative.polyline)
-                            .stroke(.blue.opacity(0.35), lineWidth: 5)
+            ZStack {
+                Map(position: $mapModel.cameraPosition,
+                    interactionModes: isPreciselyPicking ? [.pan, .zoom, .rotate] : .all) {
+                    // Draw the alternatives first so the selected route stays on top.
+                    ForEach(
+                        Array(walkingRoutePlanner.routes.enumerated()),
+                        id: \.offset
+                    ) { index, alternative in
+                        if index != walkingRoutePlanner.selectedRouteIndex {
+                            MapPolyline(alternative.polyline)
+                                .stroke(.blue.opacity(0.35), lineWidth: 5)
+                        }
+                    }
+
+                    if let route = walkingRoutePlanner.route {
+                        MapPolyline(route.polyline)
+                            .stroke(.blue, lineWidth: 6)
+                    }
+
+                    if shouldShowRealLocation {
+                        UserAnnotation()
+                    }
+
+                    if let target = mapModel.selectedLocation, target.id != fixedTarget?.id {
+                        Marker(target.name, coordinate: target.coordinate)
+                            .tint(.blue)
+                    }
+
+                    if let fixedTarget {
+                        Annotation(String(localized: "Current simulated target"), coordinate: fixedTarget.coordinate) {
+                            simulatedLocationGlyph("location.circle.fill")
+                        }
+                    }
+
+                    if let coordinate = walkingSimulation.currentCoordinate {
+                        Annotation(String(localized: "Simulated route location"), coordinate: coordinate) {
+                            simulatedLocationGlyph(
+                                walkingRoutePlanner.route?.isCustom == true ? "location.circle.fill" : walkingSimulation.mode == .walking
+                                    ? "figure.walk.circle.fill" : "car.circle.fill"
+                            )
+                        }
                     }
                 }
-
-                if let route = walkingRoutePlanner.route {
-                    MapPolyline(route.polyline)
-                        .stroke(.blue, lineWidth: 6)
+                .roamControlMapStyle(appModel.mapDisplayStyle)
+                .mapControls {
+                    MapScaleView()
                 }
-
-                if shouldShowRealLocation {
-                    UserAnnotation()
+                .onMapCameraChange(frequency: .continuous) { context in
+                    visibleMapCamera = context.camera
                 }
-
-                if let target = mapModel.selectedLocation, target.id != fixedTarget?.id {
-                    Marker(target.name, coordinate: target.coordinate)
-                        .tint(.blue)
-                }
-
-                if let fixedTarget {
-                    Annotation(String(localized: "Current simulated target"), coordinate: fixedTarget.coordinate) {
-                        simulatedLocationGlyph("location.circle.fill")
+                .onTapGesture { point in
+                    if isSearchFocused {
+                        isSearchFocused = false
+                        return
                     }
-                }
 
-                if let coordinate = walkingSimulation.currentCoordinate {
-                    Annotation(String(localized: "Simulated route location"), coordinate: coordinate) {
-                        simulatedLocationGlyph(
-                            walkingRoutePlanner.route?.isCustom == true ? "location.circle.fill" : walkingSimulation.mode == .walking
-                                ? "figure.walk.circle.fill" : "car.circle.fill"
-                        )
-                    }
+                    guard !isPreciselyPicking, !walkingSimulation.locksDestination else { return }
+                    guard let coordinate = proxy.convert(point, from: .local) else { return }
+                    if selectPreviewedRoute(at: point, coordinate: coordinate, proxy: proxy) { return }
+                    Task { await mapModel.selectDroppedPin(at: coordinate) }
                 }
-            }
-            .roamControlMapStyle(appModel.mapDisplayStyle)
-            .mapControls {
-                MapScaleView()
-            }
-            .onMapCameraChange(frequency: .continuous) { context in
-                visibleMapCamera = context.camera
-            }
-            .onTapGesture { point in
-                if isSearchFocused {
-                    isSearchFocused = false
-                    return
-                }
+                .ignoresSafeArea()
 
-                guard !isPreciselyPicking, !walkingSimulation.locksDestination else { return }
-                guard let coordinate = proxy.convert(point, from: .local) else { return }
-                if selectPreviewedRoute(at: point, coordinate: coordinate, proxy: proxy) { return }
-                Task { await mapModel.selectDroppedPin(at: coordinate) }
-            }
-            .ignoresSafeArea()
-            .overlay {
                 if isPreciselyPicking {
                     PrecisionMapPicker(
                         camera: visibleMapCamera,
@@ -419,7 +444,10 @@ struct HomeView: View {
             }
             .scrollDismissesKeyboard(.interactively)
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea(edges: [.leading, .top, .bottom])
+        )
     }
 
     private var showSidebarButton: some View {
@@ -459,10 +487,14 @@ struct HomeView: View {
             || isLocatingRealLocationAfterRestoration
     }
 
-    private func compactControls(availableHeight: CGFloat) -> some View {
-        let headerMaxHeight = isSearchingForLocation
-            ? max(260, availableHeight - 16)
-            : max(180, availableHeight * 0.44)
+    private func compactControls(
+        availableHeight: CGFloat,
+        division: MapLayoutMetrics.DivisionGuide = .init()
+    ) -> some View {
+        let headerMaxHeight = MapLayoutMetrics.compactHeaderMaxHeight(
+            availableHeight: availableHeight,
+            isSearching: isSearchingForLocation
+        )
         return ZStack(alignment: .top) {
             MapPanelViewport(maximumHeight: headerMaxHeight) {
                 VStack(spacing: 10) {
@@ -489,7 +521,8 @@ struct HomeView: View {
                 bottomDock(
                     availableHeight: availableHeight,
                     detailsCollapsed: $areDetailsCollapsed,
-                    topClearance: compactHeaderHeight + 8
+                    topClearance: compactHeaderHeight + 8,
+                    division: division
                 )
             }
         }
@@ -498,20 +531,23 @@ struct HomeView: View {
     private func bottomDock(
         availableHeight: CGFloat,
         detailsCollapsed: Binding<Bool>,
-        topClearance: CGFloat = 60
+        topClearance: CGFloat = 60,
+        division: MapLayoutMetrics.DivisionGuide = .init()
     ) -> some View {
         let maximum = max(200, availableHeight - 8)
         let pinsLocationHeader = availableHeight >= 420 && mapModel.selectedLocation != nil
             && !isLocatingRealLocationAfterRestoration && walkingRoutePlanner.route == nil
-        let mediumLimit = pinsLocationHeader
-            ? max(availableHeight * 0.48, availableHeight - topClearance - dockMapControlsHeight - 18)
-            : availableHeight * 0.48
         let warningSpace = pinsLocationHeader && showsBackgroundWarning ? dockWarningHeight + 10 : 0
-        let compact = min(maximum, max(180, compactDockContentHeight + warningSpace + 44))
-        let expandedContent = expandedDockContentHeight + warningSpace + 44
-        let medium = min(maximum, max(compact, min(mediumLimit, expandedContent)))
-        let full = min(maximum, max(medium + 32, expandedContent))
-        let heights: [CGFloat] = [compact, medium, full]
+        let heights = MapLayoutMetrics.dockHeights(
+            availableHeight: availableHeight,
+            topClearance: topClearance,
+            mapControlsHeight: dockMapControlsHeight,
+            compactContentHeight: compactDockContentHeight,
+            expandedContentHeight: expandedDockContentHeight,
+            warningSpace: warningSpace,
+            pinsLocationHeader: pinsLocationHeader,
+            division: division
+        )
         let height = DockDetentPhysics.rubberBandedHeight(
             raw: heights[dockPosition.rawValue] - dockDrag,
             minimum: heights[0],
@@ -1148,7 +1184,11 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private func sessionOverlays(reservedBottomSpace: CGFloat, leadingInset: CGFloat) -> some View {
+    private func sessionOverlays(
+        reservedBottomSpace: CGFloat,
+        leadingInset: CGFloat,
+        availableHeight: CGFloat
+    ) -> some View {
         // Always present so the banner animates both in and out, whether it
         // is dismissed by a tap or by its timer.
         VStack {
@@ -1200,6 +1240,7 @@ struct HomeView: View {
                     tunnelHandoffApp: appModel.tunnelHandoffApp,
                     usesBuiltInTunnel: appModel.usesBuiltInTunnel,
                     isUsingMobileData: appModel.deviceSession.isUsingMobileDataForStartup,
+                    availableHeight: availableHeight,
                     onOpenTunnelApp: appModel.deviceSession.openSelectedTunnelApp,
                     onRetry: appModel.deviceSession.retryConnection,
                     onUseMobileData: appModel.deviceSession.useMobileDataGuidance,
@@ -1216,6 +1257,7 @@ struct HomeView: View {
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
             }
+            .padding(.leading, leadingInset)
             .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
             .zIndex(10)
         }
@@ -1234,6 +1276,7 @@ struct HomeView: View {
                     isResuming: isPreparingRecoveredWalk || appModel.isStartingLocationSession,
                     isRestoring: appModel.isRestoringInterruptedSession,
                     errorMessage: recoveredWalkError ?? appModel.interruptedSessionError,
+                    availableHeight: availableHeight,
                     onResume: {
                         resumeInterruptedSession(recovery)
                     },
@@ -1261,6 +1304,7 @@ struct HomeView: View {
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
             }
+            .padding(.leading, leadingInset)
             .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
             .zIndex(9)
         }

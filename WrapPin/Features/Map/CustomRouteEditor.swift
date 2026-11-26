@@ -77,160 +77,129 @@ struct CustomRouteEditor: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let heights = panelHeights(for: geometry)
+            let division = MapLayoutMetrics.DivisionGuide.from(geometry)
+            let isWide = MapLayoutMetrics.usesSidebar(for: geometry.size, division: division)
+            let sidebarWidth = MapLayoutMetrics.sidebarWidth(for: geometry.size, division: division)
+            let hingeGap = MapLayoutMetrics.sidebarHingeGap(
+                for: geometry.size,
+                sidebarWidth: sidebarWidth,
+                division: division
+            )
+            let heights = panelHeights(for: geometry, division: division)
             let height = DockDetentPhysics.rubberBandedHeight(
                 raw: heights[panelStop.rawValue] - panelDrag,
                 minimum: heights[0],
                 maximum: heights[2]
             )
-            ZStack(alignment: .bottom) {
-                routeMap.ignoresSafeArea()
-                VStack {
-                    LiquidGlassContainer(spacing: 10) {
-                        HStack {
-                            Button {
-                                if hasChanges { confirmation = .discardChanges }
-                                else { dismiss() }
-                            } label: {
-                                Image(systemName: "chevron.left")
-                                    .frame(width: 44, height: 44)
-                                    .liquidGlassControl(in: Circle())
+            Group {
+                if isWide {
+                    HStack(spacing: 0) {
+                        if !isPickingOnMap {
+                            sidebarEditor
+                                .frame(width: sidebarWidth)
+                                .transition(
+                                    reduceMotion
+                                        ? .opacity : .move(edge: .leading).combined(with: .opacity))
+                            Divider()
+                                .ignoresSafeArea(edges: [.top, .bottom])
+                            if hingeGap > 0 {
+                                Color.clear
+                                    .frame(width: hingeGap)
+                                    .allowsHitTesting(false)
                             }
-                            .buttonStyle(TactilePressButtonStyle())
-                            .accessibilityLabel("Cancel")
-                            .accessibilityIdentifier("customRoute.cancel")
-                            Spacer()
-                            Text("Custom route").font(.headline)
-                                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                                .padding(.horizontal, 16).padding(.vertical, 11)
-                                .liquidGlassSurface(in: Capsule())
-                            Spacer()
-                            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
                         }
-                    }
-                    .font(.system(size: 17, weight: .semibold))
-                    .padding(.horizontal, 16).padding(.top, 8)
-                    Spacer()
-                }
-                VStack(spacing: 0) {
-                    panelHandle(heights: heights)
-                    if isPickingOnMap { mapSelectionContent }
-                    else if panelStop == .collapsed {
-                        HStack {
-                            Text("Route points").font(.headline)
-                            Spacer()
-                            Text("\(points.count)").foregroundStyle(.secondary)
-                            Button("Edit route") { setPanel(.medium) }
-                        }.padding(.horizontal, 20)
-                        Spacer(minLength: 0)
-                    } else {
-                        HStack {
-                            Text(panelStop == .expanded ? "Edit route" : "Route points").font(.headline)
-                            Text("\(points.count)").font(.subheadline).foregroundStyle(.secondary)
-                            Spacer()
-                            if panelStop == .expanded {
-                                Button("Clear all route points", role: .destructive) { confirmation = .clearRoute }
-                                    .font(.subheadline).frame(minHeight: 44)
-                                    .disabled(points.isEmpty || isReadingFile)
-                                    .accessibilityIdentifier("customRoute.clearAll")
-                            } else if let route {
-                                Text(route.distance.formatted(.number.precision(.fractionLength(1))) + " m")
-                                    .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                            }
-                        }.dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                            .padding(.horizontal, 20).padding(.bottom, 2)
-                        List {
-                            waypointList
-                            if panelStop == .expanded {
-                                Section {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack(spacing: 8) {
-                                            Label("Simulation speed", systemImage: "speedometer")
-                                            Spacer(minLength: 8)
-                                            Text("\(speed, specifier: "%.1f") km/h").monospacedDigit()
-                                        }.font(.subheadline)
-                                        Slider(value: $speed, in: 0.1...240, step: 0.1)
-                                            .accessibilityLabel("Simulation speed")
-                                            .accessibilityIdentifier("customRoute.speed")
-                                            .accessibilityValue(String(format: "%.1f", speed))
+                        ZStack(alignment: .bottom) {
+                            routeMap.ignoresSafeArea()
+                            if isPickingOnMap {
+                                VStack {
+                                    headerBar
+                                    Spacer()
+                                }
+                                VStack(alignment: .trailing, spacing: 10) {
+                                    routeMapControls
+                                        .padding(.trailing, 4)
+                                    VStack(spacing: 0) {
+                                        mapSelectionContent
+                                            .padding(.top, 14)
+                                            .padding(.bottom, 12)
                                     }
-                                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
-                                    .listRowBackground(Color.clear)
-
-                                    editorControls
-                                        .listRowInsets(EdgeInsets(top: 2, leading: 20, bottom: 2, trailing: 20))
-                                        .listRowBackground(Color.clear)
-
-                                    Text("Points connect with straight lines in order. Hold the right handle to reorder.")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 8, trailing: 20))
-                                        .listRowSeparator(.hidden)
-                                        .listRowBackground(Color.clear)
+                                    .frame(maxWidth: 480)
+                                    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                                    .background { MapFloatingPanelBackground(isExpanded: false) }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.bottom, 8)
+                            } else {
+                                VStack {
+                                    Spacer()
+                                    HStack {
+                                        Spacer()
+                                        routeMapControls
+                                    }
+                                    .padding(16)
                                 }
                             }
                         }
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                        .contentMargins(.vertical, 0, for: .scrollContent)
-                        .listSectionSpacing(4)
-                        .environment(\.editMode, .constant(.active))
-                        .accessibilityIdentifier("customRoute.scroll")
-                        HStack(spacing: 12) {
-                            addButton.frame(maxWidth: .infinity)
-                            Button(action: beginMapSelection) {
-                                Label("Pick on map", systemImage: "mappin.and.ellipse")
-                                    .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                } else {
+                    ZStack(alignment: .bottom) {
+                        routeMap.ignoresSafeArea()
+                        VStack {
+                            headerBar
+                            Spacer()
+                        }
+                        VStack(alignment: .trailing, spacing: 10) {
+                            if panelStop != .expanded {
+                                routeMapControls
+                                    .padding(.trailing, 4)
                             }
+                            VStack(spacing: 0) {
+                                panelHandle(heights: heights)
+                                if isPickingOnMap { mapSelectionContent }
+                                else if panelStop == .collapsed {
+                                    HStack {
+                                        Text("Route points").font(.headline)
+                                        Spacer()
+                                        Text("\(points.count)").foregroundStyle(.secondary)
+                                        Button("Edit route") { setPanel(.medium) }
+                                    }.padding(.horizontal, 20)
+                                    Spacer(minLength: 0)
+                                } else {
+                                    HStack {
+                                        Text(panelStop == .expanded ? "Edit route" : "Route points").font(.headline)
+                                        Text("\(points.count)").font(.subheadline).foregroundStyle(.secondary)
+                                        Spacer()
+                                        if panelStop == .expanded {
+                                            Button("Clear all route points", role: .destructive) { confirmation = .clearRoute }
+                                                .font(.subheadline).frame(minHeight: 44)
+                                                .disabled(points.isEmpty || isReadingFile)
+                                                .accessibilityIdentifier("customRoute.clearAll")
+                                        } else if let route {
+                                            Text(route.distance.formatted(.number.precision(.fractionLength(1))) + " m")
+                                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                                        }
+                                    }.dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                                        .padding(.horizontal, 20).padding(.bottom, 2)
+                                    waypointSectionList(showExpandedDetails: panelStop == .expanded)
+                                    addAndPickRow
+                                }
+                                if !isPickingOnMap { previewAction }
+                            }
+                            .frame(height: height, alignment: .top)
+                            .onChange(of: isPanelDragging) { _, dragging in
+                                if !dragging && panelDrag != 0 {
+                                    withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.86)) {
+                                        panelDrag = 0
+                                    }
+                                }
+                            }
+                            .sensoryFeedback(.impact(weight: .light), trigger: panelStop)
+                            .frame(maxWidth: 600)
+                            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                            .background { MapFloatingPanelBackground(isExpanded: panelStop == .expanded) }
                         }
-                        .buttonStyle(.plain).foregroundStyle(.tint)
-                        .font(.subheadline.weight(.medium))
-                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                        .padding(.horizontal, 20)
-
-
-                    }
-                    if !isPickingOnMap { previewAction }
-                }
-                .frame(height: height, alignment: .top)
-                .onChange(of: isPanelDragging) { _, dragging in
-                    if !dragging && panelDrag != 0 {
-                        withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.86)) {
-                            panelDrag = 0
-                        }
-                    }
-                }
-                .sensoryFeedback(.impact(weight: .light), trigger: panelStop)
-                .frame(maxWidth: 600)
-                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                .background { MapFloatingPanelBackground(isExpanded: panelStop == .expanded) }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
-                .overlay(alignment: .topTrailing) {
-                    if panelStop != .expanded {
-                    VStack(spacing: 10) {
-                        Button(action: fitRoute) { Image(systemName: "arrow.up.left.and.arrow.down.right").frame(width: 44, height: 44) }
-                            .accessibilityLabel("Show whole route")
-                            .accessibilityIdentifier("customRoute.overview")
-                            .disabled(points.isEmpty)
-                        Button { requestCurrentPosition(reportErrors: true) } label: {
-                            Group {
-                                if isWaitingForCurrentLocation { ProgressView().controlSize(.small) }
-                                else { Image(systemName: "location.fill") }
-                            }.frame(width: 44, height: 44)
-                        }
-                        .foregroundStyle(.blue)
-                        .disabled(isWaitingForCurrentLocation)
-                        .accessibilityLabel("Show my current location")
-                        .accessibilityIdentifier("customRoute.currentLocation")
-                    }
-                    .buttonStyle(TactilePressButtonStyle())
-                    .font(.system(size: 17, weight: .semibold))
-                    .liquidGlassSurface(
-                        in: RoundedRectangle(cornerRadius: 22, style: .continuous),
-                        interactive: true
-                    )
-                    .offset(y: -114).padding(.trailing, 16)
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 8)
                     }
                 }
             }
@@ -330,9 +299,174 @@ struct CustomRouteEditor: View {
         return points.count <= 100 ? indexed : indexed.filter { $0.offset == 0 || $0.offset == points.count - 1 }
     }
 
-    private func panelHeights(for geometry: GeometryProxy) -> [CGFloat] {
-        let maximum = max(220, geometry.size.height - 84)
-        return [min(isPickingOnMap ? (dynamicTypeSize.isAccessibilitySize ? 250 : 184) : (dynamicTypeSize.isAccessibilitySize ? 220 : 154), maximum), min(dynamicTypeSize.isAccessibilitySize ? 430 : 320, maximum), maximum]
+    private var headerBar: some View {
+        LiquidGlassContainer(spacing: 10) {
+            HStack {
+                Button {
+                    if hasChanges { confirmation = .discardChanges }
+                    else { dismiss() }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .frame(width: 44, height: 44)
+                        .liquidGlassControl(in: Circle())
+                }
+                .buttonStyle(TactilePressButtonStyle())
+                .accessibilityLabel("Cancel")
+                .accessibilityIdentifier("customRoute.cancel")
+                Spacer()
+                Text("Custom route").font(.headline)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                    .padding(.horizontal, 16).padding(.vertical, 11)
+                    .liquidGlassSurface(in: Capsule())
+                Spacer()
+                Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+            }
+        }
+        .font(.system(size: 17, weight: .semibold))
+        .padding(.horizontal, 16).padding(.top, 8)
+    }
+
+    private var routeMapControls: some View {
+        VStack(spacing: 10) {
+            Button(action: fitRoute) { Image(systemName: "arrow.up.left.and.arrow.down.right").frame(width: 44, height: 44) }
+                .accessibilityLabel("Show whole route")
+                .accessibilityIdentifier("customRoute.overview")
+                .disabled(points.isEmpty)
+            Button { requestCurrentPosition(reportErrors: true) } label: {
+                Group {
+                    if isWaitingForCurrentLocation { ProgressView().controlSize(.small) }
+                    else { Image(systemName: "location.fill") }
+                }.frame(width: 44, height: 44)
+            }
+            .foregroundStyle(.blue)
+            .disabled(isWaitingForCurrentLocation)
+            .accessibilityLabel("Show my current location")
+            .accessibilityIdentifier("customRoute.currentLocation")
+        }
+        .buttonStyle(TactilePressButtonStyle())
+        .font(.system(size: 17, weight: .semibold))
+        .liquidGlassSurface(
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous),
+            interactive: true
+        )
+    }
+
+    private var sidebarEditor: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Button {
+                    if hasChanges { confirmation = .discardChanges }
+                    else { dismiss() }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Cancel")
+                .accessibilityIdentifier("customRoute.cancel")
+
+                Text("Custom route")
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Spacer(minLength: 8)
+
+                Button("Clear all route points", role: .destructive) { confirmation = .clearRoute }
+                    .font(.subheadline)
+                    .frame(minHeight: 44)
+                    .disabled(points.isEmpty || isReadingFile)
+                    .accessibilityIdentifier("customRoute.clearAll")
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
+
+            HStack {
+                Text("Route points").font(.subheadline.weight(.semibold))
+                Text("\(points.count)").font(.subheadline).foregroundStyle(.secondary)
+                Spacer()
+                if let route {
+                    Text(route.distance.formatted(.number.precision(.fractionLength(1))) + " m")
+                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 6)
+
+            waypointSectionList(showExpandedDetails: true)
+            addAndPickRow
+            previewAction
+        }
+        .background(
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea(edges: [.leading, .top, .bottom])
+        )
+    }
+
+    private func waypointSectionList(showExpandedDetails: Bool) -> some View {
+        List {
+            waypointList(showExpandedDetails: showExpandedDetails)
+            if showExpandedDetails {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Label("Simulation speed", systemImage: "speedometer")
+                            Spacer(minLength: 8)
+                            Text("\(speed, specifier: "%.1f") km/h").monospacedDigit()
+                        }.font(.subheadline)
+                        Slider(value: $speed, in: 0.1...240, step: 0.1)
+                            .accessibilityLabel("Simulation speed")
+                            .accessibilityIdentifier("customRoute.speed")
+                            .accessibilityValue(String(format: "%.1f", speed))
+                    }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                    .listRowBackground(Color.clear)
+
+                    editorControls
+                        .listRowInsets(EdgeInsets(top: 2, leading: 20, bottom: 2, trailing: 20))
+                        .listRowBackground(Color.clear)
+
+                    Text("Points connect with straight lines in order. Hold the right handle to reorder.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 8, trailing: 20))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.vertical, 0, for: .scrollContent)
+        .listSectionSpacing(4)
+        .environment(\.editMode, .constant(.active))
+        .accessibilityIdentifier("customRoute.scroll")
+    }
+
+    private var addAndPickRow: some View {
+        HStack(spacing: 12) {
+            addButton.frame(maxWidth: .infinity)
+            Button(action: beginMapSelection) {
+                Label("Pick on map", systemImage: "mappin.and.ellipse")
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+        }
+        .buttonStyle(.plain).foregroundStyle(.tint)
+        .font(.subheadline.weight(.medium))
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        .padding(.horizontal, 20)
+    }
+
+    private func panelHeights(
+        for geometry: GeometryProxy,
+        division: MapLayoutMetrics.DivisionGuide
+    ) -> [CGFloat] {
+        MapLayoutMetrics.customRoutePanelHeights(
+            availableHeight: geometry.size.height,
+            isPickingOnMap: isPickingOnMap,
+            isAccessibilitySize: dynamicTypeSize.isAccessibilitySize,
+            division: division
+        )
     }
 
     private func setPanel(_ stop: PanelStop, animated: Bool = true) {
@@ -571,9 +705,13 @@ struct CustomRouteEditor: View {
         if let geometry = try? SimulationRoute(coordinates: coordinates, name: "") {
             let rect = geometry.polyline.boundingMapRect
             var visible = rect.insetBy(dx: -max(rect.width * 0.2, 300), dy: -max(rect.height * 0.2, 300))
-            // Reserve the lower map area covered by the medium route panel.
-            let coveredFraction = min(0.55, 320 / max(mapSize.height, 640))
-            visible.size.height /= 1 - coveredFraction
+            // Reserve the lower map area covered by the compact bottom route panel.
+            let coveredFraction = MapLayoutMetrics.usesSidebar(for: mapSize)
+                ? 0
+                : min(0.55, 320 / max(mapSize.height, 640))
+            if coveredFraction > 0 {
+                visible.size.height /= 1 - coveredFraction
+            }
             camera = .rect(visible)
         } else {
             camera = .region(MKCoordinateRegion(center: first.coordinate,
@@ -629,8 +767,8 @@ struct CustomRouteEditor: View {
     }
 
     @ViewBuilder
-    private var waypointList: some View {
-        if route == nil && panelStop == .expanded {
+    private func waypointList(showExpandedDetails: Bool) -> some View {
+        if route == nil && showExpandedDetails {
             Text("Choose at least two different route points to preview.")
                 .font(.caption).foregroundStyle(.secondary)
                 .listRowBackground(Color.clear)
@@ -649,13 +787,13 @@ struct CustomRouteEditor: View {
                             Text(label(for: index)).font(.caption).foregroundStyle(.secondary)
                             Text(point.name ?? String(localized: "Map point"))
                                 .font(.body.weight(.medium)).foregroundStyle(.primary)
-                                .lineLimit(panelStop == .expanded ? nil : 1)
-                            if panelStop == .expanded {
+                                .lineLimit(showExpandedDetails ? nil : 1)
+                            if showExpandedDetails {
                                 Text(point.address.flatMap { $0.isEmpty ? nil : $0 } ?? String(format: "%.5f, %.5f", point.coordinate.latitude, point.coordinate.longitude))
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                         }
-                        .frame(maxWidth: .infinity, minHeight: panelStop == .expanded ? 56 : 44, alignment: .leading)
+                        .frame(maxWidth: .infinity, minHeight: showExpandedDetails ? 56 : 44, alignment: .leading)
                     }
                     .contentShape(Rectangle())
                 }

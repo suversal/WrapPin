@@ -8,6 +8,7 @@ struct SessionRecoveryView: View {
     let isResuming: Bool
     let isRestoring: Bool
     let errorMessage: String?
+    var availableHeight: CGFloat = 600
     let onResume: () -> Void
     let onRestore: () -> Void
     let onAlreadyRestored: () -> Void
@@ -16,15 +17,12 @@ struct SessionRecoveryView: View {
     @State private var isConfirmingRestore = false
 
     var body: some View {
-        Group {
-            if dynamicTypeSize.isAccessibilitySize {
-                ScrollView(.vertical, showsIndicators: false) {
-                    content
-                }
-                .frame(maxHeight: 540)
-            } else {
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView(.vertical, showsIndicators: false) {
                 content
             }
+            .frame(maxHeight: MapLayoutMetrics.modalCardMaxHeight(availableHeight: availableHeight))
         }
         .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 20 : 26)
         .padding(.top, 12)
