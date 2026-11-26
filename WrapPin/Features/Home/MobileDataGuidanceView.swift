@@ -7,6 +7,7 @@ struct MobileDataGuidanceView: View {
     let tunnelHandoffApp: TunnelHandoffApp
     let usesBuiltInTunnel: Bool
     let isUsingMobileData: Bool
+    var availableHeight: CGFloat = 600
     let onOpenTunnelApp: () -> Void
     let onRetry: () -> Void
     let onUseMobileData: () -> Void
@@ -20,7 +21,7 @@ struct MobileDataGuidanceView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 content
             }
-            .frame(maxHeight: 540)
+            .frame(maxHeight: MapLayoutMetrics.modalCardMaxHeight(availableHeight: availableHeight))
         }
         .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 20 : 28)
         .padding(.top, 12)

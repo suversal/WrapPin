@@ -140,74 +140,102 @@ private struct OnboardingPageView: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let isCompactHeight = geometry.size.height < 640
+            let isWideLandscape = geometry.size.width >= 720 && geometry.size.width > geometry.size.height
+            let hasSecondaryCard = !page.requirements.isEmpty || page.showsUsageStatisticsControl
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 30) {
-                    Spacer(minLength: 20)
-
-                    Image(systemName: page.symbol)
-                        .font(.system(
-                            size: dynamicTypeSize.isAccessibilitySize ? 46 : 64,
-                            weight: .semibold
-                        ))
-                        .foregroundStyle(.white)
-                        .frame(
-                            width: dynamicTypeSize.isAccessibilitySize ? 96 : 132,
-                            height: dynamicTypeSize.isAccessibilitySize ? 96 : 132
-                        )
-                        .background(
-                            page.color,
-                            in: RoundedRectangle(
-                                cornerRadius: dynamicTypeSize.isAccessibilitySize ? 26 : 34,
-                                style: .continuous
-                            )
-                        )
-                        .shadow(color: page.color.opacity(0.22), radius: 18, y: 10)
-                        .accessibilityHidden(true)
-
-                    VStack(spacing: 14) {
-                        Text(page.title)
-                            .font(.largeTitle.bold())
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Text(page.message)
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .fixedSize(horizontal: false, vertical: true)
+                if isWideLandscape && hasSecondaryCard {
+                    HStack(alignment: .center, spacing: 28) {
+                        heroColumn(isCompact: isCompactHeight)
+                            .frame(maxWidth: .infinity)
+                        secondaryColumn
+                            .frame(maxWidth: .infinity)
                     }
-                    .padding(.horizontal, 28)
-
-                    if !page.requirements.isEmpty {
-                        VStack(spacing: 0) {
-                            ForEach(Array(page.requirements.enumerated()), id: \.offset) { index, item in
-                                requirementRow(item)
-
-                                if index < page.requirements.count - 1 {
-                                    Divider()
-                                        .padding(.leading, 52)
-                                }
-                            }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                    .frame(maxWidth: 860, minHeight: geometry.size.height)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityElement(children: .combine)
+                } else {
+                    VStack(spacing: isCompactHeight ? 18 : 30) {
+                        Spacer(minLength: isCompactHeight ? 10 : 20)
+                        heroColumn(isCompact: isCompactHeight)
+                        if hasSecondaryCard {
+                            secondaryColumn
+                                .padding(.horizontal, 24)
                         }
-                        .padding(.horizontal, 16)
-                        .background(
-                            Color(uiColor: .secondarySystemGroupedBackground),
-                            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        )
-                        .padding(.horizontal, 24)
+                        Spacer(minLength: isCompactHeight ? 10 : 20)
                     }
-
-                    if page.showsUsageStatisticsControl {
-                        usageStatisticsCard
-                            .padding(.horizontal, 24)
-                    }
-
-                    Spacer(minLength: 20)
+                    .frame(maxWidth: 640, minHeight: geometry.size.height)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityElement(children: .combine)
                 }
-                .frame(maxWidth: 640, minHeight: geometry.size.height)
-                .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private func heroColumn(isCompact: Bool) -> some View {
+        let usesCompactIcon = isCompact || dynamicTypeSize.isAccessibilitySize
+        return VStack(spacing: isCompact ? 16 : 24) {
+            Image(systemName: page.symbol)
+                .font(.system(
+                    size: usesCompactIcon ? 44 : 64,
+                    weight: .semibold
+                ))
+                .foregroundStyle(.white)
+                .frame(
+                    width: usesCompactIcon ? 92 : 132,
+                    height: usesCompactIcon ? 92 : 132
+                )
+                .background(
+                    page.color,
+                    in: RoundedRectangle(
+                        cornerRadius: usesCompactIcon ? 26 : 34,
+                        style: .continuous
+                    )
+                )
+                .shadow(color: page.color.opacity(0.22), radius: 18, y: 10)
+                .accessibilityHidden(true)
+
+            VStack(spacing: isCompact ? 10 : 14) {
+                Text(page.title)
+                    .font(isCompact ? .title.bold() : .largeTitle.bold())
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(page.message)
+                    .font(isCompact ? .body : .title3)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 20)
+        }
+    }
+
+    private var secondaryColumn: some View {
+        VStack(spacing: 16) {
+            if !page.requirements.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(page.requirements.enumerated()), id: \.offset) { index, item in
+                        requirementRow(item)
+
+                        if index < page.requirements.count - 1 {
+                            Divider()
+                                .padding(.leading, 52)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .background(
+                    Color(uiColor: .secondarySystemGroupedBackground),
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+                )
+            }
+
+            if page.showsUsageStatisticsControl {
+                usageStatisticsCard
             }
         }
     }
