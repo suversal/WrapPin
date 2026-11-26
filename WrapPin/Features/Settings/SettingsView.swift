@@ -433,7 +433,11 @@ struct SettingsView: View {
                 settingsRowLabel("Reduce Background Location Indicator", symbol: "location")
             }
 
-            LabeledContent("Location Authorization", value: appModel.deviceSession.backgroundKeepAlive.authorizationTitle)
+            LabeledContent {
+                Text(appModel.deviceSession.backgroundKeepAlive.authorizationTitle)
+            } label: {
+                settingsRowLabel("Location Authorization", symbol: "location.circle")
+            }
 
             if appModel.reducesBackgroundLocationIndicator,
                appModel.deviceSession.backgroundKeepAlive.authorizationStatus != .authorizedAlways {

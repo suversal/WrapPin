@@ -5,6 +5,7 @@ import UIKit
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(ReleaseUpdateModel.self) private var releaseUpdates
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var mapControlSymbolSize = 17
@@ -16,6 +17,7 @@ struct HomeView: View {
     @State private var isShowingSavedPlaces = false
     @State private var customRouteDraft: CustomRouteDraft?
     @State private var customRouteWaypoints: [RouteWaypoint]?
+    @State private var customRouteTitle: String?
     @State private var shouldRefreshRealLocationWhenActive = false
     @State private var shouldClearLocationAfterRestoration = false
     @State private var isLocatingRealLocationAfterRestoration = false
@@ -208,9 +210,11 @@ struct HomeView: View {
         }
         .fullScreenCover(item: $customRouteDraft) { draft in
             CustomRouteEditor(draft: draft, locationModel: mapModel) { waypoints, coordinateMode, speed in
+                let routeName = SavedCustomRoute.defaultName(from: waypoints)
                 let route = try walkingRoutePlanner.previewCustomRoute(
-                    coordinates: waypoints.map(\.coordinate), name: waypoints.last?.name ?? String(localized: "Custom route"))
+                    coordinates: waypoints.map(\.coordinate), name: waypoints.last?.name ?? routeName)
                 customRouteWaypoints = waypoints
+                customRouteTitle = routeName
                 guard let destination = walkingRoutePlanner.destination else { return }
                 mapModel.show(destination)
                 fixedCoordinateMode = coordinateMode
@@ -219,6 +223,7 @@ struct HomeView: View {
                 walkingSimulation.customRouteSpeedKilometresPerHour = speed
                 mapModel.show(route)
             }
+            .environment(appModel)
         }
         .sheet(isPresented: $isShowingDeviceSetup) {
             PairingSetupView()
@@ -232,10 +237,15 @@ struct HomeView: View {
             SavedPlacesView(
                 favourites: appModel.favouriteLocations,
                 history: appModel.locationHistory,
+                favouriteRoutes: appModel.favouriteCustomRoutes,
+                routeHistory: appModel.customRouteHistory,
                 shouldShowFavouriteReorderHint: !appModel.hasSeenFavouriteReorderHint,
                 isFavourite: appModel.isFavourite,
+                isFavouriteRoute: appModel.isFavouriteCustomRoute,
                 onSelect: { target in
                     guard !walkingSimulation.locksDestination else { return }
+                    customRouteWaypoints = nil
+                    customRouteTitle = nil
                     mapModel.show(target)
                     Task {
                         guard let refreshed = await mapModel.refreshAddressIfNeeded(for: target)
@@ -245,9 +255,15 @@ struct HomeView: View {
                         appModel.updateStoredLocationMetadata(with: refreshed)
                     }
                 },
+                onSelectRoute: { savedRoute in
+                    loadSavedCustomRoute(savedRoute)
+                },
                 onToggleFavourite: appModel.toggleFavourite,
+                onToggleFavouriteRoute: appModel.toggleFavouriteCustomRoute,
                 onDeleteFavourite: appModel.removeFavourite,
+                onDeleteFavouriteRoute: appModel.removeFavouriteCustomRoute,
                 onMoveFavourites: appModel.moveFavouriteLocations,
+                onMoveFavouriteRoutes: appModel.moveFavouriteCustomRoutes,
                 onDismissFavouriteReorderHint: appModel.dismissFavouriteReorderHint,
                 onRenameFavourite: { target, name in
                     if let renamed = appModel.renameFavourite(target, to: name),
@@ -255,9 +271,18 @@ struct HomeView: View {
                         mapModel.selectedLocation = selected.renamed(to: renamed.name)
                     }
                 },
+                onRenameFavouriteRoute: { savedRoute, name in
+                    if let renamed = appModel.renameFavouriteCustomRoute(savedRoute, to: name),
+                       currentSavedCustomRoute()?.contentFingerprint == renamed.contentFingerprint {
+                        customRouteTitle = renamed.name
+                    }
+                },
                 onDeleteHistory: appModel.removeFromHistory,
+                onDeleteRouteHistory: appModel.removeCustomRouteFromHistory,
                 onClearFavourites: appModel.clearFavouriteLocations,
-                onClearHistory: appModel.clearLocationHistory
+                onClearFavouriteRoutes: appModel.clearFavouriteCustomRoutes,
+                onClearHistory: appModel.clearLocationHistory,
+                onClearRouteHistory: appModel.clearCustomRouteHistory
             )
         }
     }
@@ -343,13 +368,14 @@ struct HomeView: View {
         .coordinateSpace(name: PrecisionMapPicker.mapSpace)
     }
 
+    private var simulatedMarkerTint: Color {
+        colorScheme == .dark
+            ? Color(red: 0.16, green: 0.54, blue: 0.40)
+            : Color(red: 0.14, green: 0.62, blue: 0.42)
+    }
+
     private func simulatedLocationGlyph(_ symbol: String) -> some View {
-        Image(systemName: symbol)
-            .font(.title.weight(.semibold))
-            .foregroundStyle(.white, .green)
-            .padding(4)
-            .background(.regularMaterial, in: Circle())
-            .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
+        SimulatedLocationMarker(symbol: symbol, tint: simulatedMarkerTint)
     }
 
     private var sidebar: some View {
@@ -388,6 +414,7 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 16)
             }
             .scrollDismissesKeyboard(.interactively)
@@ -403,9 +430,9 @@ struct HomeView: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 14)
                 .frame(minHeight: 44)
-                .background(.regularMaterial, in: Capsule())
+                .liquidGlassControl(in: Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TactilePressButtonStyle())
         .accessibilityIdentifier("map.showSidebar")
     }
 
@@ -433,23 +460,29 @@ struct HomeView: View {
     }
 
     private func compactControls(availableHeight: CGFloat) -> some View {
-        ZStack(alignment: .top) {
-            MapPanelViewport(maximumHeight: max(160, availableHeight * 0.42)) {
+        let headerMaxHeight = isSearchingForLocation
+            ? max(260, availableHeight - 16)
+            : max(180, availableHeight * 0.44)
+        return ZStack(alignment: .top) {
+            MapPanelViewport(maximumHeight: headerMaxHeight) {
                 VStack(spacing: 10) {
                     searchPanel
                     if !isSearchingForLocation {
                         statusPanel
                     }
                 }
+                // Keep horizontal & vertical padding inside the ScrollView so
+                // interactive Liquid Glass controls can expand on press without clipping.
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, isSearchingForLocation ? 16 : 10)
             }
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.size.height
             } action: { height in
                 compactHeaderHeight = height
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .frame(maxWidth: 560)
+            .frame(maxWidth: 592)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
             if !isSearchingForLocation {
@@ -479,36 +512,50 @@ struct HomeView: View {
         let medium = min(maximum, max(compact, min(mediumLimit, expandedContent)))
         let full = min(maximum, max(medium + 32, expandedContent))
         let heights: [CGFloat] = [compact, medium, full]
-        let height = min(maximum, max(heights[0], heights[dockPosition.rawValue] - dockDrag))
+        let height = DockDetentPhysics.rubberBandedHeight(
+            raw: heights[dockPosition.rawValue] - dockDrag,
+            minimum: heights[0],
+            maximum: maximum
+        )
         let collapsed = Binding(
             get: { dockPosition == .collapsed },
-            set: { value in setDockPosition(value ? .collapsed : .medium) })
+            set: { value in setDockPosition(value ? .collapsed : .medium, animated: true) })
         return VStack(spacing: 10) {
             if !hasSelectedSessionContent || dockPosition != .expanded {
                 mapControls.padding(.horizontal, 16)
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockMapControlsHeight = $0 }
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.94, anchor: .bottomTrailing)))
             }
             if hasSelectedSessionContent {
                 VStack(spacing: 0) {
-                    Capsule().fill(.secondary.opacity(0.4)).frame(width: 36, height: 5)
+                    Capsule().fill(.secondary.opacity(0.45)).frame(width: 38, height: 5)
                         .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-                        .gesture(DragGesture(minimumDistance: 8, coordinateSpace: .global)
+                        .onTapGesture {
+                            let next: DockPosition = dockPosition == .collapsed ? .medium : .collapsed
+                            setDockPosition(next, animated: true)
+                        }
+                        .gesture(DragGesture(minimumDistance: 4, coordinateSpace: .global)
                             .updating($isDockDragging) { _, state, _ in state = true }
                             .onChanged { value in
-                                if abs(value.translation.height) > abs(value.translation.width) { dockDrag = value.translation.height }
+                                if abs(value.translation.height) >= abs(value.translation.width) * 0.7 {
+                                    dockDrag = value.translation.height
+                                }
                             }
                             .onEnded { value in
-                                guard abs(value.translation.height) > 36,
-                                      abs(value.translation.height) > abs(value.translation.width) else { dockDrag = 0; return }
-                                let next = min(2, max(0, dockPosition.rawValue + (value.translation.height < 0 ? 1 : -1)))
-                                setDockPosition(DockPosition(rawValue: next) ?? .medium)
+                                let nextIndex = DockDetentPhysics.targetDetentIndex(
+                                    currentIndex: dockPosition.rawValue,
+                                    heights: heights,
+                                    translation: value.translation.height,
+                                    predictedTranslation: value.predictedEndTranslation.height
+                                )
+                                setDockPosition(DockPosition(rawValue: nextIndex) ?? .medium, animated: true)
                             })
                         .accessibilityElement()
                         .accessibilityLabel("Route panel handle")
                         .accessibilityValue(dockPosition == .expanded ? String(localized: "Full panel") : dockPosition == .medium ? String(localized: "Half panel") : String(localized: "Compact panel"))
                         .accessibilityIdentifier("map.panelHandle")
-                        .accessibilityAction(named: Text("Expand route panel")) { setDockPosition(.expanded) }
-                        .accessibilityAction(named: Text("Collapse route panel")) { setDockPosition(.collapsed) }
+                        .accessibilityAction(named: Text("Expand route panel")) { setDockPosition(.expanded, animated: true) }
+                        .accessibilityAction(named: Text("Collapse route panel")) { setDockPosition(.collapsed, animated: true) }
                     if pinsLocationHeader {
                         VStack(spacing: 10) {
                             if showsBackgroundWarning {
@@ -535,25 +582,36 @@ struct HomeView: View {
                     }
                 }
                 .frame(height: height, alignment: .top)
-                .animation(reduceMotion || isDockDragging ? nil : .easeInOut(duration: 0.22), value: height)
-                .onChange(of: isDockDragging) { _, dragging in if !dragging { dockDrag = 0 } }
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 32, bottomLeadingRadius: dockPosition == .expanded ? 0 : 32,
-                    bottomTrailingRadius: dockPosition == .expanded ? 0 : 32, topTrailingRadius: 32))
+                .onChange(of: isDockDragging) { _, dragging in
+                    if !dragging && dockDrag != 0 {
+                        withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.86)) {
+                            dockDrag = 0
+                        }
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                 .background { MapFloatingPanelBackground(isExpanded: dockPosition == .expanded) }
+                .sensoryFeedback(.impact(weight: .light), trigger: dockPosition)
+                .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             } else {
                 Button { isSearchFocused = true } label: {
                     selectionCard(detailsCollapsed: .constant(true))
                         .environment(\.isEmbeddedMapPanel, true)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressButtonStyle(pressedScale: 0.98))
                 .background { MapFloatingPanelBackground(isExpanded: false) }
                 .accessibilityIdentifier("map.emptyPrompt")
                 .accessibilityHint("Opens place search")
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.96, anchor: .bottom)))
             }
 
         }
-        .padding(.horizontal, hasSelectedSessionContent && dockPosition == .expanded ? 0 : 12)
-        .padding(.bottom, hasSelectedSessionContent && dockPosition == .expanded ? 0 : 8)
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.36, dampingFraction: 0.86),
+            value: hasSelectedSessionContent
+        )
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
         .frame(maxWidth: 600)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomDockHeight = $0 }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -564,10 +622,17 @@ struct HomeView: View {
         else { expandedDockContentHeight = height }
     }
 
-    private func setDockPosition(_ position: DockPosition) {
-        dockDrag = 0
-        dockPosition = position
-        areDetailsCollapsed = position == .collapsed
+    private func setDockPosition(_ position: DockPosition, animated: Bool = false) {
+        let update = {
+            dockDrag = 0
+            dockPosition = position
+            areDetailsCollapsed = position == .collapsed
+        }
+        if animated && !reduceMotion {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.86), update)
+        } else {
+            update()
+        }
     }
 
     private var searchPanel: some View {
@@ -586,17 +651,40 @@ struct HomeView: View {
                     mapModel.setOverseasSearch(!mapModel.isOverseasSearch)
                 },
                 onSubmit: {
+                    appModel.recordSearchQuery(mapModel.searchQuery)
                     Task { await mapModel.search() }
                 },
                 onClear: mapModel.clearSearch
             )
             .disabled(walkingSimulation.locksDestination)
 
+            if isSearchFocused,
+                !walkingSimulation.locksDestination,
+                mapModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                !mapModel.isShowingSuggestions,
+                !mapModel.isShowingOverseasResults,
+                !appModel.recentSearchQueries.isEmpty
+            {
+                RecentSearchesView(
+                    queries: appModel.recentSearchQueries,
+                    onSelect: { query in
+                        isSearchFocused = false
+                        mapModel.updateSearchQuery(query)
+                        appModel.recordSearchQuery(query)
+                        Task { await mapModel.search() }
+                    },
+                    onRemove: appModel.removeRecentSearchQuery,
+                    onClearAll: appModel.clearRecentSearchQueries
+                )
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
+            }
+
             if mapModel.isShowingSuggestions && !walkingSimulation.locksDestination {
                 SearchSuggestionsView(
                     suggestions: mapModel.searchSuggestions,
                     onSelect: { suggestion in
                         isSearchFocused = false
+                        appModel.recordSearchQuery(suggestion.title)
                         Task { await mapModel.selectSuggestion(suggestion) }
                     }
                 )
@@ -607,6 +695,7 @@ struct HomeView: View {
                     places: mapModel.overseasResults,
                     onSelect: { place in
                         isSearchFocused = false
+                        appModel.recordSearchQuery(place.name)
                         mapModel.selectOverseasPlace(place)
                     }
                 )
@@ -615,62 +704,61 @@ struct HomeView: View {
     }
 
     private var statusPanel: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             HStack {
                 Button {
                     isShowingDeviceSetup = true
                 } label: {
                     ConnectionBadge(state: appModel.connectionState)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressButtonStyle(pressedScale: 0.96))
                 .accessibilityHint("Opens device pairing setup")
 
                 Spacer()
 
-                HStack(spacing: 10) {
-                    Button {
-                        isSearchFocused = false
-                        customRouteDraft = CustomRouteDraft(start: mapModel.selectedLocation,
-                                                            camera: visibleMapCamera.map { .camera($0) } ?? mapModel.cameraPosition,
-                                                            coordinateMode: fixedCoordinateMode)
-                    } label: {
-                        Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
-                            .font(.body.weight(.semibold))
-                            .frame(width: 44, height: 44)
-                            .background(.regularMaterial, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canRequestRealLocation || walkingSimulation.locksDestination)
-                    .accessibilityLabel("Custom route")
-                    .accessibilityIdentifier("map.customRoute")
+                LiquidGlassContainer(spacing: 8) {
+                    HStack(spacing: 8) {
+                        Button {
+                            isSearchFocused = false
+                            customRouteDraft = CustomRouteDraft(start: mapModel.selectedLocation,
+                                                                camera: visibleMapCamera.map { .camera($0) } ?? mapModel.cameraPosition,
+                                                                coordinateMode: fixedCoordinateMode)
+                        } label: {
+                            Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+                                .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 44, height: 44)
+                                .liquidGlassControl(in: Circle())
+                        }
+                        .buttonStyle(TactilePressButtonStyle())
+                        .disabled(!canRequestRealLocation || walkingSimulation.locksDestination)
+                        .accessibilityLabel("Custom route")
+                        .accessibilityIdentifier("map.customRoute")
 
-                    Button {
-                        isShowingSavedPlaces = true
-                    } label: {
-                        Image(systemName: "heart.text.square.fill")
-                            .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 36, height: 36)
-                            .background(.regularMaterial, in: Circle())
-                            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Favourites and history")
+                        Button {
+                            isShowingSavedPlaces = true
+                        } label: {
+                            Image(systemName: "heart.text.square.fill")
+                                .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 44, height: 44)
+                                .liquidGlassControl(in: Circle())
+                        }
+                        .buttonStyle(TactilePressButtonStyle())
+                        .accessibilityLabel("Favourites and history")
 
-                    Button {
-                        isShowingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 36, height: 36)
-                            .background(.regularMaterial, in: Circle())
-                            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
-                            .frame(width: 44, height: 44)
+                        Button {
+                            isShowingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 44, height: 44)
+                                .liquidGlassControl(in: Circle())
+                        }
+                        .buttonStyle(TactilePressButtonStyle())
+                        .accessibilityLabel("Settings")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Settings")
                 }
             }
 
@@ -702,7 +790,7 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(TactilePressButtonStyle(pressedScale: 0.98))
 
                     Button(action: releaseUpdates.dismissBanner) {
                         Image(systemName: "xmark")
@@ -710,16 +798,17 @@ struct HomeView: View {
                             .foregroundStyle(.secondary)
                             .frame(width: 44, height: 44)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(TactilePressButtonStyle())
                     .accessibilityLabel("Dismiss update reminder")
                 }
                 .padding(.leading, 14)
                 .padding(.trailing, 6)
                 .padding(.vertical, 6)
-                .background(
-                    .regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .liquidGlassSurface(
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous),
+                    tint: .blue
                 )
-                .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+                .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
             }
 
             if needsPairingPrompt {
@@ -747,14 +836,23 @@ struct HomeView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(14)
-                    .background(
-                        .regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .liquidGlassSurface(
+                        in: RoundedRectangle(cornerRadius: 20, style: .continuous),
+                        interactive: true
                     )
-                    .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressButtonStyle(pressedScale: 0.98))
+                .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
             }
         }
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
+            value: releaseUpdates.visibleRelease?.version
+        )
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
+            value: needsPairingPrompt
+        )
     }
 
     private var showsBackgroundWarning: Bool {
@@ -774,8 +872,9 @@ struct HomeView: View {
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
             .padding(14)
-            .background(
-                .regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .liquidGlassSurface(
+                in: RoundedRectangle(cornerRadius: 18, style: .continuous),
+                tint: .orange
             )
             .accessibilityElement(children: .combine)
         }
@@ -785,83 +884,104 @@ struct HomeView: View {
         HStack {
             Spacer()
 
-            VStack(spacing: 10) {
-                if canPickPrecisely {
-                    mapControl("Precision selection", symbol: "scope", action: beginPrecisionSelection)
-                        .disabled(visibleMapCamera == nil)
-                        .accessibilityIdentifier("map.beginPrecisionSelection")
-                }
-
-                if let target = activeFixedTarget {
-                    mapControl("Show simulated target", symbol: "location.circle.fill") {
-                        mapModel.center(on: target)
+            LiquidGlassContainer(spacing: 10) {
+                VStack(spacing: 10) {
+                    if canPickPrecisely {
+                        mapControl("Precision selection", symbol: "scope", action: beginPrecisionSelection)
+                            .disabled(visibleMapCamera == nil)
+                            .accessibilityIdentifier("map.beginPrecisionSelection")
+                            .transition(reduceMotion ? .opacity : .scale(scale: 0.85).combined(with: .opacity))
                     }
-                }
 
-                if walkingSimulation.mode == .driving,
-                    let coordinate = walkingSimulation.currentCoordinate,
-                    let route = walkingRoutePlanner.route
-                {
-                    Button {
-                        followsSimulatedLocation.toggle()
-                        if followsSimulatedLocation {
-                            mapModel.center(on: coordinate)
-                        } else {
-                            mapModel.show(route)
+                    if let target = activeFixedTarget {
+                        mapControl("Show simulated target", symbol: "location.circle.fill") {
+                            mapModel.center(on: target)
                         }
-                    } label: {
-                        Image(systemName: followsSimulatedLocation ? "car.fill" : "car")
-                            .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
-                            .foregroundStyle(followsSimulatedLocation ? .blue : .primary)
-                            .frame(width: 44, height: 44)
-                            .background(.regularMaterial, in: Circle())
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.85).combined(with: .opacity))
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        followsSimulatedLocation
-                            ? "Show whole route"
-                            : "Follow simulated car")
-                }
 
-                if shouldShowMapCompass {
-                    Button(action: resetMapHeading) {
-                        CompassRoseDial()
-                            .rotationEffect(.degrees(-normalisedMapHeading))
-                            .frame(width: 44, height: 44)
-                            .background(.regularMaterial, in: Circle())
-                            .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Return map to north")
-                    .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
-                }
-
-                if canRequestRealLocation {
-                    Button {
-                        showCurrentLocationNorthUp()
-                    } label: {
-                        Group {
-                            if mapModel.isFindingRealLocation {
-                                ProgressView()
-                                    .controlSize(.small)
+                    if walkingSimulation.mode == .driving,
+                        let coordinate = walkingSimulation.currentCoordinate,
+                        let route = walkingRoutePlanner.route
+                    {
+                        Button {
+                            followsSimulatedLocation.toggle()
+                            if followsSimulatedLocation {
+                                mapModel.center(on: coordinate)
                             } else {
-                                Image(systemName: "location.fill")
-                                    .font(
-                                        .system(
-                                            size: min(mapControlSymbolSize, 24), weight: .semibold)
-                                    )
-                                    .foregroundStyle(.blue)
+                                mapModel.show(route)
                             }
+                        } label: {
+                            Image(systemName: followsSimulatedLocation ? "car.fill" : "car")
+                                .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
+                                .foregroundStyle(followsSimulatedLocation ? .blue : .primary)
+                                .contentTransition(.symbolEffect(.replace))
+                                .frame(width: 44, height: 44)
+                                .liquidGlassControl(
+                                    in: Circle(),
+                                    tint: followsSimulatedLocation ? .blue : nil
+                                )
                         }
-                        .frame(width: 44, height: 44)
-                        .background(.regularMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+                        .buttonStyle(TactilePressButtonStyle())
+                        .sensoryFeedback(.selection, trigger: followsSimulatedLocation)
+                        .accessibilityLabel(
+                            followsSimulatedLocation
+                                ? "Show whole route"
+                                : "Follow simulated car")
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.85).combined(with: .opacity))
                     }
-                    .buttonStyle(.plain)
-                    .disabled(mapModel.isFindingRealLocation)
-                    .accessibilityLabel("Show my current location")
+
+                    if shouldShowMapCompass {
+                        Button(action: resetMapHeading) {
+                            CompassRoseDial()
+                                .rotationEffect(.degrees(-normalisedMapHeading))
+                                .frame(width: 44, height: 44)
+                                .liquidGlassControl(in: Circle())
+                        }
+                        .buttonStyle(TactilePressButtonStyle())
+                        .accessibilityLabel("Return map to north")
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.85).combined(with: .opacity))
+                    }
+
+                    if canRequestRealLocation {
+                        Button {
+                            showCurrentLocationNorthUp()
+                        } label: {
+                            Group {
+                                if mapModel.isFindingRealLocation {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "location.fill")
+                                        .font(
+                                            .system(
+                                                size: min(mapControlSymbolSize, 24), weight: .semibold)
+                                        )
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                            .frame(width: 44, height: 44)
+                            .liquidGlassControl(in: Circle())
+                        }
+                        .buttonStyle(TactilePressButtonStyle())
+                        .disabled(mapModel.isFindingRealLocation)
+                        .accessibilityLabel("Show my current location")
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.85).combined(with: .opacity))
+                    }
                 }
             }
+            .animation(
+                reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.82),
+                value: shouldShowMapCompass
+            )
+            .animation(
+                reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.82),
+                value: canPickPrecisely
+            )
+            .animation(
+                reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.82),
+                value: activeFixedTarget?.id
+            )
         }
     }
 
@@ -873,10 +993,9 @@ struct HomeView: View {
                 .font(.system(size: min(mapControlSymbolSize, 24), weight: .semibold))
                 .foregroundStyle(.primary)
                 .frame(width: 44, height: 44)
-                .background(.regularMaterial, in: Circle())
-                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+                .liquidGlassControl(in: Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TactilePressButtonStyle())
         .accessibilityLabel(title)
     }
 
@@ -890,6 +1009,7 @@ struct HomeView: View {
         } else if let route = walkingRoutePlanner.route,
             let destination = walkingRoutePlanner.destination
         {
+            let currentCustomRoute = currentSavedCustomRoute()
             WalkingRoutePreviewCard(
                 route: route,
                 routes: walkingRoutePlanner.routes,
@@ -901,6 +1021,9 @@ struct HomeView: View {
                 onSelectRoute: selectPreviewedRoute,
                 onStart: {
                     walkingRoutePlanner.discardAlternativeRoutes()
+                    if let savedRoute = currentSavedCustomRoute() {
+                        appModel.recordCustomRouteHistory(savedRoute)
+                    }
                     followsSimulatedLocation = walkingSimulation.mode == .driving
                     Task { await walkingSimulation.start(using: appModel) }
                 },
@@ -914,6 +1037,8 @@ struct HomeView: View {
                 onChooseNewLocation: {
                     walkingSimulation.reset()
                     walkingRoutePlanner.clear()
+                    customRouteWaypoints = nil
+                    customRouteTitle = nil
                     mapModel.clearSelectedLocation()
                 },
                 onStop: {
@@ -923,6 +1048,8 @@ struct HomeView: View {
                 onDone: {
                     walkingSimulation.reset()
                     walkingRoutePlanner.clear()
+                    customRouteWaypoints = nil
+                    customRouteTitle = nil
                     mapModel.show(destination)
                 },
                 onEditCustomRoute: {
@@ -932,6 +1059,11 @@ struct HomeView: View {
                         coordinateMode: walkingSimulation.coordinateMode,
                         waypoints: customRouteWaypoints,
                         speed: walkingSimulation.customRouteSpeedKilometresPerHour)
+                },
+                isCustomRouteFavourite: currentCustomRoute.map(appModel.isFavouriteCustomRoute) ?? false,
+                onToggleCustomRouteFavourite: {
+                    guard let savedRoute = currentSavedCustomRoute() else { return }
+                    appModel.toggleFavouriteCustomRoute(savedRoute)
                 }
             )
         } else {
@@ -1022,26 +1154,31 @@ struct HomeView: View {
         VStack {
             Spacer()
             if let message = mapModel.errorMessage {
-                Text(message)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.red, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .padding(.horizontal, 16)
-                    .onTapGesture(perform: mapModel.dismissError)
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityHint("Dismisses this message")
-                    .padding(.bottom, reservedBottomSpace + 12)
-                    .transition(
-                        reduceMotion
-                            ? .opacity
-                            : .asymmetric(
-                                insertion: .opacity.combined(with: .offset(y: 12)),
-                                removal: .opacity.combined(with: .scale(scale: 0.92))
-                            )
-                    )
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                    Text(message)
+                        .font(.subheadline.weight(.medium))
+                        .multilineTextAlignment(.center)
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 11)
+                .background(.red.gradient, in: Capsule())
+                .shadow(color: .red.opacity(0.28), radius: 14, y: 6)
+                .padding(.horizontal, 16)
+                .onTapGesture(perform: mapModel.dismissError)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint("Dismisses this message")
+                .padding(.bottom, reservedBottomSpace + 12)
+                .transition(
+                    reduceMotion
+                        ? .opacity
+                        : .asymmetric(
+                            insertion: .opacity.combined(with: .offset(y: 12)).combined(with: .scale(scale: 0.94)),
+                            removal: .opacity.combined(with: .scale(scale: 0.92))
+                        )
+                )
             }
         }
         .frame(maxWidth: 560)
@@ -1428,6 +1565,42 @@ struct HomeView: View {
         }
     }
 
+    private func currentSavedCustomRoute() -> SavedCustomRoute? {
+        guard let route = walkingRoutePlanner.route, route.isCustom else { return nil }
+        let waypoints = customRouteWaypoints ?? route.mapPoints.map { RouteWaypoint(coordinate: $0.coordinate) }
+        guard waypoints.count >= 2 else { return nil }
+        let name = customRouteTitle ?? SavedCustomRoute.defaultName(from: waypoints)
+        return SavedCustomRoute(
+            name: name,
+            points: waypoints.map(SavedCustomRoutePoint.init),
+            coordinateMode: walkingSimulation.coordinateMode,
+            speedKilometresPerHour: walkingSimulation.customRouteSpeedKilometresPerHour
+        )
+    }
+
+    private func loadSavedCustomRoute(_ savedRoute: SavedCustomRoute) {
+        guard !walkingSimulation.locksDestination else { return }
+        let waypoints = savedRoute.waypoints
+        guard let route = try? walkingRoutePlanner.previewCustomRoute(
+            coordinates: savedRoute.coordinates,
+            name: waypoints.last?.name ?? savedRoute.name
+        ), let destination = walkingRoutePlanner.destination else {
+            return
+        }
+        customRouteWaypoints = waypoints
+        customRouteTitle = savedRoute.name
+        fixedCoordinateMode = savedRoute.coordinateMode
+        mapModel.show(destination)
+        walkingSimulation.prepare(
+            route: route,
+            destination: destination,
+            coordinateMode: savedRoute.coordinateMode,
+            startName: waypoints.first?.name
+        )
+        walkingSimulation.customRouteSpeedKilometresPerHour = savedRoute.speedKilometresPerHour
+        mapModel.show(route)
+    }
+
     private func dismissInterruptedSessionRecovery() {
         recoveredWalkError = nil
         isPreparingRecoveredWalk = false
@@ -1436,6 +1609,38 @@ struct HomeView: View {
         walkingRoutePlanner.clear()
         appModel.dismissInterruptedSessionRecovery()
         mapModel.showRealLocationAfterSession()
+    }
+}
+
+private struct SimulatedLocationMarker: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let symbol: String
+    let tint: Color
+
+    @State private var isBeating = false
+
+    var body: some View {
+        ZStack {
+            LivePulseRing(color: tint, diameter: 16, isActive: true)
+
+            Circle()
+                .fill(tint.opacity(isBeating ? 0.28 : 0.08))
+                .frame(width: 26, height: 26)
+                .scaleEffect(isBeating ? 1.18 : 0.94)
+
+            Image(systemName: symbol)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.96), tint)
+                .padding(2.5)
+                .liquidGlassSurface(in: Circle())
+                .scaleEffect(isBeating ? 1.08 : 1.0)
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true)) {
+                isBeating = true
+            }
+        }
     }
 }
 

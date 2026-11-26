@@ -44,8 +44,9 @@ struct OverseasResultsView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .frame(minHeight: 58)
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressButtonStyle(pressedScale: 0.985))
                 .accessibilityLabel(accessibilityLabel(for: place))
                 .accessibilityHint("Selects this location")
 
@@ -55,8 +56,11 @@ struct OverseasResultsView: View {
 
             attribution
         }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .liquidGlassSurface(
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous),
+            prominentShadow: true
+        )
     }
 
     // Required by the Geoapify free plan and the OpenStreetMap licence.

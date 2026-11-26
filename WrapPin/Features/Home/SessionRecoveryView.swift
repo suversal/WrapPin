@@ -30,12 +30,10 @@ struct SessionRecoveryView: View {
         .padding(.top, 12)
         .padding(.bottom, 24)
         .frame(maxWidth: 520)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .stroke(.white.opacity(0.16), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.24), radius: 28, y: 12)
+        .liquidGlassSurface(
+            in: RoundedRectangle(cornerRadius: 34, style: .continuous),
+            prominentShadow: true
+        )
         .confirmationDialog(
             "Restore this iPhone's real location?",
             isPresented: $isConfirmingRestore,
@@ -138,8 +136,7 @@ struct SessionRecoveryView: View {
                     Label(resumeTitle, systemImage: recovery.isRoute ? recovery.routeMode.symbol : "arrow.clockwise")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .wrapPinPrimaryButton()
                 .disabled(!isPaired)
 
                 Button(role: .destructive) {
@@ -148,8 +145,7 @@ struct SessionRecoveryView: View {
                     Label("Restore Real Location", systemImage: "location.slash.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                .wrapPinSecondaryButton(tint: .red)
                 .disabled(!isPaired)
 
                 Button("My Real Location Is Already Back", action: onAlreadyRestored)

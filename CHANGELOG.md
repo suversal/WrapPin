@@ -2,6 +2,12 @@
 
 All notable public changes to WrapPin are recorded here.
 
+## [1.0.27] - 2026-11-26
+
+- Save custom routes for reuse, rename or delete them in Saved Places, and reload their waypoints, coordinate mode and speed in one tap.
+- Show recent searches below the map search bar for quick reuse.
+- Refine the interface with iOS 26+ Liquid Glass styling, improved bottom-dock drag physics, and cleaner map overlays across the home map, route editors and precision picker. See the [release notes](Documentation/Release-1.0.27.md).
+
 ## [1.0.26] - 2026-11-24
 
 - Show the active fixed simulation target separately from the selected pin so it stays visible when choosing another location.

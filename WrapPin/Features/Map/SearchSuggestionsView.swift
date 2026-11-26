@@ -40,7 +40,7 @@ struct SearchSuggestionsView: View {
                     .frame(minHeight: 58)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressButtonStyle(pressedScale: 0.985))
                 .accessibilityLabel(accessibilityLabel(for: suggestion))
                 .accessibilityHint(showsAddAction ? Text("Adds this place to the route") : Text("Selects this location"))
 
@@ -50,8 +50,11 @@ struct SearchSuggestionsView: View {
                 }
             }
         }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .liquidGlassSurface(
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous),
+            prominentShadow: true
+        )
     }
 
     private func accessibilityLabel(for suggestion: MapSearchSuggestion) -> String {

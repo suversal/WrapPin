@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>当前版本：</strong>1.0.26（Build 96） · <strong>最低系统：</strong>iOS/iPadOS 18.0
+  <strong>当前版本：</strong>1.0.27（Build 106） · <strong>最低系统：</strong>iOS/iPadOS 18.0
 </p>
 
 <p align="center">
@@ -44,7 +44,7 @@ WrapPin 是 Sean Howarth 原项目 [Roam Control](https://github.com/seanhowarth
 
 > 请只在你拥有并控制的设备上使用。不要用于欺骗他人、伪造证据、规避安全限制，或违反第三方服务规则。
 
-1.0.26 新增独立的模拟目标标记、固定准星与摇杆微调，以及收藏列表的铅笔改名入口，并修复选点面板裁切。[本版更新说明](Documentation/Release-1.0.26.zh-CN.md)
+1.0.27 新增自定义路线保存、最近搜索记录，适配 iOS 26+ Liquid Glass 视觉风格并优化底部面板拖拽手感与地图浮层。[本版更新说明](Documentation/Release-1.0.27.zh-CN.md)
 
 ## 当前进展
 

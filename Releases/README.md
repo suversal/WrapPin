@@ -1,5 +1,11 @@
 # WrapPin releases
 
+## WrapPin 1.0.27 — Build 106
+
+Adds saved custom routes, recent map searches, iOS 26+ Liquid Glass UI refinements, improved dock drag physics and map overlay polish. [Release notes](../Documentation/Release-1.0.27.zh-CN.md) · [Verification](SavedCustomRoutes-build106/测试说明.md) · [Receipt](SavedCustomRoutes-build106/receipt.json).
+
+Downloads: [WrapPin 1.0.27](https://github.com/suversal/WrapPin/releases/tag/v1.0.27).
+
 ## WrapPin 1.0.26 — Build 96
 
 Adds a separate simulated target marker, fixed-crosshair precision selection, and a visible rename button for favourites. [Release notes](../Documentation/Release-1.0.26.zh-CN.md) · [Verification](PrecisionSelection-build96/测试说明.md) · [Receipt](PrecisionSelection-build96/receipt.json).

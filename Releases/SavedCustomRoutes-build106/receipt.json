@@ -1,0 +1,36 @@
+{
+  "version": "1.0.27",
+  "build": 106,
+  "date": "2026-11-26",
+  "build_timestamp_utc": "2026-11-26T14:32:00Z",
+  "source_commit": "665bc28472a043302b4f689c3d41c2593203a128",
+  "xcode": "27.0 (27A266a)",
+  "unsigned": true,
+  "packages": [
+    {
+      "edition": "Standard",
+      "file": "WrapPin-Standard-1.0.27-build106-unsigned.ipa",
+      "bytes": 7254821,
+      "sha256": "e4391ec3f1c0bdc04d90551363fd85212e593cb74a0a40a1b4fec27611ecac1a",
+      "bundle_id": "com.suversal.wrappin",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    },
+    {
+      "edition": "Tunnel",
+      "file": "WrapPin-Tunnel-1.0.27-build106-unsigned.ipa",
+      "bytes": 7314929,
+      "sha256": "4c20b5b1438e4da4aba38bc1cf0ddac716d008715f6d6d1330c51d260e665653",
+      "bundle_id": "com.suversal.wrappin.selfsigned",
+      "archive_files_match": true,
+      "architecture": "arm64"
+    }
+  ],
+  "verification": [
+    "Debug iOS builds and Release archives for both Standard and Tunnel editions",
+    "IPA integrity, version/build identity, extension layout, unsigned state and required legal resources",
+    "Localization check (892 zh-Hans keys covering 655 literal UI keys and 4 App Shortcuts phrases)",
+    "Failure stages, background keep-alive, location continuity, pairing reset/import, tunnel handoff, overseas search, coordinate input, route selection, route recovery and saved custom routes checks"
+  ],
+  "physical_device_testing": "The maintainer approved publication after testing Build 105 on a physical device. The unsigned Build 106 packages were archived and verified locally."
+}

@@ -1,26 +1,35 @@
 import SwiftUI
 
 struct ConnectionBadge: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let state: ConnectionState
 
     var body: some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
+        HStack(spacing: 8) {
+            ZStack {
+                LivePulseRing(color: color, diameter: 10, isActive: isLive)
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+            }
+            .frame(width: 12, height: 12)
 
             Text(label)
                 .font(.caption.weight(.semibold))
+                .contentTransition(.opacity)
 
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .frame(minHeight: 44)
-        .background(.regularMaterial, in: Capsule())
-        .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+        .liquidGlassControl(in: Capsule())
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.82),
+            value: label
+        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             String(
@@ -28,6 +37,13 @@ struct ConnectionBadge: View {
                 label
             )
         )
+    }
+
+    private var isLive: Bool {
+        switch state {
+        case .connecting, .active: true
+        case .notConfigured, .ready, .failed: false
+        }
     }
 
     private var label: String {

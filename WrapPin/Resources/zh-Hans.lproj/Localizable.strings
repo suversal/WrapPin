@@ -259,7 +259,7 @@
 "The iPhone could not start the location session." = "iPhone 无法启动定位会话。";
 
 /* Onboarding */
-"ROAM CONTROL" = "WrapPin";
+"WRAPPIN" = "WrapPin";
 "WrapPin" = "WrapPin";
 "Close introduction" = "关闭使用介绍";
 "Page %lld of %lld" = "第 %lld 页，共 %lld 页";
@@ -982,3 +982,22 @@
 "Follow route back" = "沿原路线返回";
 
 "Your location follows these points at the selected speed." = "位置将按所选速度沿路线点移动。";
+
+/* Saved custom routes */
+"Favourite Routes" = "收藏路线";
+"Rename Route" = "重命名路线";
+"Route name" = "路线名称";
+"Give this saved route a name that is easy to recognise." = "给这条收藏路线起一个好记的名字。";
+"Clear all favourite routes?" = "清空所有收藏路线？";
+"Clear Favourite Routes" = "清空收藏路线";
+"Every favourite custom route will be removed. Your saved places and history will be kept." = "所有收藏的自定义路线都会被移除，已收藏地点和历史记录不受影响。";
+"Loads this custom route" = "加载这条自定义路线";
+"Remove route from favourites" = "取消收藏路线";
+"Save route to favourites" = "收藏整条路线";
+"%lld points · %.1f km/h · %@" = "%lld 个点 · %.1f 公里/小时 · %@";
+
+/* Recent search queries */
+"Recent searches" = "最近搜索";
+"Clear recent searches" = "清空最近搜索";
+"Searches for this place again" = "再次搜索这个地点";
+"Remove recent search" = "删除这条搜索记录";

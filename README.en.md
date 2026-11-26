@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Current release:</strong> 1.0.26 (Build 96) · <strong>Minimum:</strong> iOS/iPadOS 18.0
+  <strong>Current release:</strong> 1.0.27 (Build 106) · <strong>Minimum:</strong> iOS/iPadOS 18.0
 </p>
 
 <p align="center">
@@ -34,7 +34,7 @@ WrapPin is an unofficial community fork of [Roam Control](https://github.com/sea
 
 > Use WrapPin only on devices you own and control. Do not use it to deceive other people, fabricate evidence, bypass security restrictions, or break the rules of third-party services.
 
-Version 1.0.26 adds a separate simulated target marker, a fixed crosshair and joystick for precision selection, and a pencil button for renaming favourites. It also fixes clipping in the selected-place card. [Release notes](Documentation/Release-1.0.26.md) · [iPad layout](Documentation/iPadLayout.md)
+Version 1.0.27 adds saved custom routes, recent map searches, iOS 26+ Liquid Glass styling, and refined dock physics and map overlays. [Release notes](Documentation/Release-1.0.27.md) · [iPad layout](Documentation/iPadLayout.md)
 
 ## Contents
 

@@ -78,27 +78,36 @@ struct CustomRouteEditor: View {
     var body: some View {
         GeometryReader { geometry in
             let heights = panelHeights(for: geometry)
-            let height = min(heights[2], max(heights[0], heights[panelStop.rawValue] - panelDrag))
+            let height = DockDetentPhysics.rubberBandedHeight(
+                raw: heights[panelStop.rawValue] - panelDrag,
+                minimum: heights[0],
+                maximum: heights[2]
+            )
             ZStack(alignment: .bottom) {
                 routeMap.ignoresSafeArea()
                 VStack {
-                    HStack {
-                        Button {
-                            if hasChanges { confirmation = .discardChanges }
-                            else { dismiss() }
-                        } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                        .background(.regularMaterial, in: Circle())
-                        .accessibilityLabel("Cancel")
-                        .accessibilityIdentifier("customRoute.cancel")
-                        Spacer()
-                        Text("Custom route").font(.headline)
-                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                            .padding(.horizontal, 16).padding(.vertical, 12)
-                            .background(.regularMaterial, in: Capsule())
-                        Spacer()
-                        Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+                    LiquidGlassContainer(spacing: 10) {
+                        HStack {
+                            Button {
+                                if hasChanges { confirmation = .discardChanges }
+                                else { dismiss() }
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .frame(width: 44, height: 44)
+                                    .liquidGlassControl(in: Circle())
+                            }
+                            .buttonStyle(TactilePressButtonStyle())
+                            .accessibilityLabel("Cancel")
+                            .accessibilityIdentifier("customRoute.cancel")
+                            Spacer()
+                            Text("Custom route").font(.headline)
+                                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                                .padding(.horizontal, 16).padding(.vertical, 11)
+                                .liquidGlassSurface(in: Capsule())
+                            Spacer()
+                            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+                        }
                     }
-                    .buttonStyle(.plain)
                     .font(.system(size: 17, weight: .semibold))
                     .padding(.horizontal, 16).padding(.top, 8)
                     Spacer()
@@ -145,12 +154,19 @@ struct CustomRouteEditor: View {
                                             .accessibilityIdentifier("customRoute.speed")
                                             .accessibilityValue(String(format: "%.1f", speed))
                                     }
-                                    .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                                    .listRowBackground(Color.clear)
+
                                     editorControls
                                         .listRowInsets(EdgeInsets(top: 2, leading: 20, bottom: 2, trailing: 20))
-                                } footer: {
+                                        .listRowBackground(Color.clear)
+
                                     Text("Points connect with straight lines in order. Hold the right handle to reorder.")
                                         .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 8, trailing: 20))
+                                        .listRowSeparator(.hidden)
+                                        .listRowBackground(Color.clear)
                                 }
                             }
                         }
@@ -177,10 +193,19 @@ struct CustomRouteEditor: View {
                     if !isPickingOnMap { previewAction }
                 }
                 .frame(height: height, alignment: .top)
-                .animation(reduceMotion || isPanelDragging ? nil : .easeInOut(duration: 0.22), value: height)
-                .onChange(of: isPanelDragging) { _, dragging in if !dragging { panelDrag = 0 } }
+                .onChange(of: isPanelDragging) { _, dragging in
+                    if !dragging && panelDrag != 0 {
+                        withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.86)) {
+                            panelDrag = 0
+                        }
+                    }
+                }
+                .sensoryFeedback(.impact(weight: .light), trigger: panelStop)
                 .frame(maxWidth: 600)
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                 .background { MapFloatingPanelBackground(isExpanded: panelStop == .expanded) }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
                 .overlay(alignment: .topTrailing) {
                     if panelStop != .expanded {
                     VStack(spacing: 10) {
@@ -199,8 +224,12 @@ struct CustomRouteEditor: View {
                         .accessibilityLabel("Show my current location")
                         .accessibilityIdentifier("customRoute.currentLocation")
                     }
-                    .buttonStyle(.plain).font(.system(size: 17, weight: .semibold))
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+                    .buttonStyle(TactilePressButtonStyle())
+                    .font(.system(size: 17, weight: .semibold))
+                    .liquidGlassSurface(
+                        in: RoundedRectangle(cornerRadius: 22, style: .continuous),
+                        interactive: true
+                    )
                     .offset(y: -114).padding(.trailing, 16)
                     }
                 }
@@ -306,26 +335,42 @@ struct CustomRouteEditor: View {
         return [min(isPickingOnMap ? (dynamicTypeSize.isAccessibilitySize ? 250 : 184) : (dynamicTypeSize.isAccessibilitySize ? 220 : 154), maximum), min(dynamicTypeSize.isAccessibilitySize ? 430 : 320, maximum), maximum]
     }
 
-    private func setPanel(_ stop: PanelStop) {
-        panelDrag = 0
-        panelStop = stop
-        if stop != .collapsed { isPickingOnMap = false; mapCandidate = nil }
+    private func setPanel(_ stop: PanelStop, animated: Bool = true) {
+        let update = {
+            panelDrag = 0
+            panelStop = stop
+            if stop != .collapsed { isPickingOnMap = false; mapCandidate = nil }
+        }
+        if animated && !reduceMotion {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.86), update)
+        } else {
+            update()
+        }
     }
 
     private func panelHandle(heights: [CGFloat]) -> some View {
-        Capsule().fill(.secondary.opacity(0.4)).frame(width: 36, height: 5)
+        Capsule().fill(.secondary.opacity(0.45)).frame(width: 38, height: 5)
             .frame(maxWidth: .infinity, minHeight: 44)
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 8, coordinateSpace: .global)
+            .onTapGesture {
+                let next: PanelStop = panelStop == .collapsed ? .medium : .collapsed
+                setPanel(next)
+            }
+            .gesture(DragGesture(minimumDistance: 4, coordinateSpace: .global)
                 .updating($isPanelDragging) { _, state, _ in state = true }
                 .onChanged { value in
-                    if abs(value.translation.height) > abs(value.translation.width) { panelDrag = value.translation.height }
+                    if abs(value.translation.height) >= abs(value.translation.width) * 0.7 {
+                        panelDrag = value.translation.height
+                    }
                 }
                 .onEnded { value in
-                    let movement = value.translation.height
-                    guard abs(movement) > 36, abs(movement) > abs(value.translation.width) else { panelDrag = 0; return }
-                    let next = min(2, max(0, panelStop.rawValue + (movement < 0 ? 1 : -1)))
-                    setPanel(PanelStop(rawValue: next) ?? .medium)
+                    let nextIndex = DockDetentPhysics.targetDetentIndex(
+                        currentIndex: panelStop.rawValue,
+                        heights: heights,
+                        translation: value.translation.height,
+                        predictedTranslation: value.predictedEndTranslation.height
+                    )
+                    setPanel(PanelStop(rawValue: nextIndex) ?? .medium)
                 })
             .accessibilityElement()
             .accessibilityLabel("Route panel handle")
@@ -385,14 +430,14 @@ struct CustomRouteEditor: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             HStack(spacing: 12) {
                 Button(action: finishMapSelection) {
-                    Text("Cancel").frame(maxWidth: .infinity, minHeight: 44)
+                    Text("Cancel").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
+                .wrapPinSecondaryButton()
                 .accessibilityIdentifier("customRoute.cancelMapPoint")
                 Button(action: confirmMapPoint) {
-                    Text(nextPointAction).frame(maxWidth: .infinity, minHeight: 44)
+                    Text(nextPointAction).frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .wrapPinPrimaryButton()
                 .disabled(mapCandidate == nil || isReadingFile)
                 .accessibilityIdentifier("customRoute.confirmMapPoint")
                 .accessibilityValue(mapCandidate.map { String(format: "%.5f, %.5f", $0.latitude, $0.longitude) } ?? "")
@@ -427,10 +472,17 @@ struct CustomRouteEditor: View {
                 }
                 if isPickingOnMap, let mapCandidate {
                     Annotation("Selected point", coordinate: mapCandidate, anchor: .center) {
-                        Circle().stroke(.blue, lineWidth: 3)
-                            .frame(width: 20, height: 20)
-                            .shadow(color: .white, radius: 2)
-                            .allowsHitTesting(false)
+                        ZStack {
+                            Image(systemName: "scope")
+                                .font(.system(size: 22, weight: .semibold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 36, height: 36)
+                                .liquidGlassSurface(in: Circle())
+                            Circle()
+                                .fill(.blue)
+                                .frame(width: 4.5, height: 4.5)
+                        }
+                        .allowsHitTesting(false)
                     }
                     .annotationTitles(.hidden)
                 }
@@ -455,12 +507,9 @@ struct CustomRouteEditor: View {
                 if isReadingFile { ProgressView(); Text("Importing GPX…") }
                 else { Label("Preview Route", systemImage: "figure.walk") }
             }
-            .font(.body.weight(.semibold))
-            .frame(maxWidth: .infinity, minHeight: 48)
-            .foregroundStyle(route == nil || isReadingFile ? Color.secondary : .white)
-            .background(route == nil || isReadingFile ? Color(uiColor: .tertiarySystemFill) : Color.accentColor, in: Capsule())
+            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)
+        .wrapPinPrimaryButton()
         .disabled(route == nil || isReadingFile)
         .accessibilityIdentifier("customRoute.preview")
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)

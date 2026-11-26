@@ -26,12 +26,10 @@ struct MobileDataGuidanceView: View {
         .padding(.top, 12)
         .padding(.bottom, 26)
         .frame(maxWidth: 520)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .stroke(.white.opacity(0.16), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.24), radius: 28, y: 12)
+        .liquidGlassSurface(
+            in: RoundedRectangle(cornerRadius: 34, style: .continuous),
+            prominentShadow: true
+        )
     }
 
     private var content: some View {
@@ -81,18 +79,17 @@ struct MobileDataGuidanceView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
                 Button("Try Again", action: onRetry)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .wrapPinPrimaryButton()
                     .frame(maxWidth: .infinity)
 
                 if !usesBuiltInTunnel {
                     Button(openTunnelAppTitle, action: onOpenTunnelApp)
-                        .buttonStyle(.bordered)
+                        .wrapPinSecondaryButton()
                 }
 
                 if TunnelHandoffPolicy.offersMobileDataWorkaround(for: tunnelHandoffApp) {
                     Button("I'm Using Mobile Data", action: onUseMobileData)
-                        .buttonStyle(.bordered)
+                        .wrapPinSecondaryButton()
                 }
 
                 Button("Cancel", role: .cancel, action: onCancel)
@@ -117,13 +114,12 @@ struct MobileDataGuidanceView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
                 Button("Continue", action: onMobileDataOff)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .wrapPinPrimaryButton()
                     .frame(maxWidth: .infinity)
 
                 if !usesBuiltInTunnel {
                     Button(openTunnelAppTitle, action: onOpenTunnelApp)
-                        .buttonStyle(.bordered)
+                        .wrapPinSecondaryButton()
                 }
 
                 Button("Cancel", role: .cancel, action: onCancel)
@@ -134,8 +130,7 @@ struct MobileDataGuidanceView: View {
                     .foregroundStyle(.green)
 
                 Button("Done", action: onDone)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .wrapPinPrimaryButton()
                     .frame(maxWidth: .infinity)
             }
         }
