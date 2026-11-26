@@ -7,8 +7,13 @@ import Observation
 final class AppModel {
     private static let onboardingKey = "hasCompletedOnboarding"
     private static let favouritesKey = "favouriteLocations"
+    private static let favouriteCustomRoutesKey = "favouriteCustomRoutes"
     private static let hasSeenFavouriteReorderHintKey = "hasSeenFavouriteReorderHint"
     private static let historyKey = "locationHistory"
+    private static let customRouteHistoryKey = "customRouteHistory"
+    private static let maximumCustomRouteHistoryCount = 20
+    private static let recentSearchQueriesKey = "recentSearchQueries"
+    private static let maximumRecentSearchQueriesCount = 6
     private static let coordinateModeMemoryKey = "coordinateModeMemory"
     private static let appearanceKey = "appAppearance"
     private static let mapDisplayStyleKey = "mapDisplayStyle"
@@ -27,8 +32,11 @@ final class AppModel {
     var pairingImportError: String?
     private(set) var selectedTarget: LocationTarget?
     private(set) var favouriteLocations: [LocationTarget]
+    private(set) var favouriteCustomRoutes: [SavedCustomRoute]
     private(set) var hasSeenFavouriteReorderHint: Bool
     private(set) var locationHistory: [LocationTarget]
+    private(set) var customRouteHistory: [SavedCustomRoute]
+    private(set) var recentSearchQueries: [String]
     private(set) var appearance: AppAppearance
     private(set) var mapDisplayStyle: MapDisplayStyle
     private(set) var tunnelHandoffApp: TunnelHandoffApp
@@ -96,8 +104,11 @@ final class AppModel {
         let hasCompletedOnboarding = preferences.bool(forKey: Self.onboardingKey)
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.favouriteLocations = Self.locations(forKey: Self.favouritesKey, in: preferences)
+        self.favouriteCustomRoutes = Self.customRoutes(forKey: Self.favouriteCustomRoutesKey, in: preferences)
         self.hasSeenFavouriteReorderHint = preferences.bool(forKey: Self.hasSeenFavouriteReorderHintKey)
         self.locationHistory = Self.locations(forKey: Self.historyKey, in: preferences)
+        self.customRouteHistory = Self.customRoutes(forKey: Self.customRouteHistoryKey, in: preferences)
+        self.recentSearchQueries = preferences.stringArray(forKey: Self.recentSearchQueriesKey) ?? []
         self.coordinateModeMemory = Self.coordinateModeMemory(in: preferences)
         self.appearance = AppAppearance(
             rawValue: preferences.string(forKey: Self.appearanceKey) ?? ""
@@ -261,6 +272,111 @@ final class AppModel {
         saveCoordinateModeMemory()
     }
 
+    // MARK: - Saved Custom Routes
+
+    func isFavouriteCustomRoute(_ route: SavedCustomRoute) -> Bool {
+        let fingerprint = route.contentFingerprint
+        return favouriteCustomRoutes.contains {
+            $0.id == route.id || $0.contentFingerprint == fingerprint
+        }
+    }
+
+    func toggleFavouriteCustomRoute(_ route: SavedCustomRoute) {
+        let fingerprint = route.contentFingerprint
+        if let index = favouriteCustomRoutes.firstIndex(where: {
+            $0.id == route.id || $0.contentFingerprint == fingerprint
+        }) {
+            favouriteCustomRoutes.remove(at: index)
+        } else {
+            favouriteCustomRoutes.insert(route, at: 0)
+        }
+        save(favouriteCustomRoutes, forKey: Self.favouriteCustomRoutesKey)
+    }
+
+    func removeFavouriteCustomRoute(_ route: SavedCustomRoute) {
+        favouriteCustomRoutes.removeAll { $0.id == route.id }
+        save(favouriteCustomRoutes, forKey: Self.favouriteCustomRoutesKey)
+    }
+
+    func moveFavouriteCustomRoutes(from source: IndexSet, to destination: Int) {
+        favouriteCustomRoutes.move(fromOffsets: source, toOffset: destination)
+        save(favouriteCustomRoutes, forKey: Self.favouriteCustomRoutesKey)
+        dismissFavouriteReorderHint()
+    }
+
+    @discardableResult
+    func renameFavouriteCustomRoute(_ route: SavedCustomRoute, to proposedName: String) -> SavedCustomRoute? {
+        let name = proposedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard
+            !name.isEmpty,
+            let index = favouriteCustomRoutes.firstIndex(where: { $0.id == route.id })
+        else { return nil }
+
+        let renamed = favouriteCustomRoutes[index].renamed(to: name)
+        favouriteCustomRoutes[index] = renamed
+        save(favouriteCustomRoutes, forKey: Self.favouriteCustomRoutesKey)
+        return renamed
+    }
+
+    func clearFavouriteCustomRoutes() {
+        favouriteCustomRoutes = []
+        preferences.removeObject(forKey: Self.favouriteCustomRoutesKey)
+    }
+
+    func recordCustomRouteHistory(_ route: SavedCustomRoute) {
+        guard route.points.count >= 2 else { return }
+        let fingerprint = route.contentFingerprint
+        let existingName = customRouteHistory.first(where: { $0.contentFingerprint == fingerprint })?.name
+        let favouriteName = favouriteCustomRoutes.first(where: { $0.contentFingerprint == fingerprint })?.name
+        let entry = SavedCustomRoute(
+            id: route.id,
+            name: favouriteName ?? existingName ?? route.name,
+            points: route.points,
+            coordinateMode: route.coordinateMode,
+            speedKilometresPerHour: route.speedKilometresPerHour,
+            updatedAt: .now
+        )
+        customRouteHistory.removeAll { $0.id == entry.id || $0.contentFingerprint == fingerprint }
+        customRouteHistory.insert(entry, at: 0)
+        if customRouteHistory.count > Self.maximumCustomRouteHistoryCount {
+            customRouteHistory = Array(customRouteHistory.prefix(Self.maximumCustomRouteHistoryCount))
+        }
+        save(customRouteHistory, forKey: Self.customRouteHistoryKey)
+    }
+
+    func removeCustomRouteFromHistory(_ route: SavedCustomRoute) {
+        customRouteHistory.removeAll { $0.id == route.id }
+        save(customRouteHistory, forKey: Self.customRouteHistoryKey)
+    }
+
+    func clearCustomRouteHistory() {
+        customRouteHistory = []
+        preferences.removeObject(forKey: Self.customRouteHistoryKey)
+    }
+
+    // MARK: - Recent Search Queries
+
+    func recordSearchQuery(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        recentSearchQueries.removeAll { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+        recentSearchQueries.insert(trimmed, at: 0)
+        if recentSearchQueries.count > Self.maximumRecentSearchQueriesCount {
+            recentSearchQueries = Array(recentSearchQueries.prefix(Self.maximumRecentSearchQueriesCount))
+        }
+        preferences.set(recentSearchQueries, forKey: Self.recentSearchQueriesKey)
+    }
+
+    func removeRecentSearchQuery(_ query: String) {
+        recentSearchQueries.removeAll { $0.caseInsensitiveCompare(query) == .orderedSame }
+        preferences.set(recentSearchQueries, forKey: Self.recentSearchQueriesKey)
+    }
+
+    func clearRecentSearchQueries() {
+        recentSearchQueries = []
+        preferences.removeObject(forKey: Self.recentSearchQueriesKey)
+    }
+
     func setAppearance(_ appearance: AppAppearance) {
         self.appearance = appearance
         preferences.set(appearance.rawValue, forKey: Self.appearanceKey)
@@ -359,7 +475,10 @@ final class AppModel {
 
         selectedTarget = nil
         favouriteLocations = []
+        favouriteCustomRoutes = []
         locationHistory = []
+        customRouteHistory = []
+        recentSearchQueries = []
         coordinateModeMemory = CoordinateModeMemory()
         shortcutRequest = nil
         WrapPinShortcuts.updateAppShortcutParameters()
@@ -549,7 +668,9 @@ final class AppModel {
         isStartingLocationSession = true
         let startIdentifier = UUID()
         pendingLocationStartIdentifier = startIdentifier
-        addToHistory(historyTarget)
+        if recovery.customRoutePoints == nil {
+            addToHistory(historyTarget)
+        }
         if let mode = recovery.fixedCoordinateMode {
             coordinateModeMemory.recordUse(mode, for: historyTarget)
             saveCoordinateModeMemory()
@@ -971,6 +1092,21 @@ final class AppModel {
             let memory = try? JSONDecoder().decode(CoordinateModeMemory.self, from: data)
         else { return CoordinateModeMemory() }
         return memory
+    }
+
+    private func save(_ routes: [SavedCustomRoute], forKey key: String) {
+        guard let data = try? JSONEncoder().encode(routes) else { return }
+        preferences.set(data, forKey: key)
+    }
+
+    private static func customRoutes(forKey key: String, in preferences: UserDefaults) -> [SavedCustomRoute] {
+        guard
+            let data = preferences.data(forKey: key),
+            let routes = try? JSONDecoder().decode([SavedCustomRoute].self, from: data)
+        else {
+            return []
+        }
+        return routes
     }
 
     private static func locations(forKey key: String, in preferences: UserDefaults) -> [LocationTarget] {

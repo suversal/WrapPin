@@ -21,6 +21,8 @@ struct WalkingRoutePreviewCard: View {
     let onStop: () -> Void
     let onDone: () -> Void
     let onEditCustomRoute: () -> Void
+    var isCustomRouteFavourite: Bool = false
+    var onToggleCustomRouteFavourite: (() -> Void)? = nil
 
     @State private var panelDrag: CGFloat = 0
     private var expansion: CGFloat { min(1, max(0, (isCollapsed ? 0 : 1) - panelDrag / 220)) }
@@ -94,6 +96,19 @@ struct WalkingRoutePreviewCard: View {
 
                 Spacer(minLength: 0)
 
+                if route.isCustom, let onToggleCustomRouteFavourite {
+                    Button(action: onToggleCustomRouteFavourite) {
+                        Image(systemName: isCustomRouteFavourite ? "heart.fill" : "heart")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(isCustomRouteFavourite ? .pink : .secondary)
+                            .symbolEffect(.bounce, value: isCustomRouteFavourite)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(TactilePressButtonStyle())
+                    .sensoryFeedback(.impact(weight: .medium), trigger: isCustomRouteFavourite)
+                    .accessibilityLabel(isCustomRouteFavourite ? "Remove route from favourites" : "Save route to favourites")
+                    .accessibilityIdentifier("customRoute.toggleFavourite")
+                }
                 if canClose, route.isCustom {
                     Button("Edit Route", systemImage: "pencil", action: onEditCustomRoute)
                         .font(.system(size: 18, weight: .semibold))

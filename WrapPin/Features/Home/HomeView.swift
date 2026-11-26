@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var isShowingSavedPlaces = false
     @State private var customRouteDraft: CustomRouteDraft?
     @State private var customRouteWaypoints: [RouteWaypoint]?
+    @State private var customRouteTitle: String?
     @State private var shouldRefreshRealLocationWhenActive = false
     @State private var shouldClearLocationAfterRestoration = false
     @State private var isLocatingRealLocationAfterRestoration = false
@@ -209,9 +210,11 @@ struct HomeView: View {
         }
         .fullScreenCover(item: $customRouteDraft) { draft in
             CustomRouteEditor(draft: draft, locationModel: mapModel) { waypoints, coordinateMode, speed in
+                let routeName = SavedCustomRoute.defaultName(from: waypoints)
                 let route = try walkingRoutePlanner.previewCustomRoute(
-                    coordinates: waypoints.map(\.coordinate), name: waypoints.last?.name ?? String(localized: "Custom route"))
+                    coordinates: waypoints.map(\.coordinate), name: waypoints.last?.name ?? routeName)
                 customRouteWaypoints = waypoints
+                customRouteTitle = routeName
                 guard let destination = walkingRoutePlanner.destination else { return }
                 mapModel.show(destination)
                 fixedCoordinateMode = coordinateMode
@@ -220,6 +223,7 @@ struct HomeView: View {
                 walkingSimulation.customRouteSpeedKilometresPerHour = speed
                 mapModel.show(route)
             }
+            .environment(appModel)
         }
         .sheet(isPresented: $isShowingDeviceSetup) {
             PairingSetupView()
@@ -233,10 +237,15 @@ struct HomeView: View {
             SavedPlacesView(
                 favourites: appModel.favouriteLocations,
                 history: appModel.locationHistory,
+                favouriteRoutes: appModel.favouriteCustomRoutes,
+                routeHistory: appModel.customRouteHistory,
                 shouldShowFavouriteReorderHint: !appModel.hasSeenFavouriteReorderHint,
                 isFavourite: appModel.isFavourite,
+                isFavouriteRoute: appModel.isFavouriteCustomRoute,
                 onSelect: { target in
                     guard !walkingSimulation.locksDestination else { return }
+                    customRouteWaypoints = nil
+                    customRouteTitle = nil
                     mapModel.show(target)
                     Task {
                         guard let refreshed = await mapModel.refreshAddressIfNeeded(for: target)
@@ -246,9 +255,15 @@ struct HomeView: View {
                         appModel.updateStoredLocationMetadata(with: refreshed)
                     }
                 },
+                onSelectRoute: { savedRoute in
+                    loadSavedCustomRoute(savedRoute)
+                },
                 onToggleFavourite: appModel.toggleFavourite,
+                onToggleFavouriteRoute: appModel.toggleFavouriteCustomRoute,
                 onDeleteFavourite: appModel.removeFavourite,
+                onDeleteFavouriteRoute: appModel.removeFavouriteCustomRoute,
                 onMoveFavourites: appModel.moveFavouriteLocations,
+                onMoveFavouriteRoutes: appModel.moveFavouriteCustomRoutes,
                 onDismissFavouriteReorderHint: appModel.dismissFavouriteReorderHint,
                 onRenameFavourite: { target, name in
                     if let renamed = appModel.renameFavourite(target, to: name),
@@ -256,9 +271,18 @@ struct HomeView: View {
                         mapModel.selectedLocation = selected.renamed(to: renamed.name)
                     }
                 },
+                onRenameFavouriteRoute: { savedRoute, name in
+                    if let renamed = appModel.renameFavouriteCustomRoute(savedRoute, to: name),
+                       currentSavedCustomRoute()?.contentFingerprint == renamed.contentFingerprint {
+                        customRouteTitle = renamed.name
+                    }
+                },
                 onDeleteHistory: appModel.removeFromHistory,
+                onDeleteRouteHistory: appModel.removeCustomRouteFromHistory,
                 onClearFavourites: appModel.clearFavouriteLocations,
-                onClearHistory: appModel.clearLocationHistory
+                onClearFavouriteRoutes: appModel.clearFavouriteCustomRoutes,
+                onClearHistory: appModel.clearLocationHistory,
+                onClearRouteHistory: appModel.clearCustomRouteHistory
             )
         }
     }
@@ -351,15 +375,7 @@ struct HomeView: View {
     }
 
     private func simulatedLocationGlyph(_ symbol: String) -> some View {
-        ZStack {
-            LivePulseRing(color: simulatedMarkerTint, diameter: 24, isActive: true)
-
-            Image(systemName: symbol)
-                .font(.title.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.95), simulatedMarkerTint)
-                .padding(5)
-                .liquidGlassSurface(in: Circle())
-        }
+        SimulatedLocationMarker(symbol: symbol, tint: simulatedMarkerTint)
     }
 
     private var sidebar: some View {
@@ -398,6 +414,7 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 16)
             }
             .scrollDismissesKeyboard(.interactively)
@@ -443,23 +460,29 @@ struct HomeView: View {
     }
 
     private func compactControls(availableHeight: CGFloat) -> some View {
-        ZStack(alignment: .top) {
-            MapPanelViewport(maximumHeight: max(160, availableHeight * 0.42)) {
+        let headerMaxHeight = isSearchingForLocation
+            ? max(260, availableHeight - 16)
+            : max(180, availableHeight * 0.44)
+        return ZStack(alignment: .top) {
+            MapPanelViewport(maximumHeight: headerMaxHeight) {
                 VStack(spacing: 10) {
                     searchPanel
                     if !isSearchingForLocation {
                         statusPanel
                     }
                 }
+                // Keep horizontal & vertical padding inside the ScrollView so
+                // interactive Liquid Glass controls can expand on press without clipping.
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, isSearchingForLocation ? 16 : 10)
             }
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.size.height
             } action: { height in
                 compactHeaderHeight = height
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .frame(maxWidth: 560)
+            .frame(maxWidth: 592)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
             if !isSearchingForLocation {
@@ -628,17 +651,40 @@ struct HomeView: View {
                     mapModel.setOverseasSearch(!mapModel.isOverseasSearch)
                 },
                 onSubmit: {
+                    appModel.recordSearchQuery(mapModel.searchQuery)
                     Task { await mapModel.search() }
                 },
                 onClear: mapModel.clearSearch
             )
             .disabled(walkingSimulation.locksDestination)
 
+            if isSearchFocused,
+                !walkingSimulation.locksDestination,
+                mapModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                !mapModel.isShowingSuggestions,
+                !mapModel.isShowingOverseasResults,
+                !appModel.recentSearchQueries.isEmpty
+            {
+                RecentSearchesView(
+                    queries: appModel.recentSearchQueries,
+                    onSelect: { query in
+                        isSearchFocused = false
+                        mapModel.updateSearchQuery(query)
+                        appModel.recordSearchQuery(query)
+                        Task { await mapModel.search() }
+                    },
+                    onRemove: appModel.removeRecentSearchQuery,
+                    onClearAll: appModel.clearRecentSearchQueries
+                )
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
+            }
+
             if mapModel.isShowingSuggestions && !walkingSimulation.locksDestination {
                 SearchSuggestionsView(
                     suggestions: mapModel.searchSuggestions,
                     onSelect: { suggestion in
                         isSearchFocused = false
+                        appModel.recordSearchQuery(suggestion.title)
                         Task { await mapModel.selectSuggestion(suggestion) }
                     }
                 )
@@ -649,6 +695,7 @@ struct HomeView: View {
                     places: mapModel.overseasResults,
                     onSelect: { place in
                         isSearchFocused = false
+                        appModel.recordSearchQuery(place.name)
                         mapModel.selectOverseasPlace(place)
                     }
                 )
@@ -962,6 +1009,7 @@ struct HomeView: View {
         } else if let route = walkingRoutePlanner.route,
             let destination = walkingRoutePlanner.destination
         {
+            let currentCustomRoute = currentSavedCustomRoute()
             WalkingRoutePreviewCard(
                 route: route,
                 routes: walkingRoutePlanner.routes,
@@ -973,6 +1021,9 @@ struct HomeView: View {
                 onSelectRoute: selectPreviewedRoute,
                 onStart: {
                     walkingRoutePlanner.discardAlternativeRoutes()
+                    if let savedRoute = currentSavedCustomRoute() {
+                        appModel.recordCustomRouteHistory(savedRoute)
+                    }
                     followsSimulatedLocation = walkingSimulation.mode == .driving
                     Task { await walkingSimulation.start(using: appModel) }
                 },
@@ -986,6 +1037,8 @@ struct HomeView: View {
                 onChooseNewLocation: {
                     walkingSimulation.reset()
                     walkingRoutePlanner.clear()
+                    customRouteWaypoints = nil
+                    customRouteTitle = nil
                     mapModel.clearSelectedLocation()
                 },
                 onStop: {
@@ -995,6 +1048,8 @@ struct HomeView: View {
                 onDone: {
                     walkingSimulation.reset()
                     walkingRoutePlanner.clear()
+                    customRouteWaypoints = nil
+                    customRouteTitle = nil
                     mapModel.show(destination)
                 },
                 onEditCustomRoute: {
@@ -1004,6 +1059,11 @@ struct HomeView: View {
                         coordinateMode: walkingSimulation.coordinateMode,
                         waypoints: customRouteWaypoints,
                         speed: walkingSimulation.customRouteSpeedKilometresPerHour)
+                },
+                isCustomRouteFavourite: currentCustomRoute.map(appModel.isFavouriteCustomRoute) ?? false,
+                onToggleCustomRouteFavourite: {
+                    guard let savedRoute = currentSavedCustomRoute() else { return }
+                    appModel.toggleFavouriteCustomRoute(savedRoute)
                 }
             )
         } else {
@@ -1505,6 +1565,42 @@ struct HomeView: View {
         }
     }
 
+    private func currentSavedCustomRoute() -> SavedCustomRoute? {
+        guard let route = walkingRoutePlanner.route, route.isCustom else { return nil }
+        let waypoints = customRouteWaypoints ?? route.mapPoints.map { RouteWaypoint(coordinate: $0.coordinate) }
+        guard waypoints.count >= 2 else { return nil }
+        let name = customRouteTitle ?? SavedCustomRoute.defaultName(from: waypoints)
+        return SavedCustomRoute(
+            name: name,
+            points: waypoints.map(SavedCustomRoutePoint.init),
+            coordinateMode: walkingSimulation.coordinateMode,
+            speedKilometresPerHour: walkingSimulation.customRouteSpeedKilometresPerHour
+        )
+    }
+
+    private func loadSavedCustomRoute(_ savedRoute: SavedCustomRoute) {
+        guard !walkingSimulation.locksDestination else { return }
+        let waypoints = savedRoute.waypoints
+        guard let route = try? walkingRoutePlanner.previewCustomRoute(
+            coordinates: savedRoute.coordinates,
+            name: waypoints.last?.name ?? savedRoute.name
+        ), let destination = walkingRoutePlanner.destination else {
+            return
+        }
+        customRouteWaypoints = waypoints
+        customRouteTitle = savedRoute.name
+        fixedCoordinateMode = savedRoute.coordinateMode
+        mapModel.show(destination)
+        walkingSimulation.prepare(
+            route: route,
+            destination: destination,
+            coordinateMode: savedRoute.coordinateMode,
+            startName: waypoints.first?.name
+        )
+        walkingSimulation.customRouteSpeedKilometresPerHour = savedRoute.speedKilometresPerHour
+        mapModel.show(route)
+    }
+
     private func dismissInterruptedSessionRecovery() {
         recoveredWalkError = nil
         isPreparingRecoveredWalk = false
@@ -1513,6 +1609,38 @@ struct HomeView: View {
         walkingRoutePlanner.clear()
         appModel.dismissInterruptedSessionRecovery()
         mapModel.showRealLocationAfterSession()
+    }
+}
+
+private struct SimulatedLocationMarker: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let symbol: String
+    let tint: Color
+
+    @State private var isBeating = false
+
+    var body: some View {
+        ZStack {
+            LivePulseRing(color: tint, diameter: 16, isActive: true)
+
+            Circle()
+                .fill(tint.opacity(isBeating ? 0.28 : 0.08))
+                .frame(width: 26, height: 26)
+                .scaleEffect(isBeating ? 1.18 : 0.94)
+
+            Image(systemName: symbol)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.96), tint)
+                .padding(2.5)
+                .liquidGlassSurface(in: Circle())
+                .scaleEffect(isBeating ? 1.08 : 1.0)
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true)) {
+                isBeating = true
+            }
+        }
     }
 }
 

@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Search only selects a point. It never starts a location session or requests directions.
 struct RoutePlacePicker: View {
+    @Environment(AppModel.self) private var appModel
     @Environment(\.dismiss) private var dismiss
     @State private var searchModel = MapViewModel(selectsFirstSearchResult: false)
     @State private var searchTask: Task<Void, Never>?
@@ -20,7 +21,11 @@ struct RoutePlacePicker: View {
                     isSearching: searchModel.isSearching,
                     isOverseasSearch: searchModel.isOverseasSearchAvailable ? searchModel.isOverseasSearch : nil,
                     onToggleOverseasSearch: { searchModel.setOverseasSearch(!searchModel.isOverseasSearch) },
-                    onSubmit: { isFocused = false; performSearch() },
+                    onSubmit: {
+                        isFocused = false
+                        appModel.recordSearchQuery(searchModel.searchQuery)
+                        performSearch()
+                    },
                     onClear: searchModel.clearSearch,
                     fieldIdentifier: "routePlace.query"
                 )
@@ -32,14 +37,35 @@ struct RoutePlacePicker: View {
                             Text(error).font(.subheadline).foregroundStyle(.red)
                                 .accessibilityIdentifier("routePlace.error")
                         }
+                        if !searchModel.isSearching,
+                            searchModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                            !searchModel.isShowingSuggestions,
+                            !searchModel.isShowingOverseasResults,
+                            searchModel.searchResults.isEmpty,
+                            !appModel.recentSearchQueries.isEmpty
+                        {
+                            RecentSearchesView(
+                                queries: appModel.recentSearchQueries,
+                                onSelect: { query in
+                                    isFocused = false
+                                    searchModel.updateSearchQuery(query)
+                                    appModel.recordSearchQuery(query)
+                                    performSearch()
+                                },
+                                onRemove: appModel.removeRecentSearchQuery,
+                                onClearAll: appModel.clearRecentSearchQueries
+                            )
+                        }
                         if searchModel.isShowingSuggestions {
                             SearchSuggestionsView(suggestions: searchModel.searchSuggestions, showsAddAction: true) { suggestion in
                                 isFocused = false
+                                appModel.recordSearchQuery(suggestion.title)
                                 performSearch(suggestion: suggestion)
                             }
                         }
                         if searchModel.isShowingOverseasResults {
                             OverseasResultsView(places: searchModel.overseasResults) { place in
+                                appModel.recordSearchQuery(place.name)
                                 choose(LocationTarget(name: place.name, subtitle: place.address,
                                     latitude: place.latitude, longitude: place.longitude))
                             }
@@ -84,6 +110,7 @@ struct RoutePlacePicker: View {
                         }
                     }
                     .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
                 }
                 .scrollDismissesKeyboard(.interactively)
             }

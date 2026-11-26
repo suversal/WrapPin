@@ -45,10 +45,10 @@ struct LocationSelectionCard: View {
                 dockContent(for: location, onHeightChanged: onDockContentHeightChanged)
             } else {
                 cardContent
+                    .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             }
         }
-        .padding(.horizontal, 16)
         .padding(.top, location == nil ? 16 : 0)
         .background {
             if !isEmbeddedMapPanel {
@@ -80,16 +80,19 @@ struct LocationSelectionCard: View {
             locationHeader(for: location)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 5)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockHeaderHeight = $0 }
 
             ScrollView {
                 locationDetails
+                    .padding(.horizontal, 16)
                     .padding(.top, 5)
                     .padding(.bottom, 12)
                     .fixedSize(horizontal: false, vertical: true)
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { dockDetailsHeight = $0 }
             }
+            .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize)
             .accessibilityIdentifier("map.bottomCard")
         }

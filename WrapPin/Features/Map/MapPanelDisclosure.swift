@@ -71,8 +71,21 @@ struct MapPanelViewport<Content: View>: View {
                     contentHeight = height
                 }
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
         .scrollBounceBehavior(.basedOnSize)
-        .frame(height: min(contentHeight ?? maximumHeight, maximumHeight), alignment: .bottom)
+        .modifier(HiddenScrollEdgeEffectModifier())
+        .frame(height: min(contentHeight ?? maximumHeight, maximumHeight), alignment: .top)
+    }
+}
+
+private struct HiddenScrollEdgeEffectModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.scrollEdgeEffectHidden(true, for: .all)
+        } else {
+            content
+        }
     }
 }
 
